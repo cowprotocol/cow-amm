@@ -1,3 +1,6 @@
 [submodule "lib/composable-cow"]
 	path = lib/composable-cow
 	url = https://github.com/cowprotocol/composable-cow
+[submodule "lib/uniswap-v2-core"]
+	path = lib/uniswap-v2-core
+	url = https://github.com/Uniswap/v2-core
