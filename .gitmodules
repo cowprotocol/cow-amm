@@ -1,0 +1,3 @@
+[submodule "lib/composable-cow"]
+	path = lib/composable-cow
+	url = https://github.com/cowprotocol/composable-cow
