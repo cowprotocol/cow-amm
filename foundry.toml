@@ -3,4 +3,9 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
+remappings = [
+  "lib/composable-cow:cowprotocol/=lib/composable-cow/lib/cowprotocol/src/contracts/",
+  "lib/composable-cow:safe/=lib/composable-cow/lib/safe/contracts/",
+]
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
