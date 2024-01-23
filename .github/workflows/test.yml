@@ -30,7 +30,8 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge build --sizes
+          # replace next line with `forge build --sizes` once large unused dependencies have been removed.
+          forge build
         id: build
 
       - name: Run Forge tests
