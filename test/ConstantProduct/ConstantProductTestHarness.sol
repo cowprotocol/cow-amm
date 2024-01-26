@@ -36,17 +36,48 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     function setUpDefaultReserves(address owner) internal {
+        setUpDefaultWithReserves(owner, 1337, 1337);
+    }
+
+    function setUpDefaultWithReserves(address owner, uint256 amount0, uint256 amount1) internal {
         ConstantProduct.Data memory defaultData = setUpDefaultData();
         vm.mockCall(
             defaultData.referencePair.token0(),
             abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
-            abi.encode(1337)
+            abi.encode(amount0)
         );
         vm.mockCall(
             defaultData.referencePair.token1(),
             abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
-            abi.encode(1337)
+            abi.encode(amount1)
         );
+    }
+
+    function setUpDefaultReferencePairReserves(uint256 amount0, uint256 amount1) public {
+        uint32 unusedTimestamp = 31337;
+        vm.mockCall(
+            address(DEFAULT_PAIR),
+            abi.encodeWithSelector(IUniswapV2Pair.getReserves.selector),
+            abi.encode(amount0, amount1, unusedTimestamp)
+        );
+    }
+
+    // This function calls `getTradeableOrder` while filling all unused
+    // parameters with arbitrary data. Since every tradeable order is supposed
+    // to be executable, it also immediately checks that the order is valid.
+    function getTradeableOrderWrapper(address owner, ConstantProduct.Data memory staticInput)
+        internal
+        view
+        returns (GPv2Order.Data memory order)
+    {
+        order = constantProduct.getTradeableOrder(
+            owner,
+            addressFromString("sender"),
+            keccak256(bytes("context")),
+            abi.encode(staticInput),
+            bytes("offchain input")
+        );
+        verifyWrapper(owner, staticInput, order);
     }
 
     // This function calls `verify` while filling all unused parameters with

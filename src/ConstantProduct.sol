@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
+import {Math} from "lib/composable-cow/lib/@openzeppelin/contracts/utils/math/Math.sol";
 import {IUniswapV2Pair} from "lib/uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {
@@ -34,15 +35,82 @@ contract ConstantProduct is IConditionalOrderGenerator {
     }
 
     /**
+     * @notice The order returned by this function is the order that needs to be
+     * executed for the price on the owner AMM to match that of the reference
+     * pair.
      * @inheritdoc IConditionalOrderGenerator
      */
     function getTradeableOrder(address owner, address, bytes32, bytes calldata staticInput, bytes calldata)
         public
         view
         override
+        returns (GPv2Order.Data memory)
+    {
+        return _getTradeableOrder(owner, staticInput);
+    }
+
+    /**
+     * @dev Wrapper for the `getTradeableOrder` function with only the
+     * parameters that are required for order creation. Compared to implementing
+     * the logic inside the original function, it frees up some stack slots and
+     * reduces "stack too deep" issues.
+     * @dev We are not interested in the gas efficiency of this function because
+     * it is not supposed to be called by a call in the blockchain.
+     * @param owner the contract who is the owner of the order
+     * @param staticInput the static input for all discrete orders cut from this
+     * conditional order
+     * @return order the tradeable order for submission to the CoW Protocol API
+     */
+    function _getTradeableOrder(address owner, bytes calldata staticInput)
+        internal
+        view
         returns (GPv2Order.Data memory order)
     {
-        revert("unimplemented");
+        ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
+        IERC20 token0 = IERC20(data.referencePair.token0());
+        IERC20 token1 = IERC20(data.referencePair.token1());
+        (uint256 uniswapReserve0, uint256 uniswapReserve1,) = data.referencePair.getReserves();
+        (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
+
+        IERC20 sellToken;
+        IERC20 buyToken;
+        uint256 sellAmount;
+        uint256 buyAmount;
+        // Note on rounding: we want to round down the sell amount and up the
+        // buy amount. This is because the math for the order makes it lie
+        // precisely on the AMM curve, and a rounding error to the other way
+        // could cause a valid order to become invalid.
+        // Note on the if condition: it guarantees that sellAmount is positive
+        // in the corresponding branch (it would be negative in the other). This
+        // excludes rounding errors: in this case, the function could revert but
+        // the amounts involved would be just a few atoms, so we accept that no
+        // order will be available.
+        if (uniswapReserve0 * selfReserve1 < uniswapReserve1 * selfReserve0) {
+            sellToken = token0;
+            buyToken = token1;
+            sellAmount = selfReserve0 / 2 - Math.ceilDiv(uniswapReserve0 * selfReserve1, 2 * uniswapReserve1);
+            buyAmount = Math.ceilDiv(uniswapReserve1 * selfReserve0, 2 * uniswapReserve0) - selfReserve1 / 2;
+        } else {
+            sellToken = token1;
+            buyToken = token0;
+            sellAmount = selfReserve1 / 2 - Math.ceilDiv(uniswapReserve1 * selfReserve0, 2 * uniswapReserve0);
+            buyAmount = Math.ceilDiv(uniswapReserve0 * selfReserve1, 2 * uniswapReserve1) - selfReserve0 / 2;
+        }
+
+        order = GPv2Order.Data(
+            sellToken,
+            buyToken,
+            GPv2Order.RECEIVER_SAME_AS_OWNER,
+            sellAmount,
+            buyAmount,
+            Utils.validToBucket(MAX_ORDER_DURATION),
+            data.appData,
+            0,
+            GPv2Order.KIND_SELL,
+            true,
+            GPv2Order.BALANCE_ERC20,
+            GPv2Order.BALANCE_ERC20
+        );
     }
 
     /**
