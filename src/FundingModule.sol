@@ -81,7 +81,7 @@ contract FundingModule {
         }
 
         // Transfer bought tokens to fundingDst
-        SafeModuleSafeERC20.safeTransferFrom(stagingSafe, buyToken, address(stagingSafe), fundingDst, boughtAmount);
+        SafeModuleSafeERC20.safeTransfer(stagingSafe, buyToken, fundingDst, deltaY);
 
         // Transfer matching amount of `sellToken` to `fundingDst`. This would allow for
         // `sellToken` to be drained from the funding safe, however only if a "malicious"

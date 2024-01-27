@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 // Vendored from OpenZeppelin contracts with minor modifications:
-// - Removed all functions except `safeTransferFrom` and `_callOptionalReturn`
+// - Removed all functions except `safeTransfer`, `safeTransferFrom` and `_callOptionalReturn`
 // - Functions modified to accept an `ISafe` and `IERC20` as the first two arguments
 //   which is the Safe used to execute the transaction and the token being transferred.
 //   For executing the transaction, uses the `functionCall` function from SafeModuleAddress.sol.
@@ -29,6 +29,14 @@ library SafeModuleSafeERC20 {
      * @dev An operation with an ERC20 token failed.
      */
     error SafeERC20FailedOperation(address token);
+
+    /**
+     * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,
+     * non-reverting calls are assumed to be successful.
+     */
+    function safeTransfer(ISafe safe, IERC20 token, address to, uint256 value) internal {
+        _callOptionalReturn(safe, token, abi.encodeCall(token.transfer, (to, value)));
+    }
 
     /**
      * @dev Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the
