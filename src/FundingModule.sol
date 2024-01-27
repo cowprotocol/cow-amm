@@ -15,6 +15,8 @@ import {SafeModuleSafeERC20} from "./vendored/libraries/SafeModuleSafeERC20.sol"
 contract FundingModule {
     using SafeCast for uint256;
 
+    uint112 SCALING_FACTOR = 1e9;
+
     IERC20 public immutable sellToken;
     IERC20 public immutable buyToken;
     ISafe public immutable stagingSafe;
@@ -42,49 +44,49 @@ contract FundingModule {
 
     /**
      * @notice Pulls the `sellToken` from the `fundingSrc` to the staging safe.
-     * @dev Requires calling from the trampoline to ensure the call is part of a settlement
-     * @dev No guarding against multiple calls from multiple batches, as worst case, all allowed
-     *      funds are pulled from the `fundingSrc` to the staging safe (where they would remain).
+     * @dev Will not pull more than `sellAmount` tokens per discrete order.
      */
     function pull() external {
+        uint256 stagingSellTokenBalance = sellToken.balanceOf(address(stagingSafe));
+
+        // Do not pull any tokens if there is already enough in the staging safe
+        if (stagingSellTokenBalance >= sellAmount) {
+            return;
+        }
+
         SafeModuleSafeERC20.safeTransferFrom(
             stagingSafe, // safe that has this module enabled
             sellToken, // token being transferred from
             fundingSrc, // address to transfer from
             address(stagingSafe), // address to transfer to
-            sellAmount // amount to transfer
+            sellAmount - stagingSellTokenBalance // amount to transfer
         );
     }
 
     /**
      * @notice Push bought tokens, and a corresponding amount of `sellToken`s to `fundingDst`.
-     * @dev Requires calling from the trampoline to ensure the call is part of a settlement
      * @dev If this hook fails to be included in a settlement due to a malicious solver, the
-     *      next discrete order will be able to include the requisite amounts.
+     * next discrete order will be able to include the requisite amounts.
      */
     function push() external {
-        uint256 boughtAmount = buyToken.balanceOf(address(stagingSafe));
-
+        uint112 boughtAmount = buyToken.balanceOf(address(stagingSafe)).toUint112();
         uint112 x = buyToken.balanceOf(fundingDst).toUint112();
         uint112 y = sellToken.balanceOf(fundingDst).toUint112();
 
-        // x * y has a maximum value of 2^224, which is less than 2^256-1, so this is safe
-        // If x + boughtAmount is greater than 2^224 (`boughtAmount` may be 2^256 - 1), the
-        // denominator will be greater than the numerator resulting in
-        // `requiredSelltokenReserves` = 0. This has implications for underflow protection
-        // on `topUpSellTokenAmount`, which is why `topUpSellTokenAmount` is checked but
-        // `requiredSellTokenReserves` is not.
-        uint256 requiredSellTokenReserves;
+        // `y` * `boughtAmount * SCALING_FACTOR` has a maximum value of ~2^254, which is less
+        // than 2^256-1 so this is safe for overflow.
+        uint256 topUpSellTokenAmount;
         unchecked {
-            requiredSellTokenReserves = x * y / (x + boughtAmount);
+            topUpSellTokenAmount = y * boughtAmount * SCALING_FACTOR / x / SCALING_FACTOR;
         }
-
-        uint256 topUpSellTokenAmount = requiredSellTokenReserves - y;
 
         // Transfer bought tokens to fundingDst
         SafeModuleSafeERC20.safeTransferFrom(stagingSafe, buyToken, address(stagingSafe), fundingDst, boughtAmount);
 
-        // Transfer matching amount of sellToken to fundingDst
+        // Transfer matching amount of `sellToken` to `fundingDst`. This would allow for
+        // `sellToken` to be drained from the funding safe, however only if a "malicious"
+        // user donated `buyToken` to the staging safe. We would also retain the
+        // `buyToken` and `sellToken` in the AMM safe, so this is not a concern.
         SafeModuleSafeERC20.safeTransferFrom(
             stagingSafe, sellToken, address(fundingSrc), fundingDst, topUpSellTokenAmount
         );
