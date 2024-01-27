@@ -15,6 +15,7 @@ contract PushTest is FundingModuleTestHarness {
         fundingModule.push();
 
         // check that the staging safe has the correct amount of tokens
+        // and that it hasn't reverted
         assertEq(token0.balanceOf(address(stagingSafe)), 0);
         assertEq(token1.balanceOf(address(stagingSafe)), 0);
         assertEq(token0.balanceOf(address(fundingDst)), AMM_TOKEN0_AMOUNT);
@@ -27,6 +28,7 @@ contract PushTest is FundingModuleTestHarness {
         fundingModule.push();
 
         // check that the staging safe has the correct amount of tokens
+        // and that it hasn't reverted
         assertEq(token0.balanceOf(address(stagingSafe)), 0);
         assertEq(token1.balanceOf(address(stagingSafe)), 0);
         assertEq(token0.balanceOf(address(fundingDst)), AMM_TOKEN0_AMOUNT);

@@ -40,12 +40,10 @@ abstract contract FundingModuleTestHarness is Base {
     }
 
     function setUpTokenAmounts() internal {
-        // give some tokens to the funding src
-        deal(address(token0), address(fundingSrc), FUNDING_AMOUNT);
-
-        vm.startPrank(address(stagingSafe));
-        token0.transfer(address(1), token0.balanceOf(address(stagingSafe)));
-        vm.stopPrank();
+        // give the funding amount to the funding source
+        deal(address(token0), fundingSrc, FUNDING_AMOUNT);
+        // set the staging safe to have no tokens
+        deal(address(token0), address(stagingSafe), 0);
     }
 
     function setUpAmmReserves() internal {
