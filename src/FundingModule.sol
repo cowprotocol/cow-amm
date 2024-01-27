@@ -15,8 +15,6 @@ import {SafeModuleSafeERC20} from "./vendored/libraries/SafeModuleSafeERC20.sol"
 contract FundingModule {
     using SafeCast for uint256;
 
-    address private constant HOOKS_TRAMPOLINE = 0x01DcB88678aedD0C4cC9552B20F4718550250574;
-
     IERC20 public immutable sellToken;
     IERC20 public immutable buyToken;
     ISafe public immutable stagingSafe;
@@ -24,11 +22,6 @@ contract FundingModule {
     address public immutable fundingDst;
 
     uint256 public immutable sellAmount;
-
-    modifier onlyTrampoline() {
-        require(msg.sender == HOOKS_TRAMPOLINE, "FundingModule: caller is not the trampoline");
-        _;
-    }
 
     constructor(
         IERC20 _sellToken,
@@ -53,7 +46,7 @@ contract FundingModule {
      * @dev No guarding against multiple calls from multiple batches, as worst case, all allowed
      *      funds are pulled from the `fundingSrc` to the staging safe (where they would remain).
      */
-    function pull() external onlyTrampoline {
+    function pull() external {
         SafeModuleSafeERC20.safeTransferFrom(
             stagingSafe, // safe that has this module enabled
             sellToken, // token being transferred from
@@ -69,7 +62,7 @@ contract FundingModule {
      * @dev If this hook fails to be included in a settlement due to a malicious solver, the
      *      next discrete order will be able to include the requisite amounts.
      */
-    function push() external onlyTrampoline {
+    function push() external {
         uint256 boughtAmount = buyToken.balanceOf(address(stagingSafe));
 
         uint112 x = buyToken.balanceOf(fundingDst).toUint112();
