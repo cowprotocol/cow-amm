@@ -4,3 +4,6 @@
 [submodule "lib/uniswap-v2-core"]
 	path = lib/uniswap-v2-core
 	url = https://github.com/Uniswap/v2-core
+[submodule "lib/hooks-trampoline"]
+	path = lib/hooks-trampoline
+	url = https://github.com/cowprotocol/hooks-trampoline
