@@ -92,24 +92,24 @@ contract ConstantProduct is IConditionalOrderGenerator {
         }
 
         if (order.receiver != GPv2Order.RECEIVER_SAME_AS_OWNER) {
-            revert IConditionalOrder.OrderNotValid("invalid receiver");
+            revert IConditionalOrder.OrderNotValid("receiver must be zero address");
         }
         // We add a maximum duration to avoid spamming the orderbook and force
         // an order refresh if the order is old.
         if (order.validTo > block.timestamp + MAX_ORDER_DURATION) {
-            revert IConditionalOrder.OrderNotValid("invalid validTo");
+            revert IConditionalOrder.OrderNotValid("validity too far in the future");
         }
         if (order.appData != data.appData) {
             revert IConditionalOrder.OrderNotValid("invalid appData");
         }
         if (order.feeAmount != 0) {
-            revert IConditionalOrder.OrderNotValid("invalid feeAmount");
+            revert IConditionalOrder.OrderNotValid("fee amount must be zero");
         }
         if (order.buyTokenBalance != GPv2Order.BALANCE_ERC20) {
-            revert IConditionalOrder.OrderNotValid("invalid buyTokenBalance");
+            revert IConditionalOrder.OrderNotValid("buyTokenBalance must be erc20");
         }
         if (order.sellTokenBalance != GPv2Order.BALANCE_ERC20) {
-            revert IConditionalOrder.OrderNotValid("invalid sellTokenBalance");
+            revert IConditionalOrder.OrderNotValid("sellTokenBalance must be erc20");
         }
         // These are the checks needed to satisfy the conditions on in/out
         // amounts for the function-maximising AMM.

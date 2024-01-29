@@ -72,7 +72,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         GPv2Order.Data memory defaultOrder = getDefaultOrder();
         defaultOrder.receiver = addressFromString("bad receiver");
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid receiver"));
+        vm.expectRevert(
+            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
+        );
         verifyWrapper(orderOwner, defaultData, defaultOrder);
     }
 
@@ -83,7 +85,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         GPv2Order.Data memory defaultOrder = getDefaultOrder();
         defaultOrder.validTo = uint32(block.timestamp) + constantProduct.MAX_ORDER_DURATION() + 1;
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid validTo"));
+        vm.expectRevert(
+            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "validity too far in the future")
+        );
         verifyWrapper(orderOwner, defaultData, defaultOrder);
     }
 
@@ -105,7 +109,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         GPv2Order.Data memory defaultOrder = getDefaultOrder();
         defaultOrder.feeAmount = 1;
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid feeAmount"));
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "fee amount must be zero"));
         verifyWrapper(orderOwner, defaultData, defaultOrder);
     }
 
@@ -116,7 +120,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         GPv2Order.Data memory defaultOrder = getDefaultOrder();
         defaultOrder.sellTokenBalance = GPv2Order.BALANCE_EXTERNAL;
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid sellTokenBalance"));
+        vm.expectRevert(
+            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "sellTokenBalance must be erc20")
+        );
         verifyWrapper(orderOwner, defaultData, defaultOrder);
     }
 
@@ -127,7 +133,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         GPv2Order.Data memory defaultOrder = getDefaultOrder();
         defaultOrder.buyTokenBalance = GPv2Order.BALANCE_EXTERNAL;
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid buyTokenBalance"));
+        vm.expectRevert(
+            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "buyTokenBalance must be erc20")
+        );
         verifyWrapper(orderOwner, defaultData, defaultOrder);
     }
 }
