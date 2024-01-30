@@ -38,9 +38,9 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         data = ConstantProduct.Data(pair, order.appData);
     }
 
-    // Note: if X is the reserve of the tokens that is taken from the AMM, and
-    // Y the reserve of the token that is deposited into the AMM, then given
-    // any in amount x you can compute the out amount as:
+    // Note: if X is the reserve of the token that is taken from the AMM, and Y
+    // the reserve of the token that is deposited into the AMM, then given any
+    // in amount x you can compute the out amount as:
     //         Y * x
     //   y = ---------
     //         X - 2x
