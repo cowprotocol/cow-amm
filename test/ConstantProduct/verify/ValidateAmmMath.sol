@@ -40,18 +40,18 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
 
     // Note: if X is the reserve of the token that is taken from the AMM, and Y
     // the reserve of the token that is deposited into the AMM, then given any
-    // in amount x you can compute the out amount as:
+    // in amount x you can compute the out amount for a constant-product AMM as:
     //         Y * x
     //   y = ---------
-    //         X - 2x
+    //         X - x
     function getExpectedAmountIn(uint256[2] memory reserves, uint256 amountOut) internal pure returns (uint256) {
         uint256 poolIn = reserves[0];
         uint256 poolOut = reserves[1];
-        return poolIn * amountOut / (poolOut - 2 * amountOut);
+        return poolIn * amountOut / (poolOut - amountOut);
     }
 
     function testExactAmountsInOut() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
@@ -65,11 +65,11 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // The next line is there so that we can see at a glance that the out
         // amount is reasonable given the in amount, since the math could be
         // hiding the fact that the AMM leads to bad orders.
-        require(amountIn == 1.25 ether);
+        require(amountIn == 1 ether, "amount in was not updated");
     }
 
     function testOneTooMuchOut() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
@@ -83,7 +83,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     }
 
     function testOneTooLittleIn() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
@@ -97,7 +97,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     }
 
     function testInvertInOutToken() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
@@ -111,7 +111,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     }
 
     function testInvertedTokenOneTooMuchOut() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
@@ -126,7 +126,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     }
 
     function testInvertedTokensOneTooLittleIn() public {
-        uint256 poolOut = 1000 ether;
+        uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
