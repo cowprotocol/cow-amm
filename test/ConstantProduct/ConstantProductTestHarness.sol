@@ -30,6 +30,10 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         require(pair.token0() != pair.token1(), "Pair setup failed: should use distinct tokens");
     }
 
+    function getDefaultData() internal view returns (ConstantProduct.Data memory) {
+        return ConstantProduct.Data(IUniswapV2Pair(DEFAULT_PAIR), DEFAULT_APPDATA);
+    }
+
     function setUpDefaultData() internal returns (ConstantProduct.Data memory) {
         setUpDefaultPair();
         return getDefaultData();
@@ -65,10 +69,6 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             bytes("offchain input"),
             order
         );
-    }
-
-    function getDefaultData() internal view returns (ConstantProduct.Data memory) {
-        return ConstantProduct.Data(IUniswapV2Pair(DEFAULT_PAIR), DEFAULT_APPDATA);
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {
