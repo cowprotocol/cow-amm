@@ -38,12 +38,17 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         data = ConstantProduct.Data(pair, order.appData);
     }
 
-    // Note: if X is the reserve of the tokens that is taken from the AMM, and
-    // Y the reserve of the token that is deposited into the AMM, then given
-    // any in amount x you can compute the out amount as:
+    // Note: if X is the reserve of the token that is taken from the AMM, and Y
+    // the reserve of the token that is deposited into the AMM, then given any
+    // in amount x you can compute the out amount as:
     //         Y * x
     //   y = ---------
     //         X - 2x
+    function getExpectedAmountIn(uint256[2] memory reserves, uint256 amountOut) internal pure returns (uint256) {
+        uint256 poolIn = reserves[0];
+        uint256 poolOut = reserves[1];
+        return poolIn * amountOut / (poolOut - 2 * amountOut);
+    }
 
     function testExactAmountsInOut() public {
         uint256 poolOut = 1000 ether;
@@ -51,7 +56,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
 
@@ -69,7 +74,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         order.sellAmount = amountOut + 1;
         order.buyAmount = amountIn;
 
@@ -83,7 +88,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn - 1;
 
@@ -97,7 +102,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         (order.sellToken, order.buyToken) = (order.buyToken, order.sellToken);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
@@ -111,7 +116,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         (order.sellToken, order.buyToken) = (order.buyToken, order.sellToken);
         order.sellAmount = amountOut + 1;
         order.buyAmount = amountIn;
@@ -126,7 +131,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
-        uint256 amountIn = poolIn * amountOut / (poolOut - 2 * amountOut);
+        uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         (order.sellToken, order.buyToken) = (order.buyToken, order.sellToken);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn - 1;
