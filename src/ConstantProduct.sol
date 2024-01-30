@@ -112,8 +112,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
             revert IConditionalOrder.OrderNotValid("sellTokenBalance must be erc20");
         }
         // These are the checks needed to satisfy the conditions on in/out
-        // amounts for the function-maximising AMM.
-        if ((sellReserve - 2 * order.sellAmount) * order.buyAmount < buyReserve * order.sellAmount) {
+        // amounts for a constant-product curve AMM.
+        if ((sellReserve - order.sellAmount) * order.buyAmount < buyReserve * order.sellAmount) {
             revert IConditionalOrder.OrderNotValid("received amount too low");
         }
 
