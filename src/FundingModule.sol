@@ -16,9 +16,11 @@ contract FundingModule {
     using SafeCast for uint256;
 
     error SellTokenSameBuyToken();
+    error PriceMovesTooMuch();
     error ZeroTokenAmount(address token, address who);
 
-    uint112 private constant SCALING_FACTOR = 1e9;
+    uint256 internal constant PRICE_MOVEMENT_TOLERANCE_BPS = 10;
+    uint256 internal constant BPS_COUNT = 10000;
 
     IERC20 public immutable sellToken;
     IERC20 public immutable buyToken;
@@ -36,7 +38,9 @@ contract FundingModule {
         address _fundingDst,
         uint256 _sellAmount
     ) {
-        if (_sellToken == _buyToken) revert SellTokenSameBuyToken();
+        if (_sellToken == _buyToken) {
+            revert SellTokenSameBuyToken();
+        }
         sellToken = _sellToken;
         buyToken = _buyToken;
         stagingSafe = _stagingSafe;
@@ -72,17 +76,24 @@ contract FundingModule {
      * next discrete order will be able to include the requisite amounts.
      */
     function push() external {
-        uint256 deltaY = buyToken.balanceOf(address(stagingSafe)).toUint112();
-        uint256 x = sellToken.balanceOf(fundingDst).toUint112();
-        uint256 y = buyToken.balanceOf(fundingDst).toUint112();
+        uint128 deltaY = buyToken.balanceOf(address(stagingSafe)).toUint128();
+        uint128 x = sellToken.balanceOf(fundingDst).toUint128();
+        uint128 y = buyToken.balanceOf(fundingDst).toUint128();
 
-        if (x == 0 || y == 0) revert ZeroTokenAmount(address(x == 0 ? sellToken : buyToken), address(fundingDst));
+        if (x == 0 || y == 0) {
+            revert ZeroTokenAmount(address(x == 0 ? sellToken : buyToken), address(fundingDst));
+        }
 
-        // `y` * `deltaY * SCALING_FACTOR` has a maximum value of ~2^254, which is less
-        // than 2^256-1 so this is safe for overflow.
-        uint256 deltaX;
+        uint256 deltaXFull;
+        // TODO explain it's ok
         unchecked {
-            deltaX = deltaY * x * SCALING_FACTOR / y / SCALING_FACTOR;
+            deltaXFull = deltaY * x / y;
+        }
+        uint128 deltaX = deltaXFull.toUint128();
+
+        // TODO Because of rounding issue explain explain
+        if (movesAmmPriceTooMuch(x, deltaX, y, deltaY)) {
+            revert PriceMovesTooMuch();
         }
 
         // Transfer bought tokens to fundingDst
@@ -93,5 +104,37 @@ contract FundingModule {
         // user donated `buyToken` to the staging safe. We would also retain the
         // `buyToken` and `sellToken` in the AMM safe, so this is not a concern.
         SafeModuleSafeERC20.safeTransferFrom(stagingSafe, sellToken, fundingSrc, fundingDst, deltaX);
+    }
+
+    // TODO explain it comes from the following inequalities:
+    //  x + Dx     y + Dy
+    // -------- ≤ -------- · (1 + tolerance),
+    //    x          y
+    //  y + Dy     x + Dx
+    // -------- ≤ -------- · (1 + tolerance),
+    //    y          x
+    // where tolerance = PRICE_MOVEMENT_TOLERANCE_BPS / BPS_COUNT
+    function movesAmmPriceTooMuch(uint128 x, uint128 deltaX, uint128 y, uint128 deltaY) internal returns (bool) {
+        // TODO explain why unchecked
+        uint256 k;
+        uint256 xDeltaY;
+        uint256 yDeltaX;
+        uint256 diff;
+        unchecked {
+            k = x * y;
+            xDeltaY = x * deltaY;
+            yDeltaX = y * deltaX;
+        }
+
+        if (xDeltaY < yDeltaX) {
+            (xDeltaY, yDeltaX) = (yDeltaX, xDeltaY);
+        }
+        unchecked {
+            diff = xDeltaY - yDeltaX;
+        }
+        uint256 kt = k * PRICE_MOVEMENT_TOLERANCE_BPS;
+        uint256 rescaledDiff = diff * BPS_COUNT;
+        uint256 yDeltaXT = yDeltaX * PRICE_MOVEMENT_TOLERANCE_BPS;
+        return (rescaledDiff >= yDeltaXT) && (rescaledDiff - yDeltaXT > kt);
     }
 }
