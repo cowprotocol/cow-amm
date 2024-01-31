@@ -18,7 +18,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
 
         // Assert explicit amounts to see that the trade is reasonable.
         assertEq(order.sellAmount, 4.5 ether);
-        assertEq(order.buyAmount, 8.181818181818181819 ether);
+        assertEq(order.buyAmount, 24.75 ether);
     }
 
     function testReturnedTradeValuesOtherSide() public {
@@ -36,44 +36,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
 
         // Assert explicit amounts to see that the trade is reasonable.
         assertEq(order.sellAmount, 10 ether);
-        assertEq(order.buyAmount, 8.571428571428571429 ether);
-    }
-
-    function testGeneratedTradeIsOptimal() public {
-        // That is, the sell and buy amounts are "on the AMM curve" and can't be
-        // improved by just decreasing the buy amount while satisfying the
-        // restriction in `verify`.
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
-        // Parameters copied from testReturnedTradesMovesPriceToMatchUniswapLimitPrice
-        setUpDefaultWithReserves(orderOwner, 10 ether, 10 ether);
-        setUpDefaultReferencePairReserves(1 ether, 10 ether);
-
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
-        require(
-            address(order.sellToken) == address(defaultData.referencePair.token0()),
-            "this test was intended for the case sellToken == token0"
-        );
-        order.buyAmount = order.buyAmount - 1;
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, defaultData, order);
-    }
-
-    function testGeneratedInvertedTradeIsOptimal() public {
-        // This test is the same as `testGeneratedTradeIsOptimal` but with sell
-        // and buy tokens inverted.
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
-        // Parameters copied from testReturnedTradesMovesPriceToMatchUniswapLimitPriceOtherSide
-        setUpDefaultWithReserves(orderOwner, 12 ether, 24 ether);
-        setUpDefaultReferencePairReserves(126 ether, 42 ether);
-
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
-        require(
-            address(order.sellToken) == address(defaultData.referencePair.token1()),
-            "this test was intended for the case sellToken == token1"
-        );
-        order.buyAmount = order.buyAmount - 1;
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, defaultData, order);
+        assertEq(order.buyAmount, 17.5 ether);
     }
 
     function testGeneratedTradeWithRoundingErrors() public {

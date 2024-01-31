@@ -86,6 +86,10 @@ contract ConstantProduct is IConditionalOrderGenerator {
         // excludes rounding errors: in this case, the function could revert but
         // the amounts involved would be just a few atoms, so we accept that no
         // order will be available.
+        // Note on the order price: The buy amount is not optimal for the AMM
+        // given the sell amount. This is intended because we want to force
+        // solvers to maximize the surplus for this order with the price that
+        // isn't the AMM best price. 
         uint256 selfReserve0TimesUniswapReserve1 = selfReserve0 * uniswapReserve1;
         uint256 selfReserve1TimesUniswapReserve0 = selfReserve1 * uniswapReserve0;
         if (selfReserve1TimesUniswapReserve0 < selfReserve0TimesUniswapReserve1) {
@@ -93,9 +97,9 @@ contract ConstantProduct is IConditionalOrderGenerator {
             buyToken = token1;
             sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesUniswapReserve0, 2 * uniswapReserve1);
             buyAmount = Math.mulDiv(
-                selfReserve1,
-                selfReserve0TimesUniswapReserve1 - selfReserve1TimesUniswapReserve0,
-                selfReserve0TimesUniswapReserve1 + selfReserve1TimesUniswapReserve0,
+                sellAmount,
+                selfReserve1TimesUniswapReserve0 + uniswapReserve1 * sellAmount,
+                uniswapReserve0 * selfReserve0,
                 Math.Rounding.Up
             );
         } else {
@@ -103,9 +107,9 @@ contract ConstantProduct is IConditionalOrderGenerator {
             buyToken = token0;
             sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesUniswapReserve1, 2 * uniswapReserve0);
             buyAmount = Math.mulDiv(
-                selfReserve0,
-                selfReserve1TimesUniswapReserve0 - selfReserve0TimesUniswapReserve1,
-                selfReserve1TimesUniswapReserve0 + selfReserve0TimesUniswapReserve1,
+                sellAmount,
+                selfReserve0TimesUniswapReserve1 + uniswapReserve0 * sellAmount,
+                uniswapReserve1 * selfReserve1,
                 Math.Rounding.Up
             );
         }
