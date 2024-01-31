@@ -11,7 +11,7 @@ import {
     IERC165,
     GPv2Order
 } from "lib/composable-cow/src/BaseConditionalOrder.sol";
-import "forge-std/console.sol";
+
 /**
  * @title CoW AMM
  * @author CoW Protocol Developers
