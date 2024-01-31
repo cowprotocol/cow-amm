@@ -68,6 +68,34 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         require(amountIn == 1 ether, "amount in was not updated");
     }
 
+    function testVeryLargeBuyAmountDoesNotRevert() public {
+        // If the buy amount is very high, the AMM should always be willing to
+        // trade.
+        uint256 poolOut = 1100 ether;
+        uint256 poolIn = 10 ether;
+        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+
+        order.sellAmount = 1 ether;
+        // Large enough compared to the sell amount, but not so large that it
+        // causes overflow issues.
+        order.buyAmount = type(uint128).max;
+
+        verifyWrapper(orderOwner, data, order);
+    }
+
+    function testVeryLowSellAmountDoesNotRevert() public {
+        // If the buy amount is very low (that is, the sell amount is
+        // comparatively high), the AMM should always be willing to trade.
+        uint256 poolOut = 1100 ether;
+        uint256 poolIn = 10 ether;
+        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+
+        order.sellAmount = 1;
+        order.buyAmount = 1 ether;
+
+        verifyWrapper(orderOwner, data, order);
+    }
+
     function testOneTooMuchOut() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
@@ -106,6 +134,34 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         (order.sellToken, order.buyToken) = (order.buyToken, order.sellToken);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
+
+        verifyWrapper(orderOwner, data, order);
+    }
+
+    function testInvertedTokenVeryLargeBuyAmountDoesNotRevert() public {
+        // If the buy amount is very high, the AMM should always be willing to
+        // trade.
+        uint256 poolOut = 1100 ether;
+        uint256 poolIn = 10 ether;
+        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+
+        order.sellAmount = 1 ether;
+        // Large enough compared to the sell amount, but not so large that it
+        // causes overflow issues.
+        order.buyAmount = type(uint128).max;
+
+        verifyWrapper(orderOwner, data, order);
+    }
+
+    function testInvertedTokenVeryLowSellAmountDoesNotRevert() public {
+        // If the buy amount is very low (that is, the sell amount is
+        // comparatively high), the AMM should always be willing to trade.
+        uint256 poolOut = 1100 ether;
+        uint256 poolIn = 10 ether;
+        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+
+        order.sellAmount = 1;
+        order.buyAmount = 1 ether;
 
         verifyWrapper(orderOwner, data, order);
     }
