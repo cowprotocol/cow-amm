@@ -89,7 +89,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         // Note on the order price: The buy amount is not optimal for the AMM
         // given the sell amount. This is intended because we want to force
         // solvers to maximize the surplus for this order with the price that
-        // isn't the AMM best price. 
+        // isn't the AMM best price.
         uint256 selfReserve0TimesUniswapReserve1 = selfReserve0 * uniswapReserve1;
         uint256 selfReserve1TimesUniswapReserve0 = selfReserve1 * uniswapReserve0;
         if (selfReserve1TimesUniswapReserve0 < selfReserve0TimesUniswapReserve1) {
@@ -98,7 +98,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
             sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesUniswapReserve0, 2 * uniswapReserve1);
             buyAmount = Math.mulDiv(
                 sellAmount,
-                selfReserve1TimesUniswapReserve0 + uniswapReserve1 * sellAmount,
+                selfReserve1TimesUniswapReserve0 + (uniswapReserve1 * sellAmount),
                 uniswapReserve0 * selfReserve0,
                 Math.Rounding.Up
             );
@@ -108,7 +108,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
             sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesUniswapReserve1, 2 * uniswapReserve0);
             buyAmount = Math.mulDiv(
                 sellAmount,
-                selfReserve0TimesUniswapReserve1 + uniswapReserve0 * sellAmount,
+                selfReserve0TimesUniswapReserve1 + (uniswapReserve0 * sellAmount),
                 uniswapReserve1 * selfReserve1,
                 Math.Rounding.Up
             );
