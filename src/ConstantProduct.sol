@@ -20,7 +20,6 @@ import {
  * its orders.
  * Order creation and execution is based on the Composable CoW base contracts.
  */
-
 contract ConstantProduct is IConditionalOrderGenerator {
     uint32 public constant MAX_ORDER_DURATION = 5 * 60;
 
