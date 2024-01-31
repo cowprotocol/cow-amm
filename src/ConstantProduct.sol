@@ -11,7 +11,7 @@ import {
     IERC165,
     GPv2Order
 } from "lib/composable-cow/src/BaseConditionalOrder.sol";
-
+import "forge-std/console.sol";
 /**
  * @title CoW AMM
  * @author CoW Protocol Developers
@@ -20,6 +20,7 @@ import {
  * its orders.
  * Order creation and execution is based on the Composable CoW base contracts.
  */
+
 contract ConstantProduct is IConditionalOrderGenerator {
     uint32 public constant MAX_ORDER_DURATION = 5 * 60;
 
@@ -85,16 +86,28 @@ contract ConstantProduct is IConditionalOrderGenerator {
         // excludes rounding errors: in this case, the function could revert but
         // the amounts involved would be just a few atoms, so we accept that no
         // order will be available.
-        if (uniswapReserve0 * selfReserve1 < uniswapReserve1 * selfReserve0) {
+        uint256 selfReserve0TimesUniswapReserve1 = selfReserve0 * uniswapReserve1;
+        uint256 selfReserve1TimesUniswapReserve0 = selfReserve1 * uniswapReserve0;
+        if (selfReserve1TimesUniswapReserve0 < selfReserve0TimesUniswapReserve1) {
             sellToken = token0;
             buyToken = token1;
-            sellAmount = selfReserve0 / 2 - Math.ceilDiv(uniswapReserve0 * selfReserve1, 2 * uniswapReserve1);
-            buyAmount = Math.ceilDiv(uniswapReserve1 * selfReserve0, 2 * uniswapReserve0) - selfReserve1 / 2;
+            sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesUniswapReserve0, 2 * uniswapReserve1);
+            buyAmount = Math.mulDiv(
+                selfReserve1,
+                selfReserve0TimesUniswapReserve1 - selfReserve1TimesUniswapReserve0,
+                selfReserve0TimesUniswapReserve1 + selfReserve1TimesUniswapReserve0,
+                Math.Rounding.Up
+            );
         } else {
             sellToken = token1;
             buyToken = token0;
-            sellAmount = selfReserve1 / 2 - Math.ceilDiv(uniswapReserve1 * selfReserve0, 2 * uniswapReserve0);
-            buyAmount = Math.ceilDiv(uniswapReserve0 * selfReserve1, 2 * uniswapReserve1) - selfReserve0 / 2;
+            sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesUniswapReserve1, 2 * uniswapReserve0);
+            buyAmount = Math.mulDiv(
+                selfReserve0,
+                selfReserve1TimesUniswapReserve0 - selfReserve0TimesUniswapReserve1,
+                selfReserve1TimesUniswapReserve0 + selfReserve0TimesUniswapReserve1,
+                Math.Rounding.Up
+            );
         }
 
         order = GPv2Order.Data(

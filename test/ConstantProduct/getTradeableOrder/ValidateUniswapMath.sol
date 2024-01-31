@@ -5,24 +5,23 @@ import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 import {ConstantProduct, GPv2Order, IConditionalOrder} from "../../../src/ConstantProduct.sol";
 
 abstract contract ValidateUniswapMath is ConstantProductTestHarness {
-    function testReturnedTradesMovesPriceToMatchUniswapLimitPrice() public {
+    function testReturnedTradeValues() public {
         ConstantProduct.Data memory defaultData = setUpDefaultData();
         uint256 ownerReserve0 = 10 ether;
         uint256 ownerReserve1 = 10 ether;
         setUpDefaultWithReserves(orderOwner, ownerReserve0, ownerReserve1);
         setUpDefaultReferencePairReserves(1 ether, 10 ether);
-        // The limit price on the reference pool is 1 token0 in exchange for 10
-        // token1. The AMM is currently trading 1:1. The trade should be
-        // move the AMM to match the limit price on the reference pair.
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+
         assertEq(address(order.sellToken), address(defaultData.referencePair.token0()));
         assertEq(address(order.buyToken), address(defaultData.referencePair.token1()));
-        // Note: price on reference pool is 1:10.
-        uint256 limitPriceAfterExecution = (ownerReserve1 + order.buyAmount) / (ownerReserve0 - order.sellAmount);
-        assertEq(limitPriceAfterExecution, 10);
+
+        // Assert explicit amounts to see that the trade is reasonable.
+        assertEq(order.sellAmount, 4.5 ether);
+        assertEq(order.buyAmount, 8.181818181818181819 ether);
     }
 
-    function testReturnedTradesMovesPriceToMatchUniswapLimitPriceOtherSide() public {
+    function testReturnedTradeValuesOtherSide() public {
         ConstantProduct.Data memory defaultData = setUpDefaultData();
         uint256 ownerReserve0 = 12 ether;
         uint256 ownerReserve1 = 24 ether;
@@ -30,11 +29,14 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         setUpDefaultReferencePairReserves(126 ether, 42 ether);
         // The limit price on the reference pool is 3:1. That of the order is
         // 1:2.
+
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         assertEq(address(order.sellToken), address(defaultData.referencePair.token1()));
         assertEq(address(order.buyToken), address(defaultData.referencePair.token0()));
-        uint256 limitPriceAfterExecution = (ownerReserve0 + order.buyAmount) / (ownerReserve1 - order.sellAmount);
-        assertEq(limitPriceAfterExecution, 3);
+
+        // Assert explicit amounts to see that the trade is reasonable.
+        assertEq(order.sellAmount, 10 ether);
+        assertEq(order.buyAmount, 8.571428571428571429 ether);
     }
 
     function testGeneratedTradeIsOptimal() public {
