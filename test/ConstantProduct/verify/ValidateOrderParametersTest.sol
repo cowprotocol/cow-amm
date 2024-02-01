@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order, IUniswapV2Pair, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
+import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function setUpBasicOrder()
