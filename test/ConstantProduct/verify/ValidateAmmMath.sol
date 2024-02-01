@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
+import {Utils} from "../../libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order, IUniswapV2Pair, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
+import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../../src/UniswapV2PriceOracle.sol";
 
 abstract contract ValidateAmmMath is ConstantProductTestHarness {
-    IUniswapV2Pair pair = IUniswapV2Pair(addressFromString("pair for math verification"));
+    IUniswapV2Pair pair = IUniswapV2Pair(Utils.addressFromString("pair for math verification"));
 
     function setUpAmmWithReserves(uint256 amountToken0, uint256 amountToken1) internal {
-        IERC20 token0 = IERC20(addressFromString("token0 for math verification"));
-        IERC20 token1 = IERC20(addressFromString("token1 for math verification"));
+        IERC20 token0 = IERC20(Utils.addressFromString("token0 for math verification"));
+        IERC20 token1 = IERC20(Utils.addressFromString("token1 for math verification"));
         vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token0.selector), abi.encode(token0));
         vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token1.selector), abi.encode(token1));
         // Reverts for everything else
@@ -35,7 +37,13 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = 0;
         order.buyAmount = 0;
 
-        data = ConstantProduct.Data(pair, order.appData);
+        data = ConstantProduct.Data(
+            order.sellToken,
+            order.buyToken,
+            uniswapV2PriceOracle,
+            abi.encode(abi.encode(UniswapV2PriceOracle.Data(pair))),
+            order.appData
+        );
     }
 
     // Note: if X is the reserve of the token that is taken from the AMM, and Y

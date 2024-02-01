@@ -3,7 +3,6 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
 import {Math} from "lib/composable-cow/lib/@openzeppelin/contracts/utils/math/Math.sol";
-import {IUniswapV2Pair} from "lib/uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {
     IConditionalOrderGenerator,
@@ -11,6 +10,8 @@ import {
     IERC165,
     GPv2Order
 } from "lib/composable-cow/src/BaseConditionalOrder.sol";
+
+import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 
 /**
  * @title CoW AMM
@@ -25,10 +26,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
 
     /// All data used by an order to validate the AMM conditions.
     struct Data {
-        /// A Uniswap v2 pair. This is used to determine the tokens traded by
-        /// the AMM, and also use to establish the reference price used when
-        /// computing a valid tradable order.
-        IUniswapV2Pair referencePair;
+        /// The first of the tokens traded by this AMM.
+        IERC20 token0;
+        /// The second of the tokens traded by this AMM.
+        IERC20 token1;
+        /// An onchain source for the price of the two tokens. The price should
+        /// be expressed in terms of amount of token0 per amount of token1.
+        IPriceOracle priceOracle;
+        /// The data that needs to be provided to the price oracle to retrieve
+        /// the relative price of the two tokens.
+        bytes priceOracleData;
         /// The app data that must be used in the order.
         /// See `GPv2Order.Data` for more information on the app data.
         bytes32 appData;
@@ -67,9 +74,10 @@ contract ConstantProduct is IConditionalOrderGenerator {
         returns (GPv2Order.Data memory order)
     {
         ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
-        IERC20 token0 = IERC20(data.referencePair.token0());
-        IERC20 token1 = IERC20(data.referencePair.token1());
-        (uint256 uniswapReserve0, uint256 uniswapReserve1,) = data.referencePair.getReserves();
+        IERC20 token0 = data.token0;
+        IERC20 token1 = data.token1;
+        (uint256 priceNumerator, uint256 priceDenominator) =
+            data.priceOracle.getPrice(address(token0), address(token1), data.priceOracleData);
         (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
 
         IERC20 sellToken;
@@ -89,26 +97,26 @@ contract ConstantProduct is IConditionalOrderGenerator {
         // given the sell amount. This is intended because we want to force
         // solvers to maximize the surplus for this order with the price that
         // isn't the AMM best price.
-        uint256 selfReserve0TimesUniswapReserve1 = selfReserve0 * uniswapReserve1;
-        uint256 selfReserve1TimesUniswapReserve0 = selfReserve1 * uniswapReserve0;
-        if (selfReserve1TimesUniswapReserve0 < selfReserve0TimesUniswapReserve1) {
+        uint256 selfReserve0TimesPriceDenominator = selfReserve0 * priceDenominator;
+        uint256 selfReserve1TimesPriceNumerator = selfReserve1 * priceNumerator;
+        if (selfReserve1TimesPriceNumerator < selfReserve0TimesPriceDenominator) {
             sellToken = token0;
             buyToken = token1;
-            sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesUniswapReserve0, 2 * uniswapReserve1);
+            sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * priceDenominator);
             buyAmount = Math.mulDiv(
                 sellAmount,
-                selfReserve1TimesUniswapReserve0 + (uniswapReserve1 * sellAmount),
-                uniswapReserve0 * selfReserve0,
+                selfReserve1TimesPriceNumerator + (priceDenominator * sellAmount),
+                priceNumerator * selfReserve0,
                 Math.Rounding.Up
             );
         } else {
             sellToken = token1;
             buyToken = token0;
-            sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesUniswapReserve1, 2 * uniswapReserve0);
+            sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * priceNumerator);
             buyAmount = Math.mulDiv(
                 sellAmount,
-                selfReserve0TimesUniswapReserve1 + (uniswapReserve0 * sellAmount),
-                uniswapReserve1 * selfReserve1,
+                selfReserve0TimesPriceDenominator + (priceNumerator * sellAmount),
+                priceDenominator * selfReserve1,
                 Math.Rounding.Up
             );
         }
@@ -160,8 +168,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
     function _verify(address owner, bytes calldata staticInput, GPv2Order.Data calldata order) internal view {
         ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
 
-        IERC20 sellToken = IERC20(data.referencePair.token0());
-        IERC20 buyToken = IERC20(data.referencePair.token1());
+        IERC20 sellToken = data.token0;
+        IERC20 buyToken = data.token1;
         uint256 sellReserve = sellToken.balanceOf(owner);
         uint256 buyReserve = buyToken.balanceOf(owner);
         if (order.sellToken != sellToken) {

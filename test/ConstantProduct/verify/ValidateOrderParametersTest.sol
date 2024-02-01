@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
+import {Utils} from "../../libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
 
@@ -30,9 +31,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function testRevertsIfInvalidTokenCombination() public {
         (ConstantProduct.Data memory defaultData, GPv2Order.Data memory defaultOrder) = setUpBasicOrder();
 
-        IERC20 badToken = IERC20(addressFromString("bad token"));
+        IERC20 badToken = IERC20(Utils.addressFromString("bad token"));
         vm.mockCall(address(badToken), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(1337));
-        IERC20 badTokenExtra = IERC20(addressFromString("extra bad token"));
+        IERC20 badTokenExtra = IERC20(Utils.addressFromString("extra bad token"));
         vm.mockCall(
             address(badTokenExtra), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(1337)
         );
@@ -70,7 +71,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function testRevertsIfDifferentReceiver() public {
         (ConstantProduct.Data memory defaultData, GPv2Order.Data memory defaultOrder) = setUpBasicOrder();
 
-        defaultOrder.receiver = addressFromString("bad receiver");
+        defaultOrder.receiver = Utils.addressFromString("bad receiver");
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
         );

@@ -3,22 +3,26 @@ pragma solidity ^0.8.13;
 
 import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
-import {ConstantProduct, GPv2Order, IUniswapV2Pair, IERC20} from "../../src/ConstantProduct.sol";
+import {Utils} from "../libraries/Utils.sol";
+import {ConstantProduct, GPv2Order, IERC20} from "../../src/ConstantProduct.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../src/UniswapV2PriceOracle.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
-    ConstantProduct constantProduct;
-    address internal orderOwner = addressFromString("order owner");
-
-    address private USDC = addressFromString("USDC");
-    address private WETH = addressFromString("WETH");
-    address private DEFAULT_PAIR = addressFromString("default USDC/WETH pair");
-    address private DEFAULT_RECEIVER = addressFromString("default receiver");
+    address internal orderOwner = Utils.addressFromString("order owner");
+    address private USDC = Utils.addressFromString("USDC");
+    address private WETH = Utils.addressFromString("WETH");
+    address private DEFAULT_PAIR = Utils.addressFromString("default USDC/WETH pair");
+    address private DEFAULT_RECEIVER = Utils.addressFromString("default receiver");
     bytes32 private DEFAULT_APPDATA = keccak256(bytes("unit test"));
+
+    ConstantProduct constantProduct;
+    UniswapV2PriceOracle uniswapV2PriceOracle;
 
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
 
         constantProduct = new ConstantProduct();
+        uniswapV2PriceOracle = new UniswapV2PriceOracle();
     }
 
     function setUpDefaultPair() internal {
@@ -31,7 +35,13 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     function getDefaultData() internal view returns (ConstantProduct.Data memory) {
-        return ConstantProduct.Data(IUniswapV2Pair(DEFAULT_PAIR), DEFAULT_APPDATA);
+        return ConstantProduct.Data(
+            IERC20(USDC),
+            IERC20(WETH),
+            uniswapV2PriceOracle,
+            abi.encode(UniswapV2PriceOracle.Data(IUniswapV2Pair(DEFAULT_PAIR))),
+            DEFAULT_APPDATA
+        );
     }
 
     function setUpDefaultData() internal returns (ConstantProduct.Data memory) {
@@ -45,13 +55,16 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
 
     function setUpDefaultWithReserves(address owner, uint256 amount0, uint256 amount1) internal {
         ConstantProduct.Data memory defaultData = setUpDefaultData();
+        UniswapV2PriceOracle.Data memory oracleData =
+            abi.decode(defaultData.priceOracleData, (UniswapV2PriceOracle.Data));
+
         vm.mockCall(
-            defaultData.referencePair.token0(),
+            oracleData.referencePair.token0(),
             abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
             abi.encode(amount0)
         );
         vm.mockCall(
-            defaultData.referencePair.token1(),
+            oracleData.referencePair.token1(),
             abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
             abi.encode(amount1)
         );
@@ -76,7 +89,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     {
         order = constantProduct.getTradeableOrder(
             owner,
-            addressFromString("sender"),
+            Utils.addressFromString("sender"),
             keccak256(bytes("context")),
             abi.encode(staticInput),
             bytes("offchain input")
@@ -92,7 +105,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     {
         constantProduct.verify(
             owner,
-            addressFromString("sender"),
+            Utils.addressFromString("sender"),
             keccak256(bytes("order hash")),
             keccak256(bytes("domain separator")),
             keccak256(bytes("context")),
@@ -119,9 +132,5 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             GPv2Order.BALANCE_ERC20, // bytes32 sellTokenBalance;
             GPv2Order.BALANCE_ERC20 // bytes32 buyTokenBalance;
         );
-    }
-
-    function addressFromString(string memory s) internal pure returns (address) {
-        return address(uint160(uint256(keccak256(bytes(s)))));
     }
 }
