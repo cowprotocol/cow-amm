@@ -42,6 +42,13 @@ contract UniswapV2PriceOracleTest is Test {
         assertEq(priceDenominator, reserve1);
     }
 
+    function testInvertsPriceIfTokensAreInverted() public {
+        (uint256 priceNumerator, uint256 priceDenominator) =
+            oracle.getPrice(WETH, USDC, abi.encode(getDefaultOracleData()));
+        assertEq(priceNumerator, reserve1);
+        assertEq(priceDenominator, reserve0);
+    }
+
     function testRevertsIfPairUsesIncorrectToken0() public {
         vm.expectRevert("oracle: invalid token0");
         oracle.getPrice(Utils.addressFromString("bad token 0"), WETH, abi.encode(getDefaultOracleData()));
@@ -52,8 +59,8 @@ contract UniswapV2PriceOracleTest is Test {
         oracle.getPrice(USDC, Utils.addressFromString("bad token 1"), abi.encode(getDefaultOracleData()));
     }
 
-    function testRevertsIfPairUsesInvertedTokens() public {
+    function testRevertsIfPairUsesIncorrectTokenWhenInverted() public {
         vm.expectRevert("oracle: invalid token0");
-        oracle.getPrice(WETH, USDC, abi.encode(getDefaultOracleData()));
+        oracle.getPrice(Utils.addressFromString("bad token 1"), USDC, abi.encode(getDefaultOracleData()));
     }
 }

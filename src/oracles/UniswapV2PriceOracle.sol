@@ -34,8 +34,14 @@ contract UniswapV2PriceOracle is IPriceOracle {
         returns (uint256 priceNumerator, uint256 priceDenominator)
     {
         Data memory oracleData = abi.decode(data, (Data));
-        require(token0 == oracleData.referencePair.token0(), "oracle: invalid token0");
-        require(token1 == oracleData.referencePair.token1(), "oracle: invalid token1");
         (priceNumerator, priceDenominator,) = oracleData.referencePair.getReserves();
+        address uniswapToken0 = oracleData.referencePair.token0();
+        address uniswapToken1 = oracleData.referencePair.token1();
+        if (token0 == uniswapToken1) {
+            (priceNumerator, priceDenominator) = (priceDenominator, priceNumerator);
+            (uniswapToken0, uniswapToken1) = (uniswapToken1, uniswapToken0);
+        }
+        require(token0 == uniswapToken0, "oracle: invalid token0");
+        require(token1 == uniswapToken1, "oracle: invalid token1");
     }
 }
