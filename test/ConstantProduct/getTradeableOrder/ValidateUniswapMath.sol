@@ -13,8 +13,8 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         setUpDefaultReferencePairReserves(1 ether, 10 ether);
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
 
-        assertEq(address(order.sellToken), address(defaultData.referencePair.token0()));
-        assertEq(address(order.buyToken), address(defaultData.referencePair.token1()));
+        assertEq(address(order.sellToken), address(defaultData.token0));
+        assertEq(address(order.buyToken), address(defaultData.token1));
 
         // Assert explicit amounts to see that the trade is reasonable.
         assertEq(order.sellAmount, 4.5 ether);
@@ -31,8 +31,8 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         // 1:2.
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
-        assertEq(address(order.sellToken), address(defaultData.referencePair.token1()));
-        assertEq(address(order.buyToken), address(defaultData.referencePair.token0()));
+        assertEq(address(order.sellToken), address(defaultData.token1));
+        assertEq(address(order.buyToken), address(defaultData.token0));
 
         // Assert explicit amounts to see that the trade is reasonable.
         assertEq(order.sellAmount, 10 ether);
@@ -50,7 +50,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(
-            address(order.sellToken) == address(defaultData.referencePair.token0()),
+            address(order.sellToken) == address(defaultData.token0),
             "this test was intended for the case sellToken == token0"
         );
         verifyWrapper(orderOwner, defaultData, order);
@@ -67,7 +67,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(
-            address(order.sellToken) == address(defaultData.referencePair.token1()),
+            address(order.sellToken) == address(defaultData.token1),
             "this test was intended for the case sellToken == token1"
         );
         verifyWrapper(orderOwner, defaultData, order);
