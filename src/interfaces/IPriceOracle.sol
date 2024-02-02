@@ -27,5 +27,5 @@ interface IPriceOracle {
     function getPrice(address token0, address token1, bytes calldata data)
         external
         view
-        returns (uint128 priceNumerator, uint128 priceDenominator);
+        returns (uint256 priceNumerator, uint256 priceDenominator);
 }

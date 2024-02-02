@@ -31,7 +31,7 @@ contract UniswapV2PriceOracle is IPriceOracle {
     function getPrice(address token0, address token1, bytes calldata data)
         external
         view
-        returns (uint128 priceNumerator, uint128 priceDenominator)
+        returns (uint256 priceNumerator, uint256 priceDenominator)
     {
         Data memory oracleData = abi.decode(data, (Data));
         require(token0 == oracleData.referencePair.token0(), "oracle: invalid token0");
