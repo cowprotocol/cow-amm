@@ -10,8 +10,10 @@ pragma solidity >=0.8.0 <0.9.0;
  */
 interface IPriceOracle {
     /**
-     * @dev Calling this function returns the price of token0 in terms of token1
+     * @dev Calling this function returns the price of token1 in terms of token0
      * as a fraction (numerator, denominator).
+     * For example, in a pool where token0 is DAI, token1 is ETH, and ETH is
+     * worth 2000 DAI, valid output tuples would be (2000, 1), (20000, 10), ...
      * @param token0 The first token, whose price is determined based on the
      * second token.
      * @param token1 The second token; the price of the first token is
@@ -22,9 +24,9 @@ interface IPriceOracle {
      * We recommend this data be implemented as the abi-encoding of a dedicated
      * data struct for ease of type-checking and decoding the input. 
      * @return priceNumerator The numerator of the price, expressed in amount of
-     * token0 per amount of token1.
+     * token1 per amount of token0.
      * @return priceDenominator The denominator of the price, expressed in
-     * amount of token0 per amount of token1.
+     * amount of token1 per amount of token0.
      */
     function getPrice(address token0, address token1, bytes calldata data)
         external
