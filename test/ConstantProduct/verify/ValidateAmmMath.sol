@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Utils} from "../../libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "../../../src/ConstantProduct.sol";
-import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../../src/UniswapV2PriceOracle.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../../src/oracles/UniswapV2PriceOracle.sol";
 
 abstract contract ValidateAmmMath is ConstantProductTestHarness {
     IUniswapV2Pair pair = IUniswapV2Pair(Utils.addressFromString("pair for math verification"));

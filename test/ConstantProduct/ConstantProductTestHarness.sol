@@ -5,7 +5,7 @@ import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.
 
 import {Utils} from "../libraries/Utils.sol";
 import {ConstantProduct, GPv2Order, IERC20} from "../../src/ConstantProduct.sol";
-import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../src/UniswapV2PriceOracle.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../src/oracles/UniswapV2PriceOracle.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     address internal orderOwner = Utils.addressFromString("order owner");
