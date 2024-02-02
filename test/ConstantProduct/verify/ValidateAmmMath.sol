@@ -40,6 +40,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         data = ConstantProduct.Data(
             order.sellToken,
             order.buyToken,
+            0,
             uniswapV2PriceOracle,
             abi.encode(abi.encode(UniswapV2PriceOracle.Data(pair))),
             order.appData
