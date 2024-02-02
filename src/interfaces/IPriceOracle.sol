@@ -14,6 +14,8 @@ interface IPriceOracle {
      * as a fraction (numerator, denominator).
      * For example, in a pool where token0 is DAI, token1 is ETH, and ETH is
      * worth 2000 DAI, valid output tuples would be (2000, 1), (20000, 10), ...
+     * @dev To keep the risk of multiplication overflow to a minimum, we
+     * recommend to use return values that fit the size of a uint128.
      * @param token0 The first token, whose price is determined based on the
      * second token.
      * @param token1 The second token; the price of the first token is
