@@ -33,6 +33,11 @@ $ forge test
 $ forge fmt
 ```
 
+### Dev set up
+
+You can install git hooks to help you catch simple mistakes before running some git actions like committing.
+See the [dedicated instructions](./dev/hooks/install.md) for how to install the hooks.
+
 ### Gas Snapshots
 
 ```shell

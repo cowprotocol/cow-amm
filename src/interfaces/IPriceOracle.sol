@@ -24,7 +24,7 @@ interface IPriceOracle {
      * oracle implementation. For example, it could be a specific pool id for
      * balancer, or the address of a specific price feed for Chainlink.
      * We recommend this data be implemented as the abi-encoding of a dedicated
-     * data struct for ease of type-checking and decoding the input. 
+     * data struct for ease of type-checking and decoding the input.
      * @return priceNumerator The numerator of the price, expressed in amount of
      * token1 per amount of token0.
      * @return priceDenominator The denominator of the price, expressed in
