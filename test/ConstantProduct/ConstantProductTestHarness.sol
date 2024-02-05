@@ -38,6 +38,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         return ConstantProduct.Data(
             IERC20(USDC),
             IERC20(WETH),
+            0,
             uniswapV2PriceOracle,
             abi.encode(UniswapV2PriceOracle.Data(IUniswapV2Pair(DEFAULT_PAIR))),
             DEFAULT_APPDATA
@@ -80,9 +81,8 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     // This function calls `getTradeableOrder` while filling all unused
-    // parameters with arbitrary data. Since every tradeable order is supposed
-    // to be executable, it also immediately checks that the order is valid.
-    function getTradeableOrderWrapper(address owner, ConstantProduct.Data memory staticInput)
+    // parameters with arbitrary data.
+    function getTradeableOrderUncheckedWrapper(address owner, ConstantProduct.Data memory staticInput)
         internal
         view
         returns (GPv2Order.Data memory order)
@@ -94,6 +94,17 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             abi.encode(staticInput),
             bytes("offchain input")
         );
+    }
+
+    // This function calls `getTradeableOrder` while filling all unused
+    // parameters with arbitrary data. It also immediately checks that the order
+    // is valid.
+    function getTradeableOrderWrapper(address owner, ConstantProduct.Data memory staticInput)
+        internal
+        view
+        returns (GPv2Order.Data memory order)
+    {
+        order = getTradeableOrderUncheckedWrapper(owner, staticInput);
         verifyWrapper(owner, staticInput, order);
     }
 
