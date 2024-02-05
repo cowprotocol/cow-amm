@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order} from "../../../src/ConstantProduct.sol";
+import {ConstantProduct, GPv2Order, IConditionalOrder} from "../../../src/ConstantProduct.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function testValidOrderParameters() public {
@@ -37,5 +37,33 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
 
         order = getTradeableOrderWrapper(orderOwner, defaultData);
         assertEq(order.validTo, 2 * constantProduct.MAX_ORDER_DURATION());
+    }
+
+    function testRevertsIfAmountTooLowOnSellToken() public {
+        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        setUpDefaultReserves(orderOwner);
+        setUpDefaultReferencePairReserves(42, 1337);
+
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        require(order.sellToken == defaultData.token0, "test was design for token0 to be the sell token");
+        defaultData.minTradedToken0 = order.sellAmount;
+        order = getTradeableOrderWrapper(orderOwner, defaultData);
+        defaultData.minTradedToken0 = order.sellAmount + 1;
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "traded amount too small"));
+        getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
+    }
+
+    function testRevertsIfAmountTooLowOnBuyToken() public {
+        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        setUpDefaultReserves(orderOwner);
+        setUpDefaultReferencePairReserves(1337, 42);
+
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        require(order.buyToken == defaultData.token0, "test was design for token0 to be the buy token");
+        defaultData.minTradedToken0 = order.buyAmount;
+        order = getTradeableOrderWrapper(orderOwner, defaultData);
+        defaultData.minTradedToken0 = order.buyAmount + 1;
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "traded amount too small"));
+        getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
     }
 }
