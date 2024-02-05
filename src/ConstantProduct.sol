@@ -30,6 +30,9 @@ contract ConstantProduct is IConditionalOrderGenerator {
         IERC20 token0;
         /// The second of the tokens traded by this AMM.
         IERC20 token1;
+        /// The minimum amount of token0 that needs to be traded for an order
+        /// to be created on getTradeableOrder.
+        uint256 minTradedToken0;
         /// An onchain source for the price of the two tokens. The price should
         /// be expressed in terms of amount of token0 per amount of token1.
         IPriceOracle priceOracle;
@@ -99,6 +102,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         // isn't the AMM best price.
         uint256 selfReserve0TimesPriceDenominator = selfReserve0 * priceDenominator;
         uint256 selfReserve1TimesPriceNumerator = selfReserve1 * priceNumerator;
+        uint256 tradedAmountToken0;
         if (selfReserve1TimesPriceNumerator < selfReserve0TimesPriceDenominator) {
             sellToken = token0;
             buyToken = token1;
@@ -109,6 +113,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
                 priceNumerator * selfReserve0,
                 Math.Rounding.Up
             );
+            tradedAmountToken0 = sellAmount;
         } else {
             sellToken = token1;
             buyToken = token0;
@@ -119,6 +124,11 @@ contract ConstantProduct is IConditionalOrderGenerator {
                 priceDenominator * selfReserve1,
                 Math.Rounding.Up
             );
+            tradedAmountToken0 = buyAmount;
+        }
+
+        if (tradedAmountToken0 < data.minTradedToken0) {
+            revert IConditionalOrder.OrderNotValid("traded amount too small");
         }
 
         order = GPv2Order.Data(
