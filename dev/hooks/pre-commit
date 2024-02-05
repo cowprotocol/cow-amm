@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+
+if which forge && ! forge fmt --check; then
+  echo "Bad Solidity formatting detected; did you run \`forge fmt\`?" 2>&1
+  exit 1
+fi
