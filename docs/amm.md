@@ -27,7 +27,7 @@ Batch trading guarantees that despite the minimum viable order follows the const
 ## Requirements
 
 - The CoW AMM funds will be stored in a safe. Every pair of tokens requires its dedicated safe. The owners of the safe have full access to the funds.
-- The CoW AMM safe needs to use the safe's `ExtensibleFallbackHandler` fallback handler (needed to validate a Composable CoW order).
+- The CoW AMM safe needs to use the safe's `ExtensibleFallbackHandler` fallback handler (needed to validate a `ComposableCoW` order).
 - The CoW AMM safe needs to create a new [`ComposableCoW`](https://github.com/cowprotocol/composable-cow) order that uses the standard deployment of `ConstantProduct` as its handler.
 
 ## Order setup
