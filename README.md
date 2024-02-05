@@ -12,7 +12,7 @@ You can find detailed documentation on the building blocks of this repo in the f
 
 Details on the theory behind CoW AMM can be found on the paper [Arbitrageurs' profits, LVR, and sandwich attacks: batch trading as an AMM design response](https://arxiv.org/pdf/2307.02074.pdf).
 
-## Development4
+## Development
 
 ### Build
 
