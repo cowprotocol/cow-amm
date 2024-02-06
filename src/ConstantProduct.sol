@@ -12,6 +12,7 @@ import {
 } from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
+import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol";
 
 /**
  * @title CoW AMM
@@ -128,7 +129,9 @@ contract ConstantProduct is IConditionalOrderGenerator {
         }
 
         if (tradedAmountToken0 < data.minTradedToken0) {
-            revert IConditionalOrder.OrderNotValid("traded amount too small");
+            revert IWatchtowerCustomErrors.PollTryAtEpoch(
+                Utils.validToBucket(MAX_ORDER_DURATION) + 1, "traded amount too small"
+            );
         }
 
         order = GPv2Order.Data(
