@@ -3,13 +3,13 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {DeployConstantProduct} from "script/DeployAllContracts.s.sol";
+import {DeployAllContracts} from "script/DeployAllContracts.s.sol";
 
 contract DeployAllContractsTest is Test {
-    DeployConstantProduct script;
+    DeployAllContracts script;
 
     function setUp() public {
-        script = new DeployConstantProduct();
+        script = new DeployAllContracts();
     }
 
     function testDoesNotRevert() public {
