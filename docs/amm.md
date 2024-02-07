@@ -64,7 +64,7 @@ minTradedToken0=31337
 priceOracle=0x1337133713371337133713371337133713371337
 priceOracleData=0xca11d47a
 appData=0x3232323232323232323232323232323232323232323232323232323232323232
-cast abi-encode 'f(address,address,uint256,address,bytes,bytes32)' "$token0" "$token1" "$minTradedToken0" "$priceOracle" "$priceOracleData" "$appData"
+cast abi-encode 'f((address,address,uint256,address,bytes,bytes32))' "($token0, $token1, $minTradedToken0, $priceOracle, $priceOracleData, $appData)"
 ```
 
 ### Supported price oracles
@@ -89,7 +89,7 @@ If the tokens are not the same as those traded on the chosen reference pair, no 
 If Foundry is available in your system, you can generate the bytes calldata with the following command:
 ```sh
 referencePair=0x1111111111111111111111111111111111111111
-cast abi-encode 'f(address)' "$referencePair"
+cast abi-encode 'f((address))' "($referencePair)"
 ```
 
 ## Risk profile
