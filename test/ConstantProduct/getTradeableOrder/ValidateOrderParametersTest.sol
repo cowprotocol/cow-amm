@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order, IConditionalOrder} from "../../../src/ConstantProduct.sol";
+import {ConstantProduct, GPv2Order, IConditionalOrder} from "src/ConstantProduct.sol";
+import {IWatchtowerCustomErrors} from "src/interfaces/IWatchtowerCustomErrors.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function testValidOrderParameters() public {
@@ -44,12 +45,26 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(42, 1337);
 
+        uint256 smallOffset = 42;
+        require(smallOffset < constantProduct.MAX_ORDER_DURATION());
+        uint256 nextTimestamp = 1337 * constantProduct.MAX_ORDER_DURATION() + smallOffset;
+        uint256 nextBucket = 1338 * constantProduct.MAX_ORDER_DURATION();
+        require(
+            nextTimestamp % constantProduct.MAX_ORDER_DURATION() != 0,
+            "test was designed so that the timestamp doesn't fall exactly at the start of a bucket, please change the offset"
+        );
+        vm.warp(nextTimestamp);
+
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(order.sellToken == defaultData.token0, "test was design for token0 to be the sell token");
         defaultData.minTradedToken0 = order.sellAmount;
         order = getTradeableOrderWrapper(orderOwner, defaultData);
         defaultData.minTradedToken0 = order.sellAmount + 1;
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "traded amount too small"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IWatchtowerCustomErrors.PollTryAtEpoch.selector, nextBucket + 1, "traded amount too small"
+            )
+        );
         getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
     }
 
@@ -58,12 +73,26 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(1337, 42);
 
+        uint256 smallOffset = 42;
+        require(smallOffset < constantProduct.MAX_ORDER_DURATION());
+        uint256 nextTimestamp = 1337 * constantProduct.MAX_ORDER_DURATION() + smallOffset;
+        uint256 nextBucket = 1338 * constantProduct.MAX_ORDER_DURATION();
+        require(
+            nextTimestamp % constantProduct.MAX_ORDER_DURATION() != 0,
+            "test was designed so that the timestamp doesn't fall exactly at the start of a bucket, please change the offset"
+        );
+        vm.warp(nextTimestamp);
+
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(order.buyToken == defaultData.token0, "test was design for token0 to be the buy token");
         defaultData.minTradedToken0 = order.buyAmount;
         order = getTradeableOrderWrapper(orderOwner, defaultData);
         defaultData.minTradedToken0 = order.buyAmount + 1;
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "traded amount too small"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IWatchtowerCustomErrors.PollTryAtEpoch.selector, nextBucket + 1, "traded amount too small"
+            )
+        );
         getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
     }
 }
