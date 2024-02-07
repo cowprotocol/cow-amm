@@ -3,13 +3,13 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {DeployUniswapV2PriceOracle} from "script/single-deployment/UniswapV2PriceOracle.s.sol";
+import {DeployConstantProduct} from "script/single-deployment/ConstantProduct.s.sol";
 
 contract DeployConstantProductTest is Test {
-    DeployUniswapV2PriceOracle script;
+    DeployConstantProduct script;
 
     function setUp() public {
-        script = new DeployUniswapV2PriceOracle();
+        script = new DeployConstantProduct();
     }
 
     function testDoesNotRevert() public {
