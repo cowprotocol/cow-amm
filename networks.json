@@ -1,0 +1,22 @@
+{
+  "ConstantProduct": {
+    "100": {
+      "address": "0x84D0c971bCa1e2d95D259DdFbBcE1BC237065651",
+      "transactionHash": "0x41254cbc4eb1d76c0a100fb35209b21207a7613235adc2e2607deaf177858d26"
+    },
+    "11155111": {
+      "address": "0x8C1EE557D9ed1c7DBB30024edf162b59B78872DB",
+      "transactionHash": "0x72e60f4807f88dd692db986545b94dd2bff7b79d3372d09afa81b4db1b23af43"
+    }
+  },
+  "UniswapV2PriceOracle": {
+    "100": {
+      "address": "0x6Cf0BcC4803834933421266Ee13CBbd768731204",
+      "transactionHash": "0xc33d0ab514f604f2e881c620dda647897f6caf3ffafdea888a0d48cc10434bc7"
+    },
+    "11155111": {
+      "address": "0xBC3C17A0ceD8812D480f20Dd1402A238647748e7",
+      "transactionHash": "0xa4adcaed5ea8b1de38a90713076a58575201424ebf1d07b66651837ee55de812"
+    }
+  }
+}
