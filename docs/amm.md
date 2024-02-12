@@ -2,6 +2,10 @@
 
 CoW AMM is an automated market maker running on top of CoW Protocol.
 
+> [!CAUTION]
+> CoW AMM is a proof of concept of an AMM implemented on top of CoW Protocol.
+> The code is not yet production ready and should not be used to handle large amounts of funds.
+
 ## How it works
 
 The AMM contract itself is a dedicated Safe multisig.
