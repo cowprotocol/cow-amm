@@ -3,8 +3,8 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "forge-std/Test.sol";
 
-import {Utils} from "./libraries/Utils.sol";
-import {UniswapV2PriceOracle, IUniswapV2Pair} from "../src/oracles/UniswapV2PriceOracle.sol";
+import {Utils} from "test/libraries/Utils.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 
 contract UniswapV2PriceOracleTest is Test {
     address private USDC = Utils.addressFromString("USDC");
