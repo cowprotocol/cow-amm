@@ -257,6 +257,6 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * bucket.
      */
     function revertPollAtNextBucket(string memory message) internal view {
-        revert IWatchtowerCustomErrors.PollTryAtEpoch(Utils.validToBucket(MAX_ORDER_DURATION) + 1, message);
+        revert IWatchtowerCustomErrors.PollTryAtBlock(block.number + 1, message);
     }
 }

@@ -45,7 +45,8 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(42, 1337);
 
-        uint256 nextBucket = moveTimeToMidFutureBucket();
+        uint256 currentBlock = 1337;
+        vm.roll(currentBlock);
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(order.sellToken == defaultData.token0, "test was design for token0 to be the sell token");
@@ -54,7 +55,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         defaultData.minTradedToken0 = order.sellAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
-                IWatchtowerCustomErrors.PollTryAtEpoch.selector, nextBucket + 1, "traded amount too small"
+                IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "traded amount too small"
             )
         );
         getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
@@ -65,7 +66,8 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(1337, 42);
 
-        uint256 nextBucket = moveTimeToMidFutureBucket();
+        uint256 currentBlock = 1337;
+        vm.roll(currentBlock);
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
         require(order.buyToken == defaultData.token0, "test was design for token0 to be the buy token");
@@ -74,7 +76,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         defaultData.minTradedToken0 = order.buyAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
-                IWatchtowerCustomErrors.PollTryAtEpoch.selector, nextBucket + 1, "traded amount too small"
+                IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "traded amount too small"
             )
         );
         getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
@@ -87,25 +89,14 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultWithReserves(orderOwner, selfReserve0, selfReserve1);
         setUpDefaultReferencePairReserves(uniswapReserve0, uniswapReserve1);
 
-        uint256 nextBucket = moveTimeToMidFutureBucket();
+        uint256 currentBlock = 1337;
+        vm.roll(currentBlock);
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IWatchtowerCustomErrors.PollTryAtEpoch.selector, nextBucket + 1, "subtraction underflow"
+                IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "subtraction underflow"
             )
         );
         getTradeableOrderUncheckedWrapper(orderOwner, defaultData);
-    }
-
-    function moveTimeToMidFutureBucket() internal returns (uint256 nextBucketStart) {
-        uint256 smallOffset = 42;
-        require(smallOffset < constantProduct.MAX_ORDER_DURATION());
-        uint256 nextTimestamp = 1337 * constantProduct.MAX_ORDER_DURATION() + smallOffset;
-        nextBucketStart = 1338 * constantProduct.MAX_ORDER_DURATION();
-        require(
-            nextTimestamp % constantProduct.MAX_ORDER_DURATION() != 0,
-            "test was designed so that the timestamp doesn't fall exactly at the start of a bucket, please change the offset"
-        );
-        vm.warp(nextTimestamp);
     }
 }
