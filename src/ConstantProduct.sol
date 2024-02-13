@@ -107,7 +107,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         if (selfReserve1TimesPriceNumerator < selfReserve0TimesPriceDenominator) {
             sellToken = token0;
             buyToken = token1;
-            sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * priceDenominator);
+            sellAmount = sub(selfReserve0 / 2, Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * priceDenominator));
             buyAmount = Math.mulDiv(
                 sellAmount,
                 selfReserve1TimesPriceNumerator + (priceDenominator * sellAmount),
@@ -118,7 +118,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         } else {
             sellToken = token1;
             buyToken = token0;
-            sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * priceNumerator);
+            sellAmount = sub(selfReserve1 / 2, Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * priceNumerator));
             buyAmount = Math.mulDiv(
                 sellAmount,
                 selfReserve0TimesPriceDenominator + (priceNumerator * sellAmount),
@@ -129,9 +129,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         }
 
         if (tradedAmountToken0 < data.minTradedToken0) {
-            revert IWatchtowerCustomErrors.PollTryAtEpoch(
-                Utils.validToBucket(MAX_ORDER_DURATION) + 1, "traded amount too small"
-            );
+            revertPollAtNextBucket("traded amount too small");
         }
 
         order = GPv2Order.Data(
@@ -232,5 +230,33 @@ contract ConstantProduct is IConditionalOrderGenerator {
      */
     function supportsInterface(bytes4 interfaceId) external view virtual override returns (bool) {
         return interfaceId == type(IConditionalOrderGenerator).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
+
+    /**
+     * @dev Computes the difference between the two input values. If it detects
+     * an underflow, the function reverts with a custom error that informs the
+     * watchtower to poll next.
+     * If the function reverted with a standard underflow, the watchtower would
+     * stop polling the order.
+     * @param lhs The minuend of the subtraction
+     * @param rhs The subtrahend of the subtraction
+     * @return The difference of the two input values
+     */
+    function sub(uint256 lhs, uint256 rhs) internal view returns (uint256) {
+        if (lhs < rhs) {
+            revertPollAtNextBucket("subtraction underflow");
+        }
+        unchecked {
+            return lhs - rhs;
+        }
+    }
+
+    /**
+     * @dev Reverts call execution with a custom error that indicates to the
+     * watchtower to poll for new order at the start of the next validity
+     * bucket.
+     */
+    function revertPollAtNextBucket(string memory message) internal view {
+        revert IWatchtowerCustomErrors.PollTryAtEpoch(Utils.validToBucket(MAX_ORDER_DURATION) + 1, message);
     }
 }

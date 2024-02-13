@@ -109,6 +109,10 @@ contract BalancerWeightedPoolPriceOracle is IPriceOracle {
         uint256 priceNumerator = balanceToken0 * weightToken1;
         uint256 priceDenominator = balanceToken1 * weightToken0;
 
+        // Numerator and denominator are very likely to be large. We limit the
+        // bit size of the output as recommended in the IPriceOracle interface
+        // so that this price oracle doesn't cause unexpected overflow reverts
+        // when used by `getTradeableOrder`.
         return reduceOutputBytes(priceNumerator, priceDenominator);
     }
 
@@ -116,7 +120,7 @@ contract BalancerWeightedPoolPriceOracle is IPriceOracle {
      * @dev The two input values are truncated off their least significant bits
      * by the same number of bits while trying to make them fit 128 bits.
      * The number of bits that is truncated is always the same for both values.
-     * If truncating meant that less significan bits than `TOLERANCE` remained,
+     * If truncating meant that less significant bits than `TOLERANCE` remained,
      * then this function truncates less to preserve `TOLERANCE` bits in the
      * smallest value, even if one of the output values ends up having more than
      * 128 bits of size.
