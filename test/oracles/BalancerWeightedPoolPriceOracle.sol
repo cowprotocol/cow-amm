@@ -19,8 +19,8 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
     // Technically, the first 20 bytes should be the pool address.
     // However, this property is not relied on by the Balancer price oracle.
     bytes32 private DEFAULT_POOL_ID = keccak256("Default Balancer pool id");
-    IWeightedPool internal pool = IWeightedPool(Utils.addressFromString("Balancer vault"));
-    IVault internal balancerVault = IVault(Utils.addressFromString("Balancer pool"));
+    IWeightedPool internal pool = IWeightedPool(Utils.addressFromString("Balancer pool"));
+    IVault internal balancerVault = IVault(Utils.addressFromString("Balancer vault"));
     BalancerWeightedPoolPriceOracle internal oracle;
 
     function setUp() public {
