@@ -1,4 +1,9 @@
-## CoW AMM
+# CoW AMM
+
+> [!CAUTION]
+> CoW AMM is a proof of concept of an AMM implemented on top of CoW Protocol.
+> The code is not yet production ready and should not be used to handle large amounts of funds.
+> For technical aspects of the smart contract, reach out to us on [discord](https://discord.com/invite/cowprotocol) as we push towards production, or simply star the repository to be informed of progress!
 
 CoW AMM is an automated market maker running on top of CoW Protocol.
 
