@@ -109,6 +109,10 @@ contract BalancerWeightedPoolPriceOracle is IPriceOracle {
         uint256 priceNumerator = balanceToken0 * weightToken1;
         uint256 priceDenominator = balanceToken1 * weightToken0;
 
+        // Numerator and denominator are very likely to be large. We limit the
+        // bit size of the output as recommended in the IPriceOracle interface
+        // so that this price oracle doesn't cause unexpected overflow reverts
+        // when used by `getTradeableOrder`.
         return reduceOutputBytes(priceNumerator, priceDenominator);
     }
 
