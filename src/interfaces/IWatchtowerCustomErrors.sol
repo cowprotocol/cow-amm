@@ -13,7 +13,7 @@ pragma solidity >=0.8.0 <0.9.0;
 contract IWatchtowerCustomErrors {
     /**
      * No order is currently available for trading, but the watchtower should
-     * try again at the specified timestamp.
+     * try again at the specified block.
      */
-    error PollTryAtEpoch(uint256 timestamp, string message);
+    error PollTryAtBlock(uint256 blockNumber, string message);
 }
