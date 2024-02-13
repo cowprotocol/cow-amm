@@ -116,7 +116,7 @@ contract BalancerWeightedPoolPriceOracle is IPriceOracle {
      * @dev The two input values are truncated off their least significant bits
      * by the same number of bits while trying to make them fit 128 bits.
      * The number of bits that is truncated is always the same for both values.
-     * If truncating meant that less significan bits than `TOLERANCE` remained,
+     * If truncating meant that less significant bits than `TOLERANCE` remained,
      * then this function truncates less to preserve `TOLERANCE` bits in the
      * smallest value, even if one of the output values ends up having more than
      * 128 bits of size.
