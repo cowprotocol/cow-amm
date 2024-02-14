@@ -55,7 +55,7 @@ forge script 'script/DeployAllContracts.s.sol:DeployAllContracts' -vvvv --rpc-ur
 
 ### Deployment addresses
 
-The file [`networks.json`](./networks.json) lists all offical deployments of the contracts in this repository by chain id.
+The file [`networks.json`](./networks.json) lists all official deployments of the contracts in this repository by chain id.
 
 The deployment address file is generated with:
 ```sh
