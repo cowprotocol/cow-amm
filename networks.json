@@ -1,22 +1,44 @@
 {
-  "ConstantProduct": {
+  "BalancerWeightedPoolPriceOracle": {
+    "1": {
+      "address": "0x588C956Bc94F1399e3b4747Ab207762241c54690",
+      "transactionHash": "0x10c192a731c5047700ef4da86e564bb7d171bd6a8a2523d597c584fa904e4246"
+    },
     "100": {
-      "address": "0x84D0c971bCa1e2d95D259DdFbBcE1BC237065651",
-      "transactionHash": "0x41254cbc4eb1d76c0a100fb35209b21207a7613235adc2e2607deaf177858d26"
+      "address": "0xb543A68f1C5C5F52b5CBa7809FC042A7c12c0B0E",
+      "transactionHash": "0xcd2d70cc64da1f20082b81fd4a442cacd8de0154a9afcedde3d8d3706b5499ec"
     },
     "11155111": {
-      "address": "0x8C1EE557D9ed1c7DBB30024edf162b59B78872DB",
-      "transactionHash": "0x72e60f4807f88dd692db986545b94dd2bff7b79d3372d09afa81b4db1b23af43"
+      "address": "0x37CD6FffA6eE6ac3880AB8B68bda88a28bb25335",
+      "transactionHash": "0x0c2c9fd2c48c179d324e721faeef2a13995add32636b37b1f2e412b0e8dd75ad"
+    }
+  },
+  "ConstantProduct": {
+    "1": {
+      "address": "0x02B70bd29B5F78454FB63A89a292D7100e1d9b52",
+      "transactionHash": "0xbc582f11be127ca2d6c201f6cff3f349a6dcb92abe00cc2730bf838e92931098"
+    },
+    "100": {
+      "address": "0x1323EdFAfA308D61f0bFBceFe91462FCcc901901",
+      "transactionHash": "0x5ecead0781201dc1846543b79d1025cdb348a035d24942c425b2b3f1e51c6984"
+    },
+    "11155111": {
+      "address": "0x0d32CdEd21A5be64605265Cf98a003A14e87444e",
+      "transactionHash": "0x8e70bdecb96da86e57d47fe24e6dfc355bae5c83911571d51a3357683150dfc0"
     }
   },
   "UniswapV2PriceOracle": {
+    "1": {
+      "address": "0xa334C42de929E56eB2aB6dA9f87695b24D6bbDaf",
+      "transactionHash": "0x9a25fc2f60e03bcb365c873440db96e893cee8b5e84a59a61737c4b4742bc445"
+    },
     "100": {
-      "address": "0x6Cf0BcC4803834933421266Ee13CBbd768731204",
-      "transactionHash": "0xc33d0ab514f604f2e881c620dda647897f6caf3ffafdea888a0d48cc10434bc7"
+      "address": "0xf237C9604dAF47CFea22c7748786CAe6988BB443",
+      "transactionHash": "0xa1f9eedce45efa69e969442395fbf310230c4d74b7c6247b8c9390d4b00b5735"
     },
     "11155111": {
-      "address": "0xBC3C17A0ceD8812D480f20Dd1402A238647748e7",
-      "transactionHash": "0xa4adcaed5ea8b1de38a90713076a58575201424ebf1d07b66651837ee55de812"
+      "address": "0x64D3BB15d25CfB88CE120F3ad379792fc3172814",
+      "transactionHash": "0x7dd2b872d16fae599c6fa702f19d6c2d8072017345d2eb113935744a16f371dd"
     }
   }
 }
