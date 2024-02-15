@@ -14,14 +14,16 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     address private DEFAULT_PAIR = Utils.addressFromString("default USDC/WETH pair");
     address private DEFAULT_RECEIVER = Utils.addressFromString("default receiver");
     bytes32 private DEFAULT_APPDATA = keccak256(bytes("unit test"));
+    bytes32 private DEFAULT_COMMITMENT = keccak256(bytes("order hash"));
 
-    ConstantProduct constantProduct;
-    UniswapV2PriceOracle uniswapV2PriceOracle;
+    address internal solutionSettler = Utils.addressFromString("settlment contract");
+    ConstantProduct internal constantProduct;
+    UniswapV2PriceOracle internal uniswapV2PriceOracle;
 
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
 
-        constantProduct = new ConstantProduct();
+        constantProduct = new ConstantProduct(solutionSettler);
         uniswapV2PriceOracle = new UniswapV2PriceOracle();
     }
 
@@ -48,6 +50,11 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     function setUpDefaultData() internal returns (ConstantProduct.Data memory) {
         setUpDefaultPair();
         return getDefaultData();
+    }
+
+    function setUpDefaultCommitment(address owner) internal {
+        vm.prank(solutionSettler);
+        constantProduct.commit(owner, DEFAULT_COMMITMENT);
     }
 
     function setUpDefaultReserves(address owner) internal {
@@ -109,15 +116,24 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     // This function calls `verify` while filling all unused parameters with
-    // arbitrary data.
+    // arbitrary data and the order hash with the default commitment.
     function verifyWrapper(address owner, ConstantProduct.Data memory staticInput, GPv2Order.Data memory order)
         internal
         view
     {
+        verifyWrapper(owner, DEFAULT_COMMITMENT, staticInput, order);
+    }
+
+    function verifyWrapper(
+        address owner,
+        bytes32 orderHash,
+        ConstantProduct.Data memory staticInput,
+        GPv2Order.Data memory order
+    ) internal view {
         constantProduct.verify(
             owner,
             Utils.addressFromString("sender"),
-            keccak256(bytes("order hash")),
+            orderHash,
             keccak256(bytes("domain separator")),
             keccak256(bytes("context")),
             abi.encode(staticInput),
