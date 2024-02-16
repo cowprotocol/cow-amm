@@ -16,7 +16,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     bytes32 private DEFAULT_APPDATA = keccak256(bytes("unit test"));
     bytes32 private DEFAULT_COMMITMENT = keccak256(bytes("order hash"));
 
-    address internal solutionSettler = Utils.addressFromString("settlment contract");
+    address internal solutionSettler = Utils.addressFromString("settlement contract");
     ConstantProduct internal constantProduct;
     UniswapV2PriceOracle internal uniswapV2PriceOracle;
 
