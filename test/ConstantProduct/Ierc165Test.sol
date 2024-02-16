@@ -4,12 +4,12 @@ pragma solidity >=0.8.0 <0.9.0;
 import {ConstantProductTestHarness} from "./ConstantProductTestHarness.sol";
 import {IConditionalOrderGenerator, IERC165} from "src/ConstantProduct.sol";
 
-abstract contract Ierc165Test is ConstantProductTestHarness {
+abstract contract IERC165Test is ConstantProductTestHarness {
     function testSupportsIConditionalOrderGenerator() public {
         assertTrue(constantProduct.supportsInterface(type(IConditionalOrderGenerator).interfaceId));
     }
 
-    function testSupportsIerc165() public {
+    function testSupportsIERC165() public {
         assertTrue(constantProduct.supportsInterface(type(IERC165).interfaceId));
     }
 
