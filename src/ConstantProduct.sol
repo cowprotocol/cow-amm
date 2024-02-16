@@ -129,7 +129,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         }
 
         if (tradedAmountToken0 < data.minTradedToken0) {
-            revertPollAtNextBucket("traded amount too small");
+            revertPollAtNextBlock("traded amount too small");
         }
 
         order = GPv2Order.Data(
@@ -244,7 +244,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
      */
     function sub(uint256 lhs, uint256 rhs) internal view returns (uint256) {
         if (lhs < rhs) {
-            revertPollAtNextBucket("subtraction underflow");
+            revertPollAtNextBlock("subtraction underflow");
         }
         unchecked {
             return lhs - rhs;
@@ -253,10 +253,9 @@ contract ConstantProduct is IConditionalOrderGenerator {
 
     /**
      * @dev Reverts call execution with a custom error that indicates to the
-     * watchtower to poll for new order at the start of the next validity
-     * bucket.
+     * watchtower to poll for new order when the next block is mined.
      */
-    function revertPollAtNextBucket(string memory message) internal view {
+    function revertPollAtNextBlock(string memory message) internal view {
         revert IWatchtowerCustomErrors.PollTryAtBlock(block.number + 1, message);
     }
 }
