@@ -15,7 +15,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         GPv2Order.Data memory order = getDefaultOrder();
         ConstantProduct.Data memory data = getDefaultData();
 
-        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "commitment not matching"));
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchCommitmentHash.selector));
         verifyWrapper(orderOwner, orderHashAlternative, data, order);
     }
 
@@ -62,16 +62,12 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.sellToken = IERC20(Utils.addressFromString("bad sell token"));
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.buyToken = IERC20(Utils.addressFromString("bad buy token"));
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
@@ -83,23 +79,17 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.sellAmount = modifiedOrder.sellAmount - 1;
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.buyAmount = modifiedOrder.buyAmount + 1;
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.validTo = modifiedOrder.validTo - 1;
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
@@ -114,16 +104,12 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.kind = GPv2Order.KIND_BUY;
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.partiallyFillable = !modifiedOrder.partiallyFillable;
-        vm.expectRevert(
-            abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "getTradeableOrder not matching")
-        );
+        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
         verifyWrapper(orderOwner, orderHash, defaultData, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);

@@ -73,6 +73,19 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * context.
      */
     error CommitOutsideOfSettlement();
+    /**
+     * @notice Error thrown when a solver tries to settle an AMM order on CoW
+     * Protocol whose hash doesn't match the one that has been committed to in
+     * the `commitment` mapping.
+     */
+    error OrderDoesNotMatchCommitmentHash();
+    /**
+     * @notice If an AMM order is settled and the AMM committment is set to
+     * empty, then that order must match the output of `getTradeableOrder`.
+     * This error is thrown when some of the parameters don't match the expected
+     * ones.
+     */
+    error OrderDoesNotMatchDefaultTradeableOrder();
 
     /**
      * @param _solutionSettler The CoW Protocol contract used to settle user
@@ -337,11 +350,11 @@ contract ConstantProduct is IConditionalOrderGenerator {
         bytes32 committedOrderHash = commitment[owner];
         if (orderHash != committedOrderHash) {
             if (committedOrderHash != EMPTY_COMMITMENT) {
-                revert IConditionalOrder.OrderNotValid("commitment not matching");
+                revert OrderDoesNotMatchCommitmentHash();
             }
             GPv2Order.Data memory computedOrder = _getTradeableOrder(owner, staticInput);
             if (!matchFreeOrderParams(order, computedOrder)) {
-                revert IConditionalOrder.OrderNotValid("getTradeableOrder not matching");
+                revert OrderDoesNotMatchDefaultTradeableOrder();
             }
         }
     }
