@@ -30,6 +30,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         internal
         returns (ConstantProduct.Data memory data, GPv2Order.Data memory order)
     {
+        setUpDefaultCommitment(orderOwner);
         setUpAmmWithReserves(amountToken0, amountToken1);
         order = getDefaultOrder();
         order.sellToken = IERC20(pair.token0());

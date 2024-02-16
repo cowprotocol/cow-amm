@@ -12,6 +12,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     {
         defaultData = setUpDefaultData();
         setUpDefaultReserves(orderOwner);
+        setUpDefaultCommitment(orderOwner);
         defaultOrder = getDefaultOrder();
     }
 
