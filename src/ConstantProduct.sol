@@ -23,8 +23,6 @@ import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol"
  * Order creation and execution is based on the Composable CoW base contracts.
  */
 contract ConstantProduct is IConditionalOrderGenerator {
-    uint32 public constant MAX_ORDER_DURATION = 5 * 60;
-
     /// All data used by an order to validate the AMM conditions.
     struct Data {
         /// The first of the tokens traded by this AMM.
@@ -43,6 +41,74 @@ contract ConstantProduct is IConditionalOrderGenerator {
         /// The app data that must be used in the order.
         /// See `GPv2Order.Data` for more information on the app data.
         bytes32 appData;
+    }
+
+    /**
+     * @notice The largest possible duration of any AMM order, starting from the
+     * current block timestamp.
+     */
+    uint32 public constant MAX_ORDER_DURATION = 5 * 60;
+    /**
+     * @notice The value representing the absence of a commitment. It signifies
+     * that the AMM will enforce that the order matches the order obtained from
+     * calling `getTradeableOrder`.
+     */
+    bytes32 public constant EMPTY_COMMITMENT = bytes32(0);
+    /**
+     * @notice The address of the CoW Protocol settlement contract. It is the
+     * only address that can set commitments.
+     */
+    address public immutable solutionSettler;
+    /**
+     * @notice It associates every order owner to the only order hash that can
+     * be validated by calling `verify`. The hash corresponding to the constant
+     * `EMPTY_COMMITMENT` has special semantics, discussed in the related
+     * documentation.
+     */
+    mapping(address => bytes32) public commitment;
+
+    /**
+     * @notice The `commit` function can only be called inside a CoW Swap
+     * settlement. This error is thrown when the function is called from another
+     * context.
+     */
+    error CommitOutsideOfSettlement();
+    /**
+     * @notice Error thrown when a solver tries to settle an AMM order on CoW
+     * Protocol whose hash doesn't match the one that has been committed to in
+     * the `commitment` mapping.
+     */
+    error OrderDoesNotMatchCommitmentHash();
+    /**
+     * @notice If an AMM order is settled and the AMM committment is set to
+     * empty, then that order must match the output of `getTradeableOrder`.
+     * This error is thrown when some of the parameters don't match the expected
+     * ones.
+     */
+    error OrderDoesNotMatchDefaultTradeableOrder();
+
+    /**
+     * @param _solutionSettler The CoW Protocol contract used to settle user
+     * orders on the current chain.
+     */
+    constructor(address _solutionSettler) {
+        solutionSettler = _solutionSettler;
+    }
+
+    /**
+     * @notice Restricts a specific AMM to being able to trade only the order
+     * with the specified hash.
+     * @dev The commitment is used to enforce that exactly one AMM order is
+     * valid when a CoW Protocol batch is settled.
+     * @param owner the commitment applies to orders created by this address.
+     * @param orderHash the order hash that will be enforced by the order
+     * verification function.
+     */
+    function commit(address owner, bytes32 orderHash) public {
+        if (msg.sender != solutionSettler) {
+            revert CommitOutsideOfSettlement();
+        }
+        commitment[owner] = orderHash;
     }
 
     /**
@@ -65,8 +131,6 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * parameters that are required for order creation. Compared to implementing
      * the logic inside the original function, it frees up some stack slots and
      * reduces "stack too deep" issues.
-     * @dev We are not interested in the gas efficiency of this function because
-     * it is not supposed to be called by a call in the blockchain.
      * @param owner the contract who is the owner of the order
      * @param staticInput the static input for all discrete orders cut from this
      * conditional order
@@ -156,14 +220,14 @@ contract ConstantProduct is IConditionalOrderGenerator {
     function verify(
         address owner,
         address,
-        bytes32,
+        bytes32 orderHash,
         bytes32,
         bytes32,
         bytes calldata staticInput,
         bytes calldata,
         GPv2Order.Data calldata order
     ) external view override {
-        _verify(owner, staticInput, order);
+        _verify(owner, orderHash, staticInput, order);
     }
 
     /**
@@ -172,11 +236,17 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * `verify`, it frees up some stack slots and reduces "stack too deep"
      * issues.
      * @param owner the contract who is the owner of the order
+     * @param orderHash the hash of the current order as defined by the
+     * `GPv2Order` library.
      * @param staticInput the static input for all discrete orders cut from this
      * conditional order
      * @param order `GPv2Order.Data` of a discrete order to be verified.
      */
-    function _verify(address owner, bytes calldata staticInput, GPv2Order.Data calldata order) internal view {
+    function _verify(address owner, bytes32 orderHash, bytes calldata staticInput, GPv2Order.Data calldata order)
+        internal
+        view
+    {
+        requireMatchingCommitment(owner, orderHash, staticInput, order);
         ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
 
         IERC20 sellToken = data.token0;
@@ -221,8 +291,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
         }
 
         // No checks on:
-        //bytes32 kind;
-        //bool partiallyFillable;
+        // - kind
+        // - partiallyFillable
     }
 
     /**
@@ -257,5 +327,67 @@ contract ConstantProduct is IConditionalOrderGenerator {
      */
     function revertPollAtNextBlock(string memory message) internal view {
         revert IWatchtowerCustomErrors.PollTryAtBlock(block.number + 1, message);
+    }
+
+    /**
+     * @notice This function triggers a revert if either (1) the order hash does
+     * not match the current commitment of the owner, or (2) in the case of a
+     * commitment to `EMPTY_COMMITMENT`, the non-constant parameters of the
+     * order from `getTradeableOrder` don't match those of the input order.
+     * @param owner the contract that owns the order
+     * @param orderHash the hash of the current order as defined by the
+     * `GPv2Order` library.
+     * @param staticInput the static input for all discrete orders cut from this
+     * conditional order
+     * @param order `GPv2Order.Data` of a discrete order to be verified
+     */
+    function requireMatchingCommitment(
+        address owner,
+        bytes32 orderHash,
+        bytes calldata staticInput,
+        GPv2Order.Data calldata order
+    ) internal view {
+        bytes32 committedOrderHash = commitment[owner];
+        if (orderHash != committedOrderHash) {
+            if (committedOrderHash != EMPTY_COMMITMENT) {
+                revert OrderDoesNotMatchCommitmentHash();
+            }
+            GPv2Order.Data memory computedOrder = _getTradeableOrder(owner, staticInput);
+            if (!matchFreeOrderParams(order, computedOrder)) {
+                revert OrderDoesNotMatchDefaultTradeableOrder();
+            }
+        }
+    }
+
+    /**
+     * @notice Check if the parameters of the two input orders are the same,
+     * with the exception of those parameters that have a single possible value
+     * that passes the validation of `verify`.
+     * @param lhs a CoW Swap order
+     * @param rhs another CoW Swap order
+     * @return true if the order parameters match, false otherwise
+     */
+    function matchFreeOrderParams(GPv2Order.Data calldata lhs, GPv2Order.Data memory rhs)
+        internal
+        pure
+        returns (bool)
+    {
+        bool sameSellToken = lhs.sellToken == rhs.sellToken;
+        bool sameBuyToken = lhs.buyToken == rhs.buyToken;
+        bool sameSellAmount = lhs.sellAmount == rhs.sellAmount;
+        bool sameBuyAmount = lhs.buyAmount == rhs.buyAmount;
+        bool sameValidTo = lhs.validTo == rhs.validTo;
+        bool sameKind = lhs.kind == rhs.kind;
+        bool samePartiallyFillable = lhs.partiallyFillable == rhs.partiallyFillable;
+
+        // The following parameters are untested:
+        // - receiver
+        // - appData
+        // - feeAmount
+        // - sellTokenBalance
+        // - buyTokenBalance
+
+        return sameSellToken && sameBuyToken && sameSellAmount && sameBuyAmount && sameValidTo && sameKind
+            && samePartiallyFillable;
     }
 }
