@@ -15,12 +15,12 @@ It stores reserves of two tokens and allows anyone to create orders between thes
 The order is based on the `ComposableCoW` framework: this repository only specifies the code needed for the dedicated handler and the related price oracles.
 All the code for the `ComposableCoW` framework is [here](https://github.com/cowprotocol/composable-cow).
 
-The AMM creates CoW Protocol order at regular time intervals.
+The AMM creates a CoW Protocol order at a regular time interval.
 These orders are created with a dedicated contract function `getTradeableOrder`: it returns an order that can be traded in a way that tries to rebalance the AMM to align with the reference price of a price oracle.
-These orders are provided for convenience to CoW Swap solvers so that a basic CoW AMM usage does not need any dedicated implementation to tap into its liquidity.
+These orders are provided for convenience to CoW Swap solvers so that basic CoW AMM usage does not need any dedicated implementation to tap into its liquidity.
 More sophisticated solvers can create their own order to better suit the current market conditions.
 
-The [watchtower](https://github.com/cowprotocol/watch-tower) is responsible for automatically creating the AMM order, without any necessity for the AMM to interact with the CoW Protocol API.
+The [watch tower](https://github.com/cowprotocol/watch-tower) is responsible for automatically creating the AMM order, without any necessity for the AMM to interact with the CoW Protocol API.
 
 CoW AMM orders are executed in batches by CoW Protocol solvers.
 Only one order per AMM can be executed per batch.
@@ -106,13 +106,13 @@ cast abi-encode 'f((address))' "($referencePair)"
 
 ##### BalancerWeightedPoolPriceOracle
 
-The Balancer weighted pool price oracle returns the limit price that can be computed from an Balancer pool that come from implements one of the [Balancer weighted pool](https://docs.balancer.fi/concepts/pools/weighted.html) implementations.
+The Balancer weighted pool price oracle returns the limit price that can be computed from one of the [Balancer weighted pool](https://docs.balancer.fi/concepts/pools/weighted.html) implementations.
 
-The oracle data needs to include a single parameter:
+The oracle data contains a single parameter:
 - `bytes32 poolId`: the [Balancer pool id](https://docs.balancer.fi/reference/contracts/pool-interfacing.html#poolids) representing the weighted pool that will be used to compute the reference price.
 
 The reference weighted pool can use any weights and token combination.
-However, it must be a weighted pool and not a different pool type: there is currently no check in the smart contract to guarantee that the chosen pool if is indeed from a weighted pool. If used with a different type of pool, the output of the oracle is likely to be completely unreliable.
+However, it must be a weighted pool and not a different pool type: there is currently no check in the smart contract to guarantee that the chosen pool is indeed a weighted pool. If used with a different type of pool, the output of the oracle is likely to be completely unreliable.
 
 If the tokens in the AMM orders are not all included in the reference pool, then no order will be created.
 
