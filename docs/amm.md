@@ -177,7 +177,7 @@ This order can be included in a batch as any other CoW Protocol orders with thre
 - Must contain at most one order from the AMM in the same batch.
 - One of the post-interactions must reset the commitment by calling `ConstantProduct.commit(EMPTY_COMMITMENT)`.
 
-The last step (clearing the commit) is technically not required for the batch to settle succesfully, however it makes the settlement overall cheaper, since it resets the storage slot.
+The last step (clearing the commit) is technically not required for the batch to settle successfully, however it makes the settlement overall cheaper, since it resets the storage slot.
 However, leaving the commit set means that no AMM orders will appear in the orderbook until the commit is reset.
 Not clearing the commit at the end of the batch is considered slashable behavior.
 
