@@ -105,7 +105,7 @@ However, CoW AMMs allow solvers to specify custom buy and sell amounts, as long 
 CoW AMMs can be treated as a liquidity source akin to Uniswap or Balancer weighted pools with uniform weights.
 Each CoW AMM is a pair that trades two tokens.
 
-Surplus for a CoW AMM counts as a normal order for the rewards payout.
+Importantly, surplus for a CoW AMM order is measured differently when computing the solver reward payout.
 
 ### Indexing CoW AMMs
 
@@ -155,6 +155,19 @@ This order can be included in a batch as any other CoW Protocol orders with thre
 The last step (clearing the commit) is technically not required for the batch to settle succesfully, however it makes the settlement overall cheaper, since it resets the storage slot.
 However, leaving the commit set means that no AMM orders will appear in the orderbook until the commit is reset.
 Not clearing the commit at the end of the batch is considered slashable behavior.
+
+### Surplus
+
+The surplus for a CoW AMM order is measured differently depending on which AMM order is executed.
+
+If picking the default CoW AMM order (that is, it's settled with the empty commitment), then the surplus is computed exactly like any other CoW Swap order.
+
+Otherwise, if we call `X` (resp. `Y`) the reserves of sell (resp. buy) token, and `x` (resp. `y`) the sell (resp. buy) amount, then the order surplus is computed as: 
+```
+                x (Y + y)
+surplus =  y -  --------- .
+                    X
+```
 
 ## Risk profile
 
