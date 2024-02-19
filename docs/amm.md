@@ -130,7 +130,7 @@ However, CoW AMMs allow solvers to specify custom buy and sell amounts, as long 
 CoW AMMs can be treated as a liquidity source akin to Uniswap or Balancer weighted pools with uniform weights.
 Each CoW AMM is a pair that trades two tokens.
 
-Surplus for a CoW AMM counts as a normal order for the rewards payout.
+Importantly, surplus for a CoW AMM order is measured differently when computing the solver reward payout.
 
 ### Indexing CoW AMMs
 
@@ -148,7 +148,7 @@ There are a few caveats to listening to these events:
 - While it's strongly discuraged behavior, there's nothing stopping the same CoW AMM from trading multiple pairs.
   A batch can include only a single custom order per AMM address (this is because a solver can `commit` to only a single order per AMM address).
   Moreover, if the AMM trades two overlapping pairs, settling one order may affect the reserve balance of an unrelated pair after the order is executed.
-- Even if an event is emitted, the order may be impossbile to settle.
+- Even if an event is emitted, the order may be impossible to settle.
   This can happen for example if the encoding of `staticInput` is invalid.
 
 ### Settling a custom order
@@ -174,12 +174,25 @@ You also need to compute:
 
 This order can be included in a batch as any other CoW Protocol orders with three extra conditions:
 - One of the pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
-- No more orders from the AMM must be included in the batch.
+- Must contain at most one order from the AMM in the same batch.
 - One of the post-interactions must reset the commitment by calling `ConstantProduct.commit(EMPTY_COMMITMENT)`.
 
 The last step (clearing the commit) is technically not required for the batch to settle succesfully, however it makes the settlement overall cheaper, since it resets the storage slot.
 However, leaving the commit set means that no AMM orders will appear in the orderbook until the commit is reset.
 Not clearing the commit at the end of the batch is considered slashable behavior.
+
+### Surplus
+
+The surplus for a CoW AMM order is measured differently depending on which AMM order is executed.
+
+If picking the default CoW AMM order (that is, it's settled with the empty commitment), then the surplus is computed exactly like any other CoW Swap order.
+
+Otherwise, if we call `X` (resp. `Y`) the reserves of sell (resp. buy) token, and `x` (resp. `y`) the sell (resp. buy) amount, then the order surplus is computed as: 
+```
+                x (Y + y)
+surplus =  y -  --------- .
+                    X
+```
 
 ## Risk profile
 
