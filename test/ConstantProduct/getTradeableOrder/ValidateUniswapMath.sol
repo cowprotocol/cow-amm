@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
+import {ConstantProduct, GPv2Order} from "src/ConstantProduct.sol";
+
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order, IConditionalOrder} from "../../../src/ConstantProduct.sol";
 
 abstract contract ValidateUniswapMath is ConstantProductTestHarness {
     function testReturnedTradeValues() public {

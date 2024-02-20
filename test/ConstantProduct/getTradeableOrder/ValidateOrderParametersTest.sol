@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
-import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
-import {ConstantProduct, GPv2Order, IConditionalOrder} from "src/ConstantProduct.sol";
+import {ConstantProduct, GPv2Order} from "src/ConstantProduct.sol";
 import {IWatchtowerCustomErrors} from "src/interfaces/IWatchtowerCustomErrors.sol";
+
+import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
     function testValidOrderParameters() public {
