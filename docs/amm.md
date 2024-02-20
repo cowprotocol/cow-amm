@@ -58,12 +58,12 @@ There are no requirements on the ownership structure of the Safe, but keep in mi
 
 You can create a Safe following the instruction on [the dedicated page on the Safe interface](https://app.safe.global/new-safe/create).
 
-You should not use this Safe for other purposes but running the CoW AMM: the token balances represent the state of the AMM and should not be altered outside of the normal AMM trading process.
-The same Safe must **not** be used as the AMM for multiple symultaneous pairs.
+You should not use this Safe for purposes other than running a CoW AMM: the token balances represent the state of the AMM and should not be altered outside of the normal AMM trading process.
+The same Safe must **not** be used as the AMM for multiple simultaneous pairs.
 
 ### Step 2: switch to the extensible fallback handler
 
-CoW Protocol relies on ERC-1271 signatures to validate smart-contract orders.
+CoW Protocol supports validation of smart-contract orders via ERC-1271 signatures.
 Signature verification for `ComposableCoW` orders (like the order used in the CoW AMM) is handled by a dedicated [fallback handler](https://help.safe.global/en/articles/40838-what-is-a-fallback-handler-and-how-does-it-relate-to-safe), the `ExtensibleFallbackHandler`.
 
 You can find more details on the design of `ComposableCoW` in the [dedicated page of the CoW Protocol documentation](https://docs.cow.fi/cow-protocol/reference/contracts/periphery/composable-cow#conditional-order-verification-flow).
