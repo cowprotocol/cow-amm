@@ -68,7 +68,7 @@ Signature verification for `ComposableCoW` orders (like the order used in the Co
 
 You can find more details on the design of `ComposableCoW` in the [dedicated page of the CoW Protocol documentation](https://docs.cow.fi/cow-protocol/reference/contracts/periphery/composable-cow#conditional-order-verification-flow).
 
-On the AMM Safe interface, create a new transaction on the transaction builder with the following parameters:
+On the AMM Safe Wallet interface, create a new transaction on the transaction builder with the following parameters:
 - Address: the address of the AMM Safe itself (confirm loading the implementation ABI once prompted)
 - To Address: again, the address of the AMM Safe itself
 - Contract Method selector: `setFallbackHandler`
