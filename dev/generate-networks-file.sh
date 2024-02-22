@@ -12,7 +12,8 @@ for deployment in "$repo_root_dir/broadcast/"*"/"*"/"*".json"; do
   # First, every single deployment is formatted as if it had its own networks.json
   jq --arg chainId "$chain_id" '
     .transactions[]
-    | select(.transactionType == "CREATE" )
+    | select(.transactionType == "CREATE")
+    | select(.hash != null)
     | {(.contractName): {($chainId): {address: .contractAddress, transactionHash: .hash }}}
   '  <"$deployment"
 done \
