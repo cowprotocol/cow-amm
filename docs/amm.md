@@ -43,7 +43,7 @@ Setting up a CoW AMM can be split in the following steps, which will be describe
 All these steps, with the exception of the data in the last one, aren't specific to the CoW AMM but are the same steps required for creating an order with the [`ComposableCoW`](https://github.com/cowprotocol/composable-cow) framework.
 
 You can see an example of CoW AMM trading tokens COW/WETH at address [`0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4`](https://app.safe.global/transactions/history?safe=eth:0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4).
-Example set-up transactions: [step 1](0xfb0d01c5edbf1dd80c3d9f8a54e9a4057db2419ec50045e32161044bab5a06f3), [step 2 to 4](https://app.safe.global/transactions/tx?safe=eth:0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4&id=multisig_0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4_0x2bb29ac594fd562981ac1221596ed6b471a459615bb3b8c8ebd403e9fad079af), [step 5](https://app.safe.global/transactions/tx?safe=eth:0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4&id=multisig_0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4_0x1651687da34e9a7039e3a41e81e90cde74c1bfeeb0c9ec3dac0b7432dcbb4300).
+Example set-up transactions: [step 1](https://etherscan.io/tx/0xfb0d01c5edbf1dd80c3d9f8a54e9a4057db2419ec50045e32161044bab5a06f3), [step 2 to 4](https://app.safe.global/transactions/tx?safe=eth:0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4&id=multisig_0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4_0x2bb29ac594fd562981ac1221596ed6b471a459615bb3b8c8ebd403e9fad079af), [step 5](https://app.safe.global/transactions/tx?safe=eth:0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4&id=multisig_0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4_0x1651687da34e9a7039e3a41e81e90cde74c1bfeeb0c9ec3dac0b7432dcbb4300).
 
 ### Step 1: deploy a Safe
 
