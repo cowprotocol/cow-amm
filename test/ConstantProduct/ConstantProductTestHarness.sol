@@ -67,23 +67,15 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         UniswapV2PriceOracle.Data memory oracleData =
             abi.decode(defaultData.priceOracleData, (UniswapV2PriceOracle.Data));
 
-        vm.mockCall(
-            oracleData.referencePair.token0(),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
-            abi.encode(amount0)
-        );
-        vm.mockCall(
-            oracleData.referencePair.token1(),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, owner),
-            abi.encode(amount1)
-        );
+        vm.mockCall(oracleData.referencePair.token0(), abi.encodeCall(IERC20.balanceOf, (owner)), abi.encode(amount0));
+        vm.mockCall(oracleData.referencePair.token1(), abi.encodeCall(IERC20.balanceOf, (owner)), abi.encode(amount1));
     }
 
     function setUpDefaultReferencePairReserves(uint256 amount0, uint256 amount1) public {
         uint32 unusedTimestamp = 31337;
         vm.mockCall(
             address(DEFAULT_PAIR),
-            abi.encodeWithSelector(IUniswapV2Pair.getReserves.selector),
+            abi.encodeCall(IUniswapV2Pair.getReserves, ()),
             abi.encode(amount0, amount1, unusedTimestamp)
         );
     }

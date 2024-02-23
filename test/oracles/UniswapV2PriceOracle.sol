@@ -22,12 +22,12 @@ contract UniswapV2PriceOracleTest is Test {
 
         pair = IUniswapV2Pair(DEFAULT_PAIR);
 
-        vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token0.selector), abi.encode(USDC));
-        vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token1.selector), abi.encode(WETH));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(USDC));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token1, ()), abi.encode(WETH));
         uint32 unusedTimestamp = 31337;
         vm.mockCall(
             address(DEFAULT_PAIR),
-            abi.encodeWithSelector(IUniswapV2Pair.getReserves.selector),
+            abi.encodeCall(IUniswapV2Pair.getReserves, ()),
             abi.encode(reserve0, reserve1, unusedTimestamp)
         );
     }

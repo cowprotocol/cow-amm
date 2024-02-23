@@ -13,8 +13,8 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     function setUpAmmWithReserves(uint256 amountToken0, uint256 amountToken1) internal {
         IERC20 token0 = IERC20(Utils.addressFromString("token0 for math verification"));
         IERC20 token1 = IERC20(Utils.addressFromString("token1 for math verification"));
-        vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token0.selector), abi.encode(token0));
-        vm.mockCall(address(pair), abi.encodeWithSelector(IUniswapV2Pair.token1.selector), abi.encode(token1));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(token0));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token1, ()), abi.encode(token1));
         // Reverts for everything else
         vm.mockCallRevert(address(pair), hex"", abi.encode("Called unexpected function on mock pair"));
         require(pair.token0() != pair.token1(), "Pair setup failed: should use distinct tokens");
