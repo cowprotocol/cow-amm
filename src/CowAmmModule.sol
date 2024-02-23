@@ -5,8 +5,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ComposableCoW} from "lib/composable-cow/src/ComposableCoW.sol";
 import {GPv2Settlement} from "lib/composable-cow/lib/cowprotocol/src/contracts/GPv2Settlement.sol";
 import {Safe, Enum} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
-import {ExtensibleFallbackHandler} from
-    "lib/composable-cow/lib/safe/contracts/handler/ExtensibleFallbackHandler.sol";
+import {ExtensibleFallbackHandler} from "lib/composable-cow/lib/safe/contracts/handler/ExtensibleFallbackHandler.sol";
 import {ConstantProduct, IPriceOracle, IERC20} from "./ConstantProduct.sol";
 import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
@@ -35,10 +34,17 @@ contract CowAmmModuleFactory {
      * @param _composableCow The address of `ComposableCoW`.
      * @param _ammHandler The address of the AMM implementation (e.g. `ConstantProduct`) for creating new CoW AMMs.
      */
-    constructor(CowAmmModule _implementation, address _settler, address _extensibleFallbackHandler, address _composableCow, address _ammHandler) {
+    constructor(
+        CowAmmModule _implementation,
+        address _settler,
+        address _extensibleFallbackHandler,
+        address _composableCow,
+        address _ammHandler
+    ) {
         // Make sure that the addresses within the implementation correspond correctly to the given addresses
         bool isSettler = address(_implementation.SETTLER()) == _settler;
-        bool isExtensibleFallbackHandler = address(_implementation.EXTENSIBLE_FALLBACK_HANDLER()) == _extensibleFallbackHandler;
+        bool isExtensibleFallbackHandler =
+            address(_implementation.EXTENSIBLE_FALLBACK_HANDLER()) == _extensibleFallbackHandler;
         bool isComposableCow = address(_implementation.COMPOSABLE_COW()) == _composableCow;
         bool isAmmHandler = address(_implementation.HANDLER()) == _ammHandler;
         if (!isSettler || !isExtensibleFallbackHandler || !isComposableCow || !isAmmHandler) {
@@ -296,9 +302,7 @@ contract CowAmmModule {
                 address(safe), // MUST be the safe address
                 0,
                 abi.encodeWithSelector(
-                    EXTENSIBLE_FALLBACK_HANDLER.setDomainVerifier.selector,
-                    COW_DOMAIN_SEPARATOR,
-                    COMPOSABLE_COW
+                    EXTENSIBLE_FALLBACK_HANDLER.setDomainVerifier.selector, COW_DOMAIN_SEPARATOR, COMPOSABLE_COW
                 )
             );
         }
@@ -316,10 +320,6 @@ contract CowAmmModule {
      * @notice A helper function for setting ERC20 token allowances on the Sa fe
      */
     function _setAllowance(IERC20 token) internal {
-        _execute(
-            address(token),
-            0,
-            abi.encodeWithSelector(token.approve.selector, VAULT_RELAYER, type(uint256).max)
-        );
+        _execute(address(token), 0, abi.encodeWithSelector(token.approve.selector, VAULT_RELAYER, type(uint256).max));
     }
 }
