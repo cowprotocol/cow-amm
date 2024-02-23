@@ -3,9 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Script, console} from "forge-std/Script.sol";
 
-import {Utils} from "../libraries/Utils.sol";
-
 import {ConstantProduct} from "src/ConstantProduct.sol";
+
+import {Utils} from "script/libraries/Utils.sol";
 
 contract DeployConstantProduct is Script, Utils {
     address internal constant DEFAULT_SETTLEMENT_CONTRACT = 0x9008D19f58AAbD9eD0D60971565AA8510560ab41;

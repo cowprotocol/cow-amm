@@ -3,9 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {CowProtocolSetUp} from "./cow-protocol/CowProtocolSetUp.sol";
-
 import {DeployConstantProduct} from "script/single-deployment/ConstantProduct.s.sol";
+
+import {CowProtocolSetUp} from "./cow-protocol/CowProtocolSetUp.sol";
 
 contract DeployConstantProductTest is Test, CowProtocolSetUp {
     DeployConstantProduct script;

@@ -3,9 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Script, console} from "forge-std/Script.sol";
 
-import {Utils} from "../libraries/Utils.sol";
-
 import {BalancerWeightedPoolPriceOracle, IVault} from "src/oracles/BalancerWeightedPoolPriceOracle.sol";
+
+import {Utils} from "script/libraries/Utils.sol";
 
 contract DeployBalancerWeightedPoolPriceOracle is Script, Utils {
     // Balancer uses the same address on each supported chain until now:
