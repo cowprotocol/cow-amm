@@ -28,6 +28,19 @@ contract CowAmmModuleFactory {
     error InvalidParameter();
 
     /**
+     * @notice Index all cow amm module factories created.
+     * @param implementation The address of the CoW AMM module implementation.
+     */
+    event CowAmmModuleFactoryCreated(address indexed implementation);
+
+    /**
+     * @notice Index all cow amm modules created.
+     * @param implementation The address of the CoW AMM module implementation.
+     * @param safe The address of the safe that the module will be attached to.
+     */
+    event CowAmmModuleCreated(address indexed implementation, address indexed safe);
+
+    /**
      * @param _implementation The address of the CoW AMM module implementation.
      * @param _settler The address of the GPv2Settlement contract.
      * @param _extensibleFallbackHandler The address of the `ExtensibleFallbackHandler`.
@@ -53,6 +66,8 @@ contract CowAmmModuleFactory {
 
         // Set the implementation
         IMPLEMENTATION = _implementation;
+
+        emit CowAmmModuleFactoryCreated(address(_implementation));
     }
 
     /**
@@ -63,6 +78,8 @@ contract CowAmmModuleFactory {
     function create(address safe) external returns (address) {
         CowAmmModule module = CowAmmModule(address(IMPLEMENTATION).cloneDeterministic(bytes20(safe)));
         module.initialize(safe);
+
+        emit CowAmmModuleCreated(address(module), safe);
 
         return address(module);
     }
@@ -134,6 +151,19 @@ contract CowAmmModule {
     error ModuleAlreadyInitialized();
     error NoActiveAMM();
     error TokenBalanceZero();
+
+    /**
+     * @notice Emitted when a new CoW AMM is created.
+     * @param orderHash The hash of the conditional order that created the AMM.
+     * @param token0 The address of the first token in the pair.
+     * @param token1 The address of the second token in the pair.
+     */
+    event CowAmmCreated(bytes32 indexed orderHash, address indexed token0, address indexed token1);
+
+    /**
+     * @notice Emitted when an active CoW AMM is closed.
+     */
+    event CowAmmClosed(bytes32 indexed orderHash);
 
     /**
      * @param _settler The address of the GPv2Settlement contract.
@@ -235,6 +265,8 @@ contract CowAmmModule {
         // Would be nice if the `ComposableCoW.create` returned the hash as it's
         // already calculated there and would prevent double-hashing and save some gas!
         activeOrder = COMPOSABLE_COW.hash(params);
+
+        emit CowAmmCreated(activeOrder, address(token0), address(token1));
     }
 
     /**
@@ -268,6 +300,7 @@ contract CowAmmModule {
     function closeAmm() public onlySafe {
         if (activeOrder != bytes32(0)) {
             _execute(address(COMPOSABLE_COW), 0, abi.encodeWithSelector(ComposableCoW.remove.selector, activeOrder));
+            emit CowAmmClosed(activeOrder);
             activeOrder = bytes32(0);
         }
     }
