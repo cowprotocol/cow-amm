@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
-import {Utils} from "../libraries/Utils.sol";
-import {ConstantProduct, GPv2Order, IERC20} from "../../src/ConstantProduct.sol";
-import {UniswapV2PriceOracle, IUniswapV2Pair} from "../../src/oracles/UniswapV2PriceOracle.sol";
+import {ConstantProduct, GPv2Order, IERC20} from "src/ConstantProduct.sol";
+import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
+
+import {Utils} from "test/libraries/Utils.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     address internal orderOwner = Utils.addressFromString("order owner");

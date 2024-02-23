@@ -1,5 +1,9 @@
 {
   "BalancerWeightedPoolPriceOracle": {
+    "1": {
+      "address": "0xad37FE3dDedF8cdEE1022Da1b17412CFB6495596",
+      "transactionHash": "0x97150c1fa3113c0ddb7dd94edeb0a62cd9829b14017d541b49865c5615037c6e"
+    },
     "100": {
       "address": "0xd3a84895080609e1163C80b2Bd65736DB1B86bEC",
       "transactionHash": "0xb49caccef3ecec59e77e1d64e97851d3dfef2099c65817214cc1e27541c46bfa"
@@ -10,6 +14,10 @@
     }
   },
   "ConstantProduct": {
+    "1": {
+      "address": "0x34323B933096534e43958F6c7Bf44F2Bb59424DA",
+      "transactionHash": "0xad9697d6a7b6e3283e0d022028a5252a1fe183a63ed35328a6daea9804c3492a"
+    },
     "100": {
       "address": "0xB148F40fff05b5CE6B22752cf8E454B556f7a851",
       "transactionHash": "0xa9c9681f4eaf14406931510b67eeb2a7e061389680ab3231e22e463b53185737"
@@ -20,6 +28,10 @@
     }
   },
   "UniswapV2PriceOracle": {
+    "1": {
+      "address": "0x573cC0c800048f94e022463b9214D92c2d65e97B",
+      "transactionHash": "0xd4f92c9285fec9911f41b89ca0de448f744bb3fca7fe9034c6e4b71f364f2534"
+    },
     "100": {
       "address": "0xE089049027B95C2745D1a954BC1D245352D884e9",
       "transactionHash": "0xa496c7171c68d4de6252cf0cf8df058c2594da2b3216bbc96cc32561fc1f5fd5"

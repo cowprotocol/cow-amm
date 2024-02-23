@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
-import {Math} from "lib/composable-cow/lib/@openzeppelin/contracts/utils/math/Math.sol";
+import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {
     IConditionalOrderGenerator,

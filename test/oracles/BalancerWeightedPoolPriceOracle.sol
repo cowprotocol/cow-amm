@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import "forge-std/Test.sol";
-
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {
     BalancerWeightedPoolPriceOracle,
     IVault,
     IWeightedPool,
     IConditionalOrder
 } from "src/oracles/BalancerWeightedPoolPriceOracle.sol";
+
+import {Utils} from "test/libraries/Utils.sol";
 
 contract BalancerWeightedPoolPriceOracleTest is Test {
     IERC20 private USDC = IERC20(Utils.addressFromString("USDC"));

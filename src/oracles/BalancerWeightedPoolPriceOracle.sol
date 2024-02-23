@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
-import {Math} from "lib/composable-cow/lib/@openzeppelin/contracts/utils/math/Math.sol";
+import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 
 import {IVault, IWeightedPool} from "../interfaces/IBalancer.sol";
 import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
