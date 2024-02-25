@@ -42,18 +42,17 @@ contract DeployCowAmmModule is EnvReader, Utils {
     }
 
     function run() public virtual {
-        if (handler == address(0)) {
-            console.log("No constant product contract provided in single deployment!");
-            console.log(
-                "Please provide the constant product contract address in the environment variable CONSTANT_PRODUCT_CONTRACT."
-            );
-            revert();
-        }
-
         deployCowAmmModule(handler);
     }
 
     function deployCowAmmModule(address _handler) internal returns (CowAmmModule) {
+        if (_handler == address(0)) {
+            console.log("No constant product contract provided!");
+            revert();
+        }
+        console.log("handler contract at %s.", _handler);
+        assertHasCode(_handler, "no code at expected handler contract");
+
         vm.broadcast();
         return new CowAmmModule(
             GPv2Settlement(payable(solutionSettler)),

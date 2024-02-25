@@ -86,7 +86,7 @@ contract CowAmmModule {
      * @param token1 The address of the second token in the pair.
      * @param orderHash The hash of the conditional order that created the AMM.
      */
-    event CowAmmCreated(Safe indexed safe, address indexed token0, address indexed token1, bytes32 orderHash);
+    event CowAmmCreated(Safe indexed safe, IERC20 indexed token0, IERC20 indexed token1, bytes32 orderHash);
 
     /**
      * @notice Emitted when an active CoW AMM is closed.
@@ -134,7 +134,7 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) external {
+    ) external returns (bytes32) {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
@@ -144,7 +144,7 @@ contract CowAmmModule {
             revert ActiveAMM();
         }
 
-        _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
@@ -164,7 +164,7 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) external {
+    ) external returns (bytes32) {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
@@ -172,8 +172,7 @@ contract CowAmmModule {
         if (_activeOrder == EMPTY_AMM_HASH) {
             revert NoActiveOrderToReplace();
         }
-        _closeAmm(safe, _activeOrder);
-        _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
@@ -208,7 +207,7 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) internal {
+    ) internal returns (bytes32 orderHash) {
         // Always make sure the module is setup before doing anything
         _setup(safe);
 
@@ -244,10 +243,10 @@ contract CowAmmModule {
         // Set the new CoW AMM as the active order
         // Would be nice if the `ComposableCoW.create` returned the hash as it's
         // already calculated there and would prevent double-hashing and save some gas!
-        bytes32 _activeOrder = COMPOSABLE_COW.hash(params);
-        activeOrders[safe] = _activeOrder;
+        orderHash = COMPOSABLE_COW.hash(params);
+        activeOrders[safe] = orderHash;
 
-        emit CowAmmCreated(safe, address(token0), address(token1), _activeOrder);
+        emit CowAmmCreated(safe, token0, token1, orderHash);
     }
 
     /**
