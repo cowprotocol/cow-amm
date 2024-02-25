@@ -7,15 +7,19 @@ import {
     DeployBalancerWeightedPoolPriceOracle,
     BalancerWeightedPoolPriceOracle
 } from "./single-deployment/BalancerWeightedPoolPriceOracle.s.sol";
+import {DeployCowAmmModule, CowAmmModule} from "./single-deployment/CowAmmModule.s.sol";
 
 contract DeployAllContracts is
     DeployConstantProduct,
     DeployUniswapV2PriceOracle,
-    DeployBalancerWeightedPoolPriceOracle
+    DeployBalancerWeightedPoolPriceOracle,
+    DeployCowAmmModule
 {
     function run()
         public
-        override(DeployConstantProduct, DeployUniswapV2PriceOracle, DeployBalancerWeightedPoolPriceOracle)
+        override(
+            DeployConstantProduct, DeployUniswapV2PriceOracle, DeployBalancerWeightedPoolPriceOracle, DeployCowAmmModule
+        )
     {
         deployAll();
     }
@@ -25,11 +29,13 @@ contract DeployAllContracts is
         returns (
             ConstantProduct constantProduct,
             UniswapV2PriceOracle uniswapV2PriceOracle,
-            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle
+            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle,
+            CowAmmModule cowAmmModule
         )
     {
         constantProduct = deployConstantProduct();
         uniswapV2PriceOracle = deployUniswapV2PriceOracle();
         balancerWeightedPoolPriceOracle = deployBalancerWeightedPoolPriceOracle();
+        cowAmmModule = deployCowAmmModule(address(constantProduct));
     }
 }

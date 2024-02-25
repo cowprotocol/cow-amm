@@ -100,21 +100,16 @@ contract CowAmmModule {
      * @param _composableCow The address of `ComposableCoW`.
      * @param _handler The address of the ConstantProduct AMM implementation for creating new CoW AMMs.
      */
-    constructor(
-        GPv2Settlement _settler,
-        ExtensibleFallbackHandler _extensibleFallbackHandler,
-        ComposableCoW _composableCow,
-        IConditionalOrder _handler
-    ) {
+    constructor(address _settler, address _extensibleFallbackHandler, address _composableCow, address _handler) {
         // GPv2 specifics to make sure we set the right things and they're immutable!
-        SETTLER = _settler;
+        SETTLER = GPv2Settlement(payable(_settler));
         COW_DOMAIN_SEPARATOR = SETTLER.domainSeparator();
         VAULT_RELAYER = address(SETTLER.vaultRelayer());
 
         // ComposableCoW specifics
-        EXTENSIBLE_FALLBACK_HANDLER = _extensibleFallbackHandler;
-        COMPOSABLE_COW = _composableCow;
-        HANDLER = _handler;
+        EXTENSIBLE_FALLBACK_HANDLER = ExtensibleFallbackHandler(_extensibleFallbackHandler);
+        COMPOSABLE_COW = ComposableCoW(_composableCow);
+        HANDLER = IConditionalOrder(_handler);
     }
 
     /**
