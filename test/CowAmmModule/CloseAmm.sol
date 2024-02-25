@@ -5,7 +5,6 @@ import {CowAmmModuleTestHarness, CowAmmModule, ConstantProduct} from "./CowAmmMo
 import {FallbackManager} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
 
 abstract contract CloseAmmTest is CowAmmModuleTestHarness {
-
     function testCloseAmmWhenOneExists() public {
         setUpDefaultCowAmm();
 

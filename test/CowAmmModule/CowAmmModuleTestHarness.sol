@@ -30,12 +30,8 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
         safe = Safe(payable(SafeLib.createSafe(factory, singleton, owners, 2, address(0), 2)));
 
         constantProduct = new ConstantProduct(address(settlement));
-        cowAmmModule = new CowAmmModule(
-            address(settlement),
-            address(eHandler),
-            address(composableCow),
-            address(constantProduct)
-        );
+        cowAmmModule =
+            new CowAmmModule(address(settlement), address(eHandler), address(composableCow), address(constantProduct));
     }
 
     function setUpDefaultSafe() internal {
@@ -46,14 +42,7 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
     }
 
     function getDefaultData() internal view returns (ConstantProduct.Data memory) {
-        return ConstantProduct.Data(
-            token0,
-            token1,
-            0,
-            DEFAULT_PRICE_ORACLE,
-            bytes("some oracle data"),
-            DEFAULT_APPDATA
-        );
+        return ConstantProduct.Data(token0, token1, 0, DEFAULT_PRICE_ORACLE, bytes("some oracle data"), DEFAULT_APPDATA);
     }
 
     function setUpDefaultCowAmm() internal {
@@ -70,5 +59,4 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
             ammData.appData
         );
     }
-
 }
