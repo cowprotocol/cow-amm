@@ -59,6 +59,8 @@ contract CowAmmModule {
 
     /**
      * @dev The storage slot of the fallback handler on the safe
+     * This is taken from the `FallbackManager` of Safe contracts. The reference can be found at:
+     * https://github.com/safe-global/safe-smart-account/blob/767ef36bba88bdbc0c9fe3708a4290cabef4c376/contracts/base/FallbackManager.sol#L12
      */
     bytes32 internal constant _FALLBACK_HANDLER_STORAGE_SLOT =
         0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
@@ -72,6 +74,7 @@ contract CowAmmModule {
     error ActiveAMM();
     error NoActiveAMM();
     error TokenBalanceZero();
+    error NoActiveOrderToReplace();
 
     // --- events
 
