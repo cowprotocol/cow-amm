@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {Script, console} from "forge-std/Script.sol";
+import {console} from "forge-std/Script.sol";
 
 import {ConstantProduct} from "src/ConstantProduct.sol";
 
+import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
-contract DeployConstantProduct is Script, Utils {
-    address internal constant DEFAULT_SETTLEMENT_CONTRACT = 0x9008D19f58AAbD9eD0D60971565AA8510560ab41;
-    address internal solutionSettler;
-
+contract DeployConstantProduct is EnvReader, Utils {
     constructor() {
         solutionSettler = addressEnvOrDefault("SETTLEMENT_CONTRACT", DEFAULT_SETTLEMENT_CONTRACT);
         console.log("Settlement contract at %s.", solutionSettler);

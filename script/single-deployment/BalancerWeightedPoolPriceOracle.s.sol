@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {Script, console} from "forge-std/Script.sol";
+import {console} from "forge-std/Script.sol";
 
 import {BalancerWeightedPoolPriceOracle, IVault} from "src/oracles/BalancerWeightedPoolPriceOracle.sol";
 
+import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
-contract DeployBalancerWeightedPoolPriceOracle is Script, Utils {
+contract DeployBalancerWeightedPoolPriceOracle is EnvReader, Utils {
     // Balancer uses the same address on each supported chain until now:
     // https://docs.balancer.fi/reference/contracts/deployment-addresses/mainnet.html
     // Chains: Arbitrum, Avalanche, Base, Gnosis, Goerli, Mainnet, Optimism,
