@@ -173,6 +173,8 @@ contract CowAmmModule {
         bytes32 _activeOrder = activeOrders[safe];
         if (_activeOrder == EMPTY_AMM_HASH) {
             revert NoActiveOrderToReplace();
+        } else {
+            _closeAmm(safe, _activeOrder);
         }
         return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
