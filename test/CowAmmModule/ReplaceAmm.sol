@@ -43,7 +43,6 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         assertTrue(cowAmmModule.activeOrders(safe) == bytes32(0));
 
         ConstantProduct.Data memory ammData = getDefaultData();
-        bytes32 domainSeparator = settlement.domainSeparator();
 
         vm.prank(address(safe));
         vm.expectRevert(abi.encodeWithSelector(CowAmmModule.NoActiveOrderToReplace.selector));
