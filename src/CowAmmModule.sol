@@ -126,6 +126,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return The hash of the conditional order that created the AMM.
      */
     function createAmm(
         IERC20 token0,
@@ -155,6 +156,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return The hash of the conditional order that created the new AMM.
      * @dev This function internally just calls `closeAmm` and then `createAmm`.
      */
     function replaceAmm(
@@ -198,6 +200,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return orderHash The hash of the conditional order that created the AMM.
      */
     function _createAmm(
         Safe safe,

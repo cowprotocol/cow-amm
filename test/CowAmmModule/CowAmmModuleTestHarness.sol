@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
+import {
+    BaseComposableCoWTest, IConditionalOrder, ComposableCoW
+} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 import {SafeLib, Safe} from "lib/composable-cow/test/libraries/SafeLib.t.sol";
 
 import {CowAmmModule, ConstantProduct} from "src/CowAmmModule.sol";
@@ -27,11 +29,16 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
         owners[1] = bob.addr;
         owners[2] = carol.addr;
 
-        safe = Safe(payable(SafeLib.createSafe(factory, singleton, owners, 2, address(0), 2)));
+        safe = Safe(
+            payable(
+                SafeLib.createSafe(
+                    factory, singleton, owners, 2, address(0), Utils.uintFromString("safe creation salt")
+                )
+            )
+        );
 
         constantProduct = new ConstantProduct(address(settlement));
-        cowAmmModule =
-            new CowAmmModule(address(settlement), address(eHandler), address(composableCow), address(constantProduct));
+        cowAmmModule = new CowAmmModule(settlement, eHandler, composableCow, constantProduct);
     }
 
     function setUpDefaultSafe() internal {
@@ -58,5 +65,16 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
             ammData.priceOracleData,
             ammData.appData
         );
+    }
+
+    function preCalculateConditionalOrderHash(ConstantProduct.Data memory data) internal view returns (bytes32) {
+        // Wrap the data in a conditional order
+        IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams({
+            handler: constantProduct,
+            salt: keccak256(abi.encodePacked(block.timestamp)),
+            staticInput: abi.encode(data)
+        });
+
+        return composableCow.hash(params);
     }
 }

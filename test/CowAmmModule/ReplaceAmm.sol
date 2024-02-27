@@ -14,7 +14,14 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         ConstantProduct.Data memory ammData = getDefaultData();
         ammData.minTradedToken0 = 1;
 
+        bytes32 newPreCalculatedOrderHash = preCalculateConditionalOrderHash(ammData);
+
         vm.prank(address(safe));
+        vm.expectEmit();
+        emit CowAmmModule.CowAmmClosed(safe, previousOrderHash);
+        vm.expectEmit();
+        emit CowAmmModule.CowAmmCreated(safe, token0, token1, newPreCalculatedOrderHash);
+
         bytes32 orderHash = cowAmmModule.replaceAmm(
             ammData.token0,
             ammData.token1,
@@ -26,6 +33,8 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
 
         assertTrue(orderHash != previousOrderHash);
         assertEq(orderHash, cowAmmModule.activeOrders(safe));
+        assertFalse(composableCow.singleOrders(address(safe), previousOrderHash));
+        assertTrue(composableCow.singleOrders(address(safe), orderHash));
     }
 
     function testReplaceAmmWhenNonExists() public {
@@ -41,7 +50,7 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         // Verify `ChangedFallbackHandler` and should be set to `eHandler`
         // We do this to ensure that the fallback handler is set to the expected value
         // as observing the handler directly is not possible
-        vm.expectEmit(true, true, false, false);
+        vm.expectEmit();
         emit FallbackManager.ChangedFallbackHandler(address(eHandler));
         vm.expectEmit(true, true, true, false);
         emit CowAmmModule.CowAmmCreated(safe, token0, token1, bytes32(0));
