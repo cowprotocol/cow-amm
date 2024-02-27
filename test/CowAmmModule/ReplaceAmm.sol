@@ -46,14 +46,7 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         bytes32 domainSeparator = settlement.domainSeparator();
 
         vm.prank(address(safe));
-
-        // Verify `ChangedFallbackHandler` and should be set to `eHandler`
-        // We do this to ensure that the fallback handler is set to the expected value
-        // as observing the handler directly is not possible
-        vm.expectEmit();
-        emit FallbackManager.ChangedFallbackHandler(address(eHandler));
-        vm.expectEmit(true, true, true, false);
-        emit CowAmmModule.CowAmmCreated(safe, token0, token1, bytes32(0));
+        vm.expectRevert(abi.encodeWithSelector(CowAmmModule.NoActiveOrderToReplace.selector));
 
         bytes32 orderHash = cowAmmModule.replaceAmm(
             ammData.token0,
@@ -63,10 +56,5 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
             ammData.priceOracleData,
             ammData.appData
         );
-
-        assertEq(address(eHandler.domainVerifiers(safe, domainSeparator)), address(composableCow));
-        assertEq(token0.allowance(address(safe), address(relayer)), type(uint256).max);
-        assertEq(token1.allowance(address(safe), address(relayer)), type(uint256).max);
-        assertTrue(composableCow.singleOrders(address(safe), orderHash));
     }
 }
