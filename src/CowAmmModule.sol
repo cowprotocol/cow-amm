@@ -144,7 +144,7 @@ contract CowAmmModule {
     }
 
     /**
-     * @notice Replaces the active CoW AMM with a new one.
+     * @notice Replaces the active CoW AMM that was created with this module with a new one.
      * @param token0 The address of the first token in the pair.
      * @param token1 The address of the second token in the pair.
      * @param minTradedToken0 The minimum amount of token0 before the AMM attempts auto-rebalance.
@@ -165,9 +165,10 @@ contract CowAmmModule {
         Safe safe = Safe(payable(msg.sender));
 
         bytes32 _activeOrder = activeOrders[safe];
-        if (_activeOrder != EMPTY_AMM_HASH) {
-            _closeAmm(safe, _activeOrder);
+        if (_activeOrder == EMPTY_AMM_HASH) {
+            revert NoActiveOrderToReplace();
         }
+        _closeAmm(safe, _activeOrder);
         _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
