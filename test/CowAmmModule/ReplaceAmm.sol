@@ -9,6 +9,7 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         setUpDefaultCowAmm();
 
         bytes32 previousOrderHash = cowAmmModule.activeOrders(safe);
+        require(previousOrderHash != bytes32(0), "no order created in setup");
 
         ConstantProduct.Data memory ammData = getDefaultData();
         ammData.minTradedToken0 = 1;

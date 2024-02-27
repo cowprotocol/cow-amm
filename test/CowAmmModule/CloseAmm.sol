@@ -9,6 +9,7 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
         setUpDefaultCowAmm();
 
         bytes32 previousOrderHash = cowAmmModule.activeOrders(safe);
+        require(cowAmmModule.activeOrders(safe) != bytes32(0), "no order created in setup");
 
         vm.prank(address(safe));
 
@@ -22,7 +23,7 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
     function testCloseAmmWhenNoneExists() public {
         setUpDefaultSafe();
 
-        assertTrue(cowAmmModule.activeOrders(safe) == bytes32(0));
+        assertEq(cowAmmModule.activeOrders(safe), bytes32(0));
 
         vm.prank(address(safe));
         cowAmmModule.closeAmm();
