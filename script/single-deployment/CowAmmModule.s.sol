@@ -21,7 +21,7 @@ contract DeployCowAmmModule is EnvReader, Utils {
             addressEnvOrDefault("EXTENSIBLE_FALLBACK_HANDLER_CONTRACT", DEFAULT_EXTENSIBLE_FALLBACK_HANDLER_CONTRACT);
         composableCow = addressEnvOrDefault("COMPOSABLE_COW_CONTRACT", DEFAULT_COMPOSABLE_COW_CONTRACT);
 
-        // Special case as there is no default value for the constant product contract (not deterministically deployed).
+        // Special case as the contract address might be determined at run time.
         handler = addressEnvOrDefault("CONSTANT_PRODUCT_CONTRACT", address(0));
 
         console.log("Settlement contract at %s.", solutionSettler);
