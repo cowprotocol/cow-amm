@@ -1,18 +1,18 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 
-// Vendored from OpenZeppelin contracts with minor modifications:
+// Logic mostly ported from OpenZeppelin contracts for use in the
+// context of a Safe Multisig. Highlights:
 // - Removed all functions except `functionCall` and `functionCallWithValue`
 // - Functions modified to accept a `ISafe` as the first argument which
 //   is the Safe used to execute the transaction.
 // - Modified `functionCallWithValue` to execute the transaction via a Safe,
 //   designed to be called from a module.
 // - Added imports for Safe related contracts.
-// - Added import for canonical Address library.
 // <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.1/contracts/utils/Address.sol>
 
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Address.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {Safe, Enum} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
 

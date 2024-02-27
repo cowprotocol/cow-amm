@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 
-// Vendored from OpenZeppelin contracts with minor modifications:
+// Logic mostly ported from OpenZeppelin contracts for use in the
+// context of a Safe Multisig. Highlights:
 // - Functions modified to accept an `ISafe` and `IERC20` as the first two arguments
 //   which is the Safe used to execute the transaction and the token being transferred.
 //   For executing the transaction, uses the `functionCall` function from SafeModuleAddress.sol.
@@ -10,7 +11,7 @@
 
 // OpenZeppelin Contracts (last updated v5.0.0) (token/ERC20/utils/SafeERC20.sol)
 
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeModuleAddress} from "./SafeModuleAddress.sol";
