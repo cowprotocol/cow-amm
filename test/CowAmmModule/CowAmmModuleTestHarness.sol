@@ -2,7 +2,11 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {
-    BaseComposableCoWTest, IConditionalOrder, ComposableCoW
+    BaseComposableCoWTest,
+    IConditionalOrder,
+    ComposableCoW,
+    ExtensibleFallbackHandler,
+    SignatureVerifierMuxer
 } from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 import {SafeLib, Safe} from "lib/composable-cow/test/libraries/SafeLib.t.sol";
 
