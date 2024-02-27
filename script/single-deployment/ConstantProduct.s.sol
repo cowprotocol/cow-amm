@@ -5,9 +5,10 @@ import {console} from "forge-std/Script.sol";
 
 import {ConstantProduct} from "src/ConstantProduct.sol";
 
+import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
-contract DeployConstantProduct is Utils {
+contract DeployConstantProduct is EnvReader, Utils {
     constructor() {
         solutionSettler = addressEnvOrDefault("SETTLEMENT_CONTRACT", DEFAULT_SETTLEMENT_CONTRACT);
         console.log("Settlement contract at %s.", solutionSettler);

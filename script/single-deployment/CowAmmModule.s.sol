@@ -3,11 +3,16 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {console} from "forge-std/Script.sol";
 
-import {CowAmmModule} from "src/CowAmmModule.sol";
+import {ComposableCoW} from "lib/composable-cow/src/ComposableCoW.sol";
+import {GPv2Settlement} from "lib/composable-cow/lib/cowprotocol/src/contracts/GPv2Settlement.sol";
+import {ExtensibleFallbackHandler} from "lib/composable-cow/lib/safe/contracts/handler/ExtensibleFallbackHandler.sol";
+import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
+import {CowAmmModule} from "src/CowAmmModule.sol";
+import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
-contract DeployCowAmmModule is Utils {
+contract DeployCowAmmModule is EnvReader, Utils {
     address internal handler;
 
     constructor() {
@@ -15,6 +20,8 @@ contract DeployCowAmmModule is Utils {
         extensibleFallbackHandler =
             addressEnvOrDefault("EXTENSIBLE_FALLBACK_HANDLER_CONTRACT", DEFAULT_EXTENSIBLE_FALLBACK_HANDLER_CONTRACT);
         composableCow = addressEnvOrDefault("COMPOSABLE_COW_CONTRACT", DEFAULT_COMPOSABLE_COW_CONTRACT);
+
+        // Special case as there is no default value for the constant product contract (not deterministically deployed).
         handler = addressEnvOrDefault("CONSTANT_PRODUCT_CONTRACT", address(0));
 
         console.log("Settlement contract at %s.", solutionSettler);
@@ -28,9 +35,7 @@ contract DeployCowAmmModule is Utils {
         // Special case: if the constant product contract is not provided, we assume
         // that this script is being called from DeployAllContracts and that the
         // constant product contract will be deployed by it.
-        if (handler == address(0)) {
-            console.log("No constant product contract provided, assuming called in deployAll.");
-        } else {
+        if (handler != address(0)) {
             console.log("handler contract at %s.", handler);
             assertHasCode(handler, "no code at expected handler contract");
         }
@@ -50,6 +55,11 @@ contract DeployCowAmmModule is Utils {
 
     function deployCowAmmModule(address _handler) internal returns (CowAmmModule) {
         vm.broadcast();
-        return new CowAmmModule(solutionSettler, extensibleFallbackHandler, composableCow, _handler);
+        return new CowAmmModule(
+            GPv2Settlement(payable(solutionSettler)),
+            ExtensibleFallbackHandler(extensibleFallbackHandler),
+            ComposableCoW(composableCow),
+            IConditionalOrder(_handler)
+        );
     }
 }

@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {ComposableCoW} from "lib/composable-cow/src/ComposableCoW.sol";
 import {GPv2Settlement} from "lib/composable-cow/lib/cowprotocol/src/contracts/GPv2Settlement.sol";
+import {GPv2VaultRelayer} from "lib/composable-cow/lib/cowprotocol/src/contracts/GPv2VaultRelayer.sol";
 import {Safe, FallbackManager, Enum} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
 import {
     ExtensibleFallbackHandler,
@@ -32,7 +33,7 @@ contract CowAmmModule {
     /**
      * @notice The vault relayer that should be automatically approved for the tokens.
      */
-    address public immutable VAULT_RELAYER;
+    GPv2VaultRelayer public immutable VAULT_RELAYER;
     /**
      * @notice The address for the `ExtensibleFallbackHandler` on this network. This will be set as the
      * fallback handler on the Safe when the module is attached to a Safe.
@@ -100,16 +101,21 @@ contract CowAmmModule {
      * @param _composableCow The address of `ComposableCoW`.
      * @param _handler The address of the ConstantProduct AMM implementation for creating new CoW AMMs.
      */
-    constructor(address _settler, address _extensibleFallbackHandler, address _composableCow, address _handler) {
+    constructor(
+        GPv2Settlement _settler,
+        ExtensibleFallbackHandler _extensibleFallbackHandler,
+        ComposableCoW _composableCow,
+        IConditionalOrder _handler
+    ) {
         // GPv2 specifics to make sure we set the right things and they're immutable!
         SETTLER = GPv2Settlement(payable(_settler));
         COW_DOMAIN_SEPARATOR = SETTLER.domainSeparator();
-        VAULT_RELAYER = address(SETTLER.vaultRelayer());
+        VAULT_RELAYER = SETTLER.vaultRelayer();
 
         // ComposableCoW specifics
-        EXTENSIBLE_FALLBACK_HANDLER = ExtensibleFallbackHandler(_extensibleFallbackHandler);
-        COMPOSABLE_COW = ComposableCoW(_composableCow);
-        HANDLER = IConditionalOrder(_handler);
+        EXTENSIBLE_FALLBACK_HANDLER = _extensibleFallbackHandler;
+        COMPOSABLE_COW = _composableCow;
+        HANDLER = _handler;
     }
 
     /**
@@ -285,7 +291,7 @@ contract CowAmmModule {
      * @notice A helper function for setting ERC20 token allowances on the Safe
      */
     function _setAllowance(Safe safe, IERC20 token) internal {
-        _execute(safe, address(token), 0, abi.encodeCall(IERC20.approve, (VAULT_RELAYER, type(uint256).max)));
+        _execute(safe, address(token), 0, abi.encodeCall(IERC20.approve, (address(VAULT_RELAYER), type(uint256).max)));
     }
 
     /**
