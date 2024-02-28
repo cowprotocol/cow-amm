@@ -13,7 +13,7 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
 
         vm.prank(address(safe));
 
-        vm.expectEmit(true, true, true, false);
+        vm.expectEmit();
         emit CowAmmModule.CowAmmClosed(safe, previousOrderHash);
         cowAmmModule.closeAmm();
 

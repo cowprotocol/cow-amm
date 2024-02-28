@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
+import {FallbackManager} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
+
 import {
     CowAmmModuleTestHarness,
     CowAmmModule,
@@ -9,7 +11,6 @@ import {
     ComposableCoW,
     SignatureVerifierMuxer
 } from "./CowAmmModuleTestHarness.sol";
-import {FallbackManager} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
 
 abstract contract CreateAmmTest is CowAmmModuleTestHarness {
     function testCreateAmm() public {
