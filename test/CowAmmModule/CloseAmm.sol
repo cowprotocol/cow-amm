@@ -10,6 +10,7 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
 
         bytes32 previousOrderHash = cowAmmModule.activeOrders(safe);
         require(cowAmmModule.activeOrders(safe) != bytes32(0), "no order created in setup");
+        require(composableCow.singleOrders(address(safe), previousOrderHash), "order unset");
 
         vm.prank(address(safe));
 
