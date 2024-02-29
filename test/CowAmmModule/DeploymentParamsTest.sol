@@ -16,5 +16,7 @@ abstract contract DeploymentParamsTest is CowAmmModuleTestHarness {
         assertEq(address(cowAmmModule.EXTENSIBLE_FALLBACK_HANDLER()), address(eHandler));
         assertEq(address(cowAmmModule.COMPOSABLE_COW()), address(composableCow));
         assertEq(address(cowAmmModule.HANDLER()), address(constantProduct));
+        assertEq(address(cowAmmModule.VAULT_RELAYER()), address(settlement.vaultRelayer()));
+        assertEq(cowAmmModule.COW_DOMAIN_SEPARATOR(), settlement.domainSeparator());
     }
 }
