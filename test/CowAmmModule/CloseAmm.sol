@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {CowAmmModuleTestHarness, CowAmmModule, ConstantProduct} from "./CowAmmModuleTestHarness.sol";
+import {CowAmmModuleTestHarness, CowAmmModule, ConstantProduct, ComposableCoW} from "./CowAmmModuleTestHarness.sol";
 import {FallbackManager} from "lib/composable-cow/lib/safe/contracts/Safe.sol";
 
 abstract contract CloseAmmTest is CowAmmModuleTestHarness {
@@ -18,6 +18,7 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
         cowAmmModule.closeAmm();
 
         assertEq(cowAmmModule.activeOrders(safe), bytes32(0));
+        assertFalse(composableCow.singleOrders(address(safe), previousOrderHash));
     }
 
     function testCloseAmmWhenNoneExists() public {
@@ -25,6 +26,11 @@ abstract contract CloseAmmTest is CowAmmModuleTestHarness {
 
         assertEq(cowAmmModule.activeOrders(safe), bytes32(0));
 
+        vm.mockCallRevert(
+            address(composableCow),
+            abi.encodeWithSelector(ComposableCoW.remove.selector),
+            abi.encode("called remove when shouldn't have")
+        );
         vm.prank(address(safe));
         cowAmmModule.closeAmm();
 
