@@ -5,4 +5,8 @@ library Utils {
     function addressFromString(string memory s) internal pure returns (address) {
         return address(uint160(uint256(keccak256(bytes(s)))));
     }
+
+    function uintFromString(string memory s) internal pure returns (uint256) {
+        return uint256(keccak256(bytes(s)));
+    }
 }

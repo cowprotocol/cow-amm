@@ -11,6 +11,8 @@ import {
 } from "lib/composable-cow/lib/safe/contracts/handler/ExtensibleFallbackHandler.sol";
 import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
+import {SafeModuleSafeERC20} from "./libraries/SafeModuleSafeERC20.sol";
+import {SafeModuleAddress} from "./libraries/SafeModuleAddress.sol";
 import {ConstantProduct, IPriceOracle, IERC20} from "./ConstantProduct.sol";
 
 /**
@@ -19,6 +21,9 @@ import {ConstantProduct, IPriceOracle, IERC20} from "./ConstantProduct.sol";
  * @dev A Safe module for smoothing the experience when administering CoW AMMs.
  */
 contract CowAmmModule {
+    using SafeModuleSafeERC20 for Safe;
+    using SafeModuleAddress for Safe;
+
     // --- immutable state
 
     /**
@@ -86,7 +91,7 @@ contract CowAmmModule {
      * @param token1 The address of the second token in the pair.
      * @param orderHash The hash of the conditional order that created the AMM.
      */
-    event CowAmmCreated(Safe indexed safe, address indexed token0, address indexed token1, bytes32 orderHash);
+    event CowAmmCreated(Safe indexed safe, IERC20 indexed token0, IERC20 indexed token1, bytes32 orderHash);
 
     /**
      * @notice Emitted when an active CoW AMM is closed.
@@ -126,6 +131,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return The hash of the conditional order that created the AMM.
      */
     function createAmm(
         IERC20 token0,
@@ -134,7 +140,7 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) external {
+    ) external returns (bytes32) {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
@@ -144,7 +150,7 @@ contract CowAmmModule {
             revert ActiveAMM();
         }
 
-        _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
@@ -155,6 +161,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return The hash of the conditional order that created the new AMM.
      * @dev This function internally just calls `closeAmm` and then `createAmm`.
      */
     function replaceAmm(
@@ -164,16 +171,17 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) external {
+    ) external returns (bytes32) {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
         bytes32 _activeOrder = activeOrders[safe];
         if (_activeOrder == EMPTY_AMM_HASH) {
             revert NoActiveOrderToReplace();
+        } else {
+            _closeAmm(safe, _activeOrder);
         }
-        _closeAmm(safe, _activeOrder);
-        _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
@@ -199,6 +207,7 @@ contract CowAmmModule {
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
+     * @return orderHash The hash of the conditional order that created the AMM.
      */
     function _createAmm(
         Safe safe,
@@ -208,7 +217,7 @@ contract CowAmmModule {
         address priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
-    ) internal {
+    ) internal returns (bytes32 orderHash) {
         // Always make sure the module is setup before doing anything
         _setup(safe);
 
@@ -239,15 +248,15 @@ contract CowAmmModule {
         });
 
         // Create the new CoW AMM
-        _execute(safe, address(COMPOSABLE_COW), 0, abi.encodeCall(ComposableCoW.create, (params, true)));
+        safe.functionCall(address(COMPOSABLE_COW), abi.encodeCall(ComposableCoW.create, (params, true)));
 
         // Set the new CoW AMM as the active order
         // Would be nice if the `ComposableCoW.create` returned the hash as it's
         // already calculated there and would prevent double-hashing and save some gas!
-        bytes32 _activeOrder = COMPOSABLE_COW.hash(params);
-        activeOrders[safe] = _activeOrder;
+        orderHash = COMPOSABLE_COW.hash(params);
+        activeOrders[safe] = orderHash;
 
-        emit CowAmmCreated(safe, address(token0), address(token1), _activeOrder);
+        emit CowAmmCreated(safe, token0, token1, orderHash);
     }
 
     /**
@@ -257,7 +266,7 @@ contract CowAmmModule {
      * @param orderHash The hash of the conditional order that created the AMM.
      */
     function _closeAmm(Safe safe, bytes32 orderHash) internal {
-        _execute(safe, address(COMPOSABLE_COW), 0, abi.encodeCall(ComposableCoW.remove, (orderHash)));
+        safe.functionCall(address(COMPOSABLE_COW), abi.encodeCall(ComposableCoW.remove, (orderHash)));
         emit CowAmmClosed(safe, orderHash);
         activeOrders[safe] = EMPTY_AMM_HASH;
     }
@@ -268,20 +277,16 @@ contract CowAmmModule {
     function _setup(Safe safe) internal {
         address fallbackHandler = abi.decode(safe.getStorageAt(uint256(_FALLBACK_HANDLER_STORAGE_SLOT), 1), (address));
         if (fallbackHandler != address(EXTENSIBLE_FALLBACK_HANDLER)) {
-            _execute(
-                safe,
+            safe.functionCall(
                 address(safe),
-                0,
                 abi.encodeCall(FallbackManager.setFallbackHandler, (address(EXTENSIBLE_FALLBACK_HANDLER)))
             );
         }
 
         address domainVerifier = address(EXTENSIBLE_FALLBACK_HANDLER.domainVerifiers(safe, COW_DOMAIN_SEPARATOR));
         if (domainVerifier != address(COMPOSABLE_COW)) {
-            _execute(
-                safe,
-                address(safe), // MUST be the safe address
-                0,
+            safe.functionCall(
+                address(safe),
                 abi.encodeCall(SignatureVerifierMuxer.setDomainVerifier, (COW_DOMAIN_SEPARATOR, COMPOSABLE_COW))
             );
         }
@@ -291,14 +296,8 @@ contract CowAmmModule {
      * @notice A helper function for setting ERC20 token allowances on the Safe
      */
     function _setAllowance(Safe safe, IERC20 token) internal {
-        _execute(safe, address(token), 0, abi.encodeCall(IERC20.approve, (address(VAULT_RELAYER), type(uint256).max)));
-    }
-
-    /**
-     * @notice A helper function for executing a transaction from the module. This function is used to ensure that
-     * execution is done consistently and that it never uses delegatecall.
-     */
-    function _execute(Safe safe, address to, uint256 value, bytes memory data) internal {
-        safe.execTransactionFromModule(to, value, data, Enum.Operation.Call);
+        if (token.allowance(address(safe), address(VAULT_RELAYER)) < type(uint256).max) {
+            safe.forceApprove(token, address(VAULT_RELAYER), type(uint256).max);
+        }
     }
 }
