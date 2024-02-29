@@ -74,7 +74,9 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
     }
 
     function testFallbackHandlerSetDoesNotSetAgain() public {
-        setUpDefaultSafe();
+        setUpDefaultCowAmm();
+        vm.prank(address(safe));
+        cowAmmModule.closeAmm();
 
         ConstantProduct.Data memory ammData = getDefaultData();
 
@@ -84,7 +86,6 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
             abi.encode("called setFallbackHandler")
         );
         vm.prank(address(safe));
-        vm.expectRevert();
         cowAmmModule.createAmm(
             ammData.token0,
             ammData.token1,
@@ -96,7 +97,9 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
     }
 
     function testDomainVerifierSetDoesNotSetAgain() public {
-        setUpDefaultSafe();
+        setUpDefaultCowAmm();
+        vm.prank(address(safe));
+        cowAmmModule.closeAmm();
 
         ConstantProduct.Data memory ammData = getDefaultData();
 
@@ -106,7 +109,6 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
             abi.encode("called setDomainVerifier")
         );
         vm.prank(address(safe));
-        vm.expectRevert();
         cowAmmModule.createAmm(
             ammData.token0,
             ammData.token1,
