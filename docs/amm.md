@@ -114,7 +114,8 @@ The static input of the constant product handler comprises the following paramet
   See the [section below](#supported-price-oracles) for more information on which price oracles are available.
 - `bytes priceOracleData`: the extra oracle information needed to recover the price.
   See the section below for more information on how to set this value based on the chosen price oracle.
-- `bytes32 appData`: The app data (as defined in a CoW Protocol order) that must be used for the order to be valid.
+- `bytes32 appData`: The app data that will be used on all order.
+  Any app data that is [valid for the CoW Protocol](https://docs.cow.fi/cow-protocol/reference/core/intents/app-data) is admissible; for example, hooks and referrals are supported.
 
 If Foundry is available in your system, you can generate the bytes calldata with the following command:
 ```sh
