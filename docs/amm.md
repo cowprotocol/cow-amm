@@ -116,6 +116,8 @@ The static input of the constant product handler comprises the following paramet
   See the section below for more information on how to set this value based on the chosen price oracle.
 - `bytes32 appData`: The app data that will be used on all order.
   Any app data that is [valid for the CoW Protocol](https://docs.cow.fi/cow-protocol/reference/core/intents/app-data) is admissible; for example, hooks and referrals are supported.
+  It's important that you upload your app data to the API **before** you call `create`.
+  [There's a live-coding environment tutorial available to help you with this.](https://learn.cow.fi/tutorial/orderbook-upload-app-data)
 
 If Foundry is available in your system, you can generate the bytes calldata with the following command:
 ```sh
