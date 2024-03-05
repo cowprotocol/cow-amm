@@ -29,16 +29,16 @@
   },
   "CowAmmModule": {
     "1": {
-      "address": "0x49D3d6e387E0CD2AC08cBe2323B341E70ccA3561",
-      "transactionHash": "0x2dca2051ee63f10170132194190a780ce38cbe57ce27d2b382cad417850d7a52"
+      "address": "0x413e10D3A38F002eDd45d57Be1833ea133f5F5a4",
+      "transactionHash": "0x3720c9ae34c99233312375bc50528f24c8134c65040490f504617a7f6aa803b6"
     },
     "100": {
-      "address": "0x758fe3195f6499fd64de2b96a0b97D0441c10bAB",
-      "transactionHash": "0x472c7fffdb1d419a2ab40deb7a7abb5f5d068c3b902d0a0a56615b469c535940"
+      "address": "0xAa06a7274c97Bdb8375f403A4db565E7375De94e",
+      "transactionHash": "0x398abb8f5ffc97bb7e78b6921ca338200dd230e671fda466b19d7f1e14c5c50d"
     },
     "11155111": {
-      "address": "0x311eCe22daa29dBe1F253aBFee9dD4b360257aA1",
-      "transactionHash": "0x759c6baab7f8ba5eadc57f65cacf751978ea37c6277a9f84c280c38f14970711"
+      "address": "0x5660096d77dE391bAad64481C0f5241542f1a14a",
+      "transactionHash": "0xfb5fab3c2b419607fb252c3f3115d6ac37bfed279f0d1af3b539d5717cc645fd"
     }
   },
   "UniswapV2PriceOracle": {
