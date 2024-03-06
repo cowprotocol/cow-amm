@@ -34,11 +34,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         (ConstantProduct.Data memory defaultData, GPv2Order.Data memory defaultOrder) = setUpBasicOrder();
 
         IERC20 badToken = IERC20(Utils.addressFromString("bad token"));
-        vm.mockCall(address(badToken), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(1337));
+        vm.mockCall(address(badToken), abi.encodeCall(IERC20.balanceOf, (orderOwner)), abi.encode(1337));
         IERC20 badTokenExtra = IERC20(Utils.addressFromString("extra bad token"));
-        vm.mockCall(
-            address(badTokenExtra), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(1337)
-        );
+        vm.mockCall(address(badTokenExtra), abi.encodeCall(IERC20.balanceOf, (orderOwner)), abi.encode(1337));
 
         IERC20[2][4] memory sellTokenInvalidCombinations = [
             [badToken, badToken],
