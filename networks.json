@@ -27,6 +27,20 @@
       "transactionHash": "0x0d2d00fbdab5a0c6fb32cfdebde7f77dfce2eb1e016f4d0c540333f9c6bd1215"
     }
   },
+  "CowAmmModule": {
+    "1": {
+      "address": "0x413e10D3A38F002eDd45d57Be1833ea133f5F5a4",
+      "transactionHash": "0x99eafdf186e890a29196aa14223bbf7a0a59ecbcdbd9f5bf6314de90e78e4161"
+    },
+    "100": {
+      "address": "0xAa06a7274c97Bdb8375f403A4db565E7375De94e",
+      "transactionHash": "0x398abb8f5ffc97bb7e78b6921ca338200dd230e671fda466b19d7f1e14c5c50d"
+    },
+    "11155111": {
+      "address": "0x5660096d77dE391bAad64481C0f5241542f1a14a",
+      "transactionHash": "0xfb5fab3c2b419607fb252c3f3115d6ac37bfed279f0d1af3b539d5717cc645fd"
+    }
+  },
   "UniswapV2PriceOracle": {
     "1": {
       "address": "0x573cC0c800048f94e022463b9214D92c2d65e97B",
