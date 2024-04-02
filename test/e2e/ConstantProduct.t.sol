@@ -12,7 +12,7 @@ import {TestAccountHelper} from "test/libraries/TestAccountHelper.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";
 import {SafeHelper} from "test/libraries/SafeHelper.sol";
 
-contract E2eConditionalOrderTest is BaseComposableCoWTest {
+contract E2EConditionalOrderTest is BaseComposableCoWTest {
     using TestAccountHelper for TestAccount[];
     using UniswapV2Helper for IUniswapV2Factory;
     using SafeHelper for Safe;
@@ -32,7 +32,7 @@ contract E2eConditionalOrderTest is BaseComposableCoWTest {
         DAI = token0;
         WETH = token1;
         IUniswapV2Factory uniswapV2Factory = UniswapV2Helper.deployUniswapV2FactoryAt(
-            vm, Utils.addressFromString("E2eConditionalOrderTest UniswapV2 factory")
+            vm, Utils.addressFromString("E2EConditionalOrderTest UniswapV2 factory")
         );
         pair = createPair(uniswapV2Factory, DAI, 300_000 ether, WETH, 100 ether);
     }
@@ -48,11 +48,11 @@ contract E2eConditionalOrderTest is BaseComposableCoWTest {
         deal(address(token0), address(uniswapVPair), amountToken0);
         deal(address(token1), address(uniswapVPair), amountToken1);
         uniswapVPair.mint(
-            Utils.addressFromString("E2eConditionalOrderTest sink address from UniswapV2 liquidity tokens")
+            Utils.addressFromString("E2EConditionalOrderTest sink address from UniswapV2 liquidity tokens")
         );
     }
 
-    function testE2eSettle() public {
+    function testE2ESettle() public {
         (Safe amm, TestAccount[] memory owners) = deployAmmSafe();
 
         ConstantProduct.Data memory data = ConstantProduct.Data(
