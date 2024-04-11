@@ -26,11 +26,11 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
 
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
-        constantProduct = new ConstantProduct(address(settlement));
-        uniswapV2PriceOracle = new UniswapV2PriceOracle();
-        domainSeparator = composableCow.domainSeparator();
         DAI = token0;
         WETH = token1;
+        constantProduct = new ConstantProduct(address(settlement), DAI, WETH);
+        uniswapV2PriceOracle = new UniswapV2PriceOracle();
+        domainSeparator = composableCow.domainSeparator();
         IUniswapV2Factory uniswapV2Factory = UniswapV2Helper.deployUniswapV2FactoryAt(
             vm, Utils.addressFromString("E2EConditionalOrderTest UniswapV2 factory")
         );
@@ -56,7 +56,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         (Safe amm, TestAccount[] memory owners) = deployAmmSafe();
 
         ConstantProduct.Data memory data = ConstantProduct.Data(
-            DAI, WETH, 0, uniswapV2PriceOracle, abi.encode(UniswapV2PriceOracle.Data(pair)), keccak256("order app data")
+            0, uniswapV2PriceOracle, abi.encode(UniswapV2PriceOracle.Data(pair)), keccak256("order app data")
         );
         IConditionalOrder.ConditionalOrderParams memory params =
             super.createOrder(constantProduct, keccak256("any salt"), abi.encode(data));

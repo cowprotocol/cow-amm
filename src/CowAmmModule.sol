@@ -53,6 +53,14 @@ contract CowAmmModule {
      * @notice The address of the ConstantProduct programmatic order handler implementation of CoW AMMs.
      */
     IConditionalOrder public immutable HANDLER;
+    /**
+     * @notice The first of the two tokens traded by the AMM deployed by this module.
+     */
+    IERC20 public immutable token0;
+    /**
+     * @notice The second of the two tokens traded by the AMM deployed by this module.
+     */
+    IERC20 public immutable token1;
 
     // --- mutable state
 
@@ -110,7 +118,9 @@ contract CowAmmModule {
         GPv2Settlement _settler,
         ExtensibleFallbackHandler _extensibleFallbackHandler,
         ComposableCoW _composableCow,
-        IConditionalOrder _handler
+        IConditionalOrder _handler,
+        IERC20 _token0,
+        IERC20 _token1
     ) {
         // GPv2 specifics to make sure we set the right things and they're immutable!
         SETTLER = GPv2Settlement(payable(_settler));
@@ -121,26 +131,23 @@ contract CowAmmModule {
         EXTENSIBLE_FALLBACK_HANDLER = _extensibleFallbackHandler;
         COMPOSABLE_COW = _composableCow;
         HANDLER = _handler;
+
+        token0 = _token0;
+        token1 = _token1;
     }
 
     /**
      * @notice Creates a new CoW AMM with the given parameters.
-     * @param token0 The address of the first token in the pair.
-     * @param token1 The address of the second token in the pair.
      * @param minTradedToken0 The minimum amount of token0 before the AMM attempts auto-rebalance.
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
      * @param appData The app data to pass to the AMM.
      * @return The hash of the conditional order that created the AMM.
      */
-    function createAmm(
-        IERC20 token0,
-        IERC20 token1,
-        uint256 minTradedToken0,
-        address priceOracle,
-        bytes calldata priceOracleData,
-        bytes32 appData
-    ) external returns (bytes32) {
+    function createAmm(uint256 minTradedToken0, address priceOracle, bytes calldata priceOracleData, bytes32 appData)
+        external
+        returns (bytes32)
+    {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
@@ -150,13 +157,11 @@ contract CowAmmModule {
             revert ActiveAMM();
         }
 
-        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
      * @notice Replaces the active CoW AMM that was created with this module with a new one.
-     * @param token0 The address of the first token in the pair.
-     * @param token1 The address of the second token in the pair.
      * @param minTradedToken0 The minimum amount of token0 before the AMM attempts auto-rebalance.
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
@@ -164,14 +169,10 @@ contract CowAmmModule {
      * @return The hash of the conditional order that created the new AMM.
      * @dev This function internally just calls `closeAmm` and then `createAmm`.
      */
-    function replaceAmm(
-        IERC20 token0,
-        IERC20 token1,
-        uint256 minTradedToken0,
-        address priceOracle,
-        bytes calldata priceOracleData,
-        bytes32 appData
-    ) external returns (bytes32) {
+    function replaceAmm(uint256 minTradedToken0, address priceOracle, bytes calldata priceOracleData, bytes32 appData)
+        external
+        returns (bytes32)
+    {
         // Assume the caller is a Safe
         Safe safe = Safe(payable(msg.sender));
 
@@ -181,7 +182,7 @@ contract CowAmmModule {
         } else {
             _closeAmm(safe, _activeOrder);
         }
-        return _createAmm(safe, token0, token1, minTradedToken0, priceOracle, priceOracleData, appData);
+        return _createAmm(safe, minTradedToken0, priceOracle, priceOracleData, appData);
     }
 
     /**
@@ -201,8 +202,6 @@ contract CowAmmModule {
     /**
      * @notice Creates a new CoW AMM with the given parameters.
      * @param safe The address of the Safe that owns the new CoW AMM.
-     * @param token0 The address of the first token in the pair.
-     * @param token1 The address of the second token in the pair.
      * @param minTradedToken0 The minimum amount of token0 before the AMM attempts auto-rebalance.
      * @param priceOracle The address of the price oracle to use for the AMM.
      * @param priceOracleData The data to pass to the price oracle.
@@ -211,8 +210,6 @@ contract CowAmmModule {
      */
     function _createAmm(
         Safe safe,
-        IERC20 token0,
-        IERC20 token1,
         uint256 minTradedToken0,
         address priceOracle,
         bytes calldata priceOracleData,
@@ -232,8 +229,6 @@ contract CowAmmModule {
 
         // Prepare the data for the new CoW AMM
         ConstantProduct.Data memory data = ConstantProduct.Data({
-            token0: token0,
-            token1: token1,
             minTradedToken0: minTradedToken0,
             priceOracle: IPriceOracle(priceOracle),
             priceOracleData: priceOracleData,

@@ -24,7 +24,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
 
-        constantProduct = new ConstantProduct(solutionSettler);
+        constantProduct = new ConstantProduct(solutionSettler, IERC20(USDC), IERC20(WETH));
         uniswapV2PriceOracle = new UniswapV2PriceOracle();
     }
 
@@ -39,8 +39,6 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
 
     function getDefaultData() internal view returns (ConstantProduct.Data memory) {
         return ConstantProduct.Data(
-            IERC20(USDC),
-            IERC20(WETH),
             0,
             uniswapV2PriceOracle,
             abi.encode(UniswapV2PriceOracle.Data(IUniswapV2Pair(DEFAULT_PAIR))),

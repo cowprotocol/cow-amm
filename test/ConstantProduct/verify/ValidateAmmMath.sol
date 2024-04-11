@@ -11,19 +11,21 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     IUniswapV2Pair pair = IUniswapV2Pair(Utils.addressFromString("pair for math verification"));
 
     function setUpAmmWithReserves(uint256 amountToken0, uint256 amountToken1) internal {
-        IERC20 token0 = IERC20(Utils.addressFromString("token0 for math verification"));
-        IERC20 token1 = IERC20(Utils.addressFromString("token1 for math verification"));
-        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(token0));
-        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token1, ()), abi.encode(token1));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(constantProduct.token0()));
+        vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token1, ()), abi.encode(constantProduct.token1()));
         // Reverts for everything else
         vm.mockCallRevert(address(pair), hex"", abi.encode("Called unexpected function on mock pair"));
         require(pair.token0() != pair.token1(), "Pair setup failed: should use distinct tokens");
 
         vm.mockCall(
-            address(token0), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(amountToken0)
+            address(pair.token0()),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner),
+            abi.encode(amountToken0)
         );
         vm.mockCall(
-            address(token1), abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner), abi.encode(amountToken1)
+            address(pair.token1()),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner),
+            abi.encode(amountToken1)
         );
     }
 
@@ -40,12 +42,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = 0;
 
         data = ConstantProduct.Data(
-            order.sellToken,
-            order.buyToken,
-            0,
-            uniswapV2PriceOracle,
-            abi.encode(abi.encode(UniswapV2PriceOracle.Data(pair))),
-            order.appData
+            0, uniswapV2PriceOracle, abi.encode(abi.encode(UniswapV2PriceOracle.Data(pair))), order.appData
         );
     }
 

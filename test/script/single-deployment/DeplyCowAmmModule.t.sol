@@ -22,6 +22,9 @@ contract DeployCowAmmModuleTest is Test, CowProtocolSetUp, SafeSetUp {
 
         vm.etch(ETCHED_HANDLER, hex"1337");
 
+        vm.setEnv("TOKEN_0", "0x1111111111111111111111111111111111111111");
+        vm.setEnv("TOKEN_1", "0x2222222222222222222222222222222222222222");
+
         script = new DeployCowAmmModule();
         goodScript = new DeployCowAmmModuleTestDeployer();
     }

@@ -25,10 +25,6 @@ import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol"
 contract ConstantProduct is IConditionalOrderGenerator {
     /// All data used by an order to validate the AMM conditions.
     struct Data {
-        /// The first of the tokens traded by this AMM.
-        IERC20 token0;
-        /// The second of the tokens traded by this AMM.
-        IERC20 token1;
         /// The minimum amount of token0 that needs to be traded for an order
         /// to be created on getTradeableOrder.
         uint256 minTradedToken0;
@@ -59,6 +55,14 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * only address that can set commitments.
      */
     address public immutable solutionSettler;
+    /**
+     * @notice The first of the two tokens traded by this AMM.
+     */
+    IERC20 public immutable token0;
+    /**
+     * @notice The second of the two tokens traded by this AMM.
+     */
+    IERC20 public immutable token1;
     /**
      * @notice It associates every order owner to the only order hash that can
      * be validated by calling `verify`. The hash corresponding to the constant
@@ -91,8 +95,10 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param _solutionSettler The CoW Protocol contract used to settle user
      * orders on the current chain.
      */
-    constructor(address _solutionSettler) {
+    constructor(address _solutionSettler, IERC20 _token0, IERC20 _token1) {
         solutionSettler = _solutionSettler;
+        token0 = _token0;
+        token1 = _token1;
     }
 
     /**
@@ -142,8 +148,6 @@ contract ConstantProduct is IConditionalOrderGenerator {
         returns (GPv2Order.Data memory order)
     {
         ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
-        IERC20 token0 = data.token0;
-        IERC20 token1 = data.token1;
         (uint256 priceNumerator, uint256 priceDenominator) =
             data.priceOracle.getPrice(address(token0), address(token1), data.priceOracleData);
         (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
@@ -249,8 +253,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
         requireMatchingCommitment(owner, orderHash, staticInput, order);
         ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
 
-        IERC20 sellToken = data.token0;
-        IERC20 buyToken = data.token1;
+        IERC20 sellToken = token0;
+        IERC20 buyToken = token1;
         uint256 sellReserve = sellToken.balanceOf(owner);
         uint256 buyReserve = buyToken.balanceOf(owner);
         if (order.sellToken != sellToken) {

@@ -32,12 +32,7 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
         emit CowAmmModule.CowAmmCreated(safe, token0, token1, preCalculatedOrderHash);
 
         bytes32 orderHash = cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
 
         assertEq(address(eHandler.domainVerifiers(safe, domainSeparator)), address(composableCow));
@@ -64,12 +59,7 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
         vm.prank(address(safe));
         vm.expectRevert(abi.encodeWithSelector(CowAmmModule.ActiveAMM.selector));
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
@@ -87,12 +77,7 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
         );
         vm.prank(address(safe));
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
@@ -110,48 +95,33 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
         );
         vm.prank(address(safe));
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
     function testRevertCalledFromSafeWithoutModuleEnabled() public {
         ConstantProduct.Data memory ammData = getDefaultData();
 
-        deal(address(ammData.token0), address(safe1), 100);
-        deal(address(ammData.token1), address(safe1), 100);
+        deal(address(cowAmmModule.token0()), address(safe1), 100);
+        deal(address(cowAmmModule.token1()), address(safe1), 100);
 
         vm.prank(address(safe1));
         vm.expectRevert("GS104");
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
     function testRevertCalledFromNonSafe() public {
         ConstantProduct.Data memory ammData = getDefaultData();
 
-        deal(address(ammData.token0), address(alice.addr), 100);
-        deal(address(ammData.token1), address(alice.addr), 100);
+        deal(address(cowAmmModule.token0()), address(alice.addr), 100);
+        deal(address(cowAmmModule.token1()), address(alice.addr), 100);
 
         vm.prank(address(alice.addr));
         vm.expectRevert();
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
@@ -164,12 +134,7 @@ abstract contract CreateAmmTest is CowAmmModuleTestHarness {
         vm.prank(address(safe));
         vm.expectRevert(abi.encodeWithSelector(CowAmmModule.TokenBalanceZero.selector));
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 }

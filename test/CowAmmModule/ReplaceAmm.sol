@@ -23,12 +23,7 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         emit CowAmmModule.CowAmmCreated(safe, token0, token1, newPreCalculatedOrderHash);
 
         bytes32 orderHash = cowAmmModule.replaceAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
 
         assertTrue(orderHash != previousOrderHash);
@@ -48,12 +43,7 @@ abstract contract ReplaceAmmTest is CowAmmModuleTestHarness {
         vm.expectRevert(abi.encodeWithSelector(CowAmmModule.NoActiveOrderToReplace.selector));
 
         bytes32 orderHash = cowAmmModule.replaceAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 }

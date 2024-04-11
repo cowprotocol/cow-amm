@@ -50,7 +50,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.roll(currentBlock);
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
-        require(order.sellToken == defaultData.token0, "test was design for token0 to be the sell token");
+        require(order.sellToken == constantProduct.token0(), "test was design for token0 to be the sell token");
         defaultData.minTradedToken0 = order.sellAmount;
         order = getTradeableOrderWrapper(orderOwner, defaultData);
         defaultData.minTradedToken0 = order.sellAmount + 1;
@@ -71,7 +71,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.roll(currentBlock);
 
         GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
-        require(order.buyToken == defaultData.token0, "test was design for token0 to be the buy token");
+        require(order.buyToken == constantProduct.token0(), "test was design for token0 to be the buy token");
         defaultData.minTradedToken0 = order.buyAmount;
         order = getTradeableOrderWrapper(orderOwner, defaultData);
         defaultData.minTradedToken0 = order.buyAmount + 1;
