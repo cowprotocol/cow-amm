@@ -7,12 +7,12 @@ import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateUniswapMath is ConstantProductTestHarness {
     function testReturnedTradeValues() public {
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        ConstantProduct.TradingParams memory defaultTradingParams = setUpDefaultTradingParams();
         uint256 ownerReserve0 = 10 ether;
         uint256 ownerReserve1 = 10 ether;
         setUpDefaultWithReserves(orderOwner, ownerReserve0, ownerReserve1);
         setUpDefaultReferencePairReserves(1 ether, 10 ether);
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
 
         assertEq(address(order.sellToken), address(constantProduct.token0()));
         assertEq(address(order.buyToken), address(constantProduct.token1()));
@@ -23,7 +23,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
     }
 
     function testReturnedTradeValuesOtherSide() public {
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        ConstantProduct.TradingParams memory defaultTradingParams = setUpDefaultTradingParams();
         uint256 ownerReserve0 = 12 ether;
         uint256 ownerReserve1 = 24 ether;
         setUpDefaultWithReserves(orderOwner, ownerReserve0, ownerReserve1);
@@ -31,7 +31,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         // The limit price on the reference pool is 3:1. That of the order is
         // 1:2.
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
         assertEq(address(order.sellToken), address(constantProduct.token1()));
         assertEq(address(order.buyToken), address(constantProduct.token0()));
 
@@ -43,34 +43,34 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
     function testGeneratedTradeWithRoundingErrors() public {
         // There are many ways to trigger a rounding error. This test only
         // considers a case where the ceil division is necessary.
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        ConstantProduct.TradingParams memory defaultTradingParams = setUpDefaultTradingParams();
         // Parameters copied from testReturnedTradesMovesPriceToMatchUniswapLimitPrice
         uint256 roundingTrigger = 1;
         setUpDefaultWithReserves(orderOwner, 10 ether, 10 ether + roundingTrigger);
         setUpDefaultReferencePairReserves(1 ether + roundingTrigger, 10 ether);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
         require(
             address(order.sellToken) == address(constantProduct.token0()),
             "this test was intended for the case sellToken == token0"
         );
-        verifyWrapper(orderOwner, defaultData, order);
+        verifyWrapper(orderOwner, defaultTradingParams, order);
     }
 
     function testGeneratedInvertedTradeWithRoundingErrors() public {
         // We also test for some rounding issues on the other side of the if
         // condition.
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        ConstantProduct.TradingParams memory defaultTradingParams = setUpDefaultTradingParams();
         // Parameters copied from testReturnedTradesMovesPriceToMatchUniswapLimitPriceOtherSide
         uint256 roundingTrigger = 1;
         setUpDefaultWithReserves(orderOwner, 12 ether, 24 ether);
         setUpDefaultReferencePairReserves(126 ether + roundingTrigger, 42 ether);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultData);
+        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
         require(
             address(order.sellToken) == address(constantProduct.token1()),
             "this test was intended for the case sellToken == token1"
         );
-        verifyWrapper(orderOwner, defaultData, order);
+        verifyWrapper(orderOwner, defaultTradingParams, order);
     }
 }

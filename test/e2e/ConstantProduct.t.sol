@@ -55,11 +55,11 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
     function testE2ESettle() public {
         (Safe amm, TestAccount[] memory owners) = deployAmmSafe();
 
-        ConstantProduct.Data memory data = ConstantProduct.Data(
+        ConstantProduct.TradingParams memory tradingParams = ConstantProduct.TradingParams(
             0, uniswapV2PriceOracle, abi.encode(UniswapV2PriceOracle.Data(pair)), keccak256("order app data")
         );
         IConditionalOrder.ConditionalOrderParams memory params =
-            super.createOrder(constantProduct, keccak256("any salt"), abi.encode(data));
+            super.createOrder(constantProduct, keccak256("any salt"), abi.encode(tradingParams));
         // Create the conditional order.
         _create(address(amm), params, true);
 

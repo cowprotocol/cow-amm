@@ -6,5 +6,15 @@ import {GetTradeableOrderTest} from "./ConstantProduct/GetTradeableOrderTest.sol
 import {CommitTest} from "./ConstantProduct/CommitTest.sol";
 import {DeploymentParamsTest} from "./ConstantProduct/DeploymentParamsTest.sol";
 import {IERC165Test} from "./ConstantProduct/IERC165Test.sol";
+import {EnableTrading} from "./ConstantProduct/EnableTrading.sol";
+import {DisableTrading} from "./ConstantProduct/DisableTrading.sol";
 
-contract ConstantProductTest is VerifyTest, GetTradeableOrderTest, CommitTest, DeploymentParamsTest, IERC165Test {}
+contract ConstantProductTest is
+    VerifyTest,
+    GetTradeableOrderTest,
+    CommitTest,
+    DeploymentParamsTest,
+    IERC165Test,
+    EnableTrading,
+    DisableTrading
+{}

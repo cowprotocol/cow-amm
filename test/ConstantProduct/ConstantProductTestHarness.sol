@@ -55,8 +55,8 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         require(pair.token0() != pair.token1(), "Pair setup failed: should use distinct tokens");
     }
 
-    function getDefaultData() internal view returns (ConstantProduct.Data memory) {
-        return ConstantProduct.Data(
+    function getDefaultTradingParams() internal view returns (ConstantProduct.TradingParams memory) {
+        return ConstantProduct.TradingParams(
             0,
             uniswapV2PriceOracle,
             abi.encode(UniswapV2PriceOracle.Data(IUniswapV2Pair(DEFAULT_PAIR))),
@@ -64,9 +64,9 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         );
     }
 
-    function setUpDefaultData() internal returns (ConstantProduct.Data memory) {
+    function setUpDefaultTradingParams() internal returns (ConstantProduct.TradingParams memory) {
         setUpDefaultPair();
-        return getDefaultData();
+        return getDefaultTradingParams();
     }
 
     function setUpDefaultCommitment(address owner) internal {
@@ -79,9 +79,9 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     function setUpDefaultWithReserves(address owner, uint256 amount0, uint256 amount1) internal {
-        ConstantProduct.Data memory defaultData = setUpDefaultData();
+        ConstantProduct.TradingParams memory defaultTradingParams = setUpDefaultTradingParams();
         UniswapV2PriceOracle.Data memory oracleData =
-            abi.decode(defaultData.priceOracleData, (UniswapV2PriceOracle.Data));
+            abi.decode(defaultTradingParams.priceOracleData, (UniswapV2PriceOracle.Data));
 
         vm.mockCall(oracleData.referencePair.token0(), abi.encodeCall(IERC20.balanceOf, (owner)), abi.encode(amount0));
         vm.mockCall(oracleData.referencePair.token1(), abi.encodeCall(IERC20.balanceOf, (owner)), abi.encode(amount1));
@@ -98,7 +98,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
 
     // This function calls `getTradeableOrder` while filling all unused
     // parameters with arbitrary data.
-    function getTradeableOrderUncheckedWrapper(address owner, ConstantProduct.Data memory staticInput)
+    function getTradeableOrderUncheckedWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
@@ -107,7 +107,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             owner,
             Utils.addressFromString("sender"),
             keccak256(bytes("context")),
-            abi.encode(staticInput),
+            abi.encode(tradingParams),
             bytes("offchain input")
         );
     }
@@ -115,28 +115,29 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     // This function calls `getTradeableOrder` while filling all unused
     // parameters with arbitrary data. It also immediately checks that the order
     // is valid.
-    function getTradeableOrderWrapper(address owner, ConstantProduct.Data memory staticInput)
+    function getTradeableOrderWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        order = getTradeableOrderUncheckedWrapper(owner, staticInput);
-        verifyWrapper(owner, staticInput, order);
+        order = getTradeableOrderUncheckedWrapper(owner, tradingParams);
+        verifyWrapper(owner, tradingParams, order);
     }
 
     // This function calls `verify` while filling all unused parameters with
     // arbitrary data and the order hash with the default commitment.
-    function verifyWrapper(address owner, ConstantProduct.Data memory staticInput, GPv2Order.Data memory order)
-        internal
-        view
-    {
-        verifyWrapper(owner, DEFAULT_COMMITMENT, staticInput, order);
+    function verifyWrapper(
+        address owner,
+        ConstantProduct.TradingParams memory tradingParams,
+        GPv2Order.Data memory order
+    ) internal view {
+        verifyWrapper(owner, DEFAULT_COMMITMENT, tradingParams, order);
     }
 
     function verifyWrapper(
         address owner,
         bytes32 orderHash,
-        ConstantProduct.Data memory staticInput,
+        ConstantProduct.TradingParams memory tradingParams,
         GPv2Order.Data memory order
     ) internal view {
         constantProduct.verify(
@@ -145,14 +146,14 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             orderHash,
             keccak256(bytes("domain separator")),
             keccak256(bytes("context")),
-            abi.encode(staticInput),
+            abi.encode(tradingParams),
             bytes("offchain input"),
             order
         );
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {
-        ConstantProduct.Data memory data = getDefaultData();
+        ConstantProduct.TradingParams memory tradingParams = getDefaultTradingParams();
 
         return GPv2Order.Data(
             IERC20(USDC), // IERC20 sellToken;
@@ -161,7 +162,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             0, // uint256 sellAmount;
             0, // uint256 buyAmount;
             uint32(block.timestamp) + constantProduct.MAX_ORDER_DURATION() / 2, // uint32 validTo;
-            data.appData, // bytes32 appData;
+            tradingParams.appData, // bytes32 appData;
             0, // uint256 feeAmount;
             GPv2Order.KIND_SELL, // bytes32 kind;
             true, // bool partiallyFillable;

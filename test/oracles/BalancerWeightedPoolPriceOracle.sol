@@ -33,7 +33,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         );
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid pool id"));
-        oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
     }
 
     function testRevertsIfNoTokensAvailable() public {
@@ -48,7 +48,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         // pool is registered. We don't expect this function to revert at this
         // point.
         vm.expectRevert();
-        oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
     }
 
     function testRevertsIfNoWeightsAvailable() public {
@@ -61,7 +61,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         );
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "not a weighted pool"));
-        oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
     }
 
     function testRevertsIfToken0IsNotPartOfThePool() public {
@@ -74,7 +74,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         setUpDefaultBalancerPool(tokens, balances, weights);
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "pool does not trade token0"));
-        oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
     }
 
     function testRevertsIfToken1IsNotPartOfThePool() public {
@@ -87,7 +87,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         setUpDefaultBalancerPool(tokens, balances, weights);
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "pool does not trade token1"));
-        oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
     }
 
     function testComputesExpectedPriceWithUniformWeights() public {
@@ -102,7 +102,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         weights[1] = 0.5 ether;
         setUpDefaultBalancerPool(tokens, balances, weights);
 
-        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
         assertEq(num / den, 2000);
     }
 
@@ -118,7 +118,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         weights[1] = 0.5 ether;
         setUpDefaultBalancerPool(tokens, balances, weights);
 
-        (uint256 num, uint256 den) = oracle.getPrice(address(WETH), address(USDC), getDefaultData());
+        (uint256 num, uint256 den) = oracle.getPrice(address(WETH), address(USDC), getDefaultTradingParams());
         // Inverting the fraction to still get an integer price
         assertEq(den / num, 2000);
     }
@@ -141,7 +141,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         weights[3] = 0.25 ether;
         setUpDefaultBalancerPool(tokens, balances, weights);
 
-        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
         assertEq(num / den, 2000);
     }
 
@@ -158,7 +158,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         weights[1] = 0.2 ether;
         setUpDefaultBalancerPool(tokens, balances, weights);
 
-        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        (uint256 num, uint256 den) = oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
 
         assertEq(num / den, 2000);
     }
@@ -178,7 +178,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         weights[1] = 500000000000000000;
         setUpDefaultBalancerPool(tokens, balances, weights);
 
-        (uint256 num, uint256 den) = oracle.getPrice(address(COW), address(WETH), getDefaultData());
+        (uint256 num, uint256 den) = oracle.getPrice(address(COW), address(WETH), getDefaultTradingParams());
 
         assertEq(num / den, 6168);
         // The price is close to the last onchain trade involving this pool:
@@ -204,12 +204,12 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         setUpDefaultBalancerPool(tokens, balances, weights);
 
         uint256 decimalAdjustment = 10 ** 18 / 10 ** 6;
-        (uint256 num1, uint256 den1) = oracle.getPrice(address(USDC), address(WETH), getDefaultData());
+        (uint256 num1, uint256 den1) = oracle.getPrice(address(USDC), address(WETH), getDefaultTradingParams());
         assertEq(num1 * decimalAdjustment / den1, 2671);
         // The price is close to the last onchain trade involving this pool and tokens:
         // https://etherscan.io/tx/0x30a83c1be9a335b3e62467c4da2eb82700a331730cc66f4dc2efb6b20d229ea7
 
-        (uint256 num2, uint256 den2) = oracle.getPrice(address(KNC), address(USDC), getDefaultData());
+        (uint256 num2, uint256 den2) = oracle.getPrice(address(KNC), address(USDC), getDefaultTradingParams());
         // Multiply by 1000 because the price is ~1.579 and rounding would cause
         // the decimals to be truncated.
         assertEq(1000 * num2 / (den2 * decimalAdjustment), 1579);
@@ -245,7 +245,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         vm.mockCallRevert(address(pool), hex"", abi.encode("Called unexpected function on mock pool"));
     }
 
-    function getDefaultData() internal view returns (bytes memory data) {
+    function getDefaultTradingParams() internal view returns (bytes memory data) {
         return abi.encode(BalancerWeightedPoolPriceOracle.Data(DEFAULT_POOL_ID));
     }
 }
