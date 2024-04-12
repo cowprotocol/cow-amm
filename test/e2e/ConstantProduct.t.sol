@@ -5,7 +5,7 @@ import {
     BaseComposableCoWTest, Safe, TestAccount, TestAccountLib
 } from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
-import {ConstantProduct, IConditionalOrder, GPv2Order, IERC20} from "src/ConstantProduct.sol";
+import {ConstantProduct, IConditionalOrder, GPv2Order, IERC20, ISettlement} from "src/ConstantProduct.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {Utils} from "test/libraries/Utils.sol";
 import {TestAccountHelper} from "test/libraries/TestAccountHelper.sol";
@@ -28,7 +28,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         super.setUp();
         DAI = token0;
         WETH = token1;
-        constantProduct = new ConstantProduct(address(settlement), DAI, WETH);
+        constantProduct = new ConstantProduct(ISettlement(address(settlement)), DAI, WETH);
         uniswapV2PriceOracle = new UniswapV2PriceOracle();
         domainSeparator = composableCow.domainSeparator();
         IUniswapV2Factory uniswapV2Factory = UniswapV2Helper.deployUniswapV2FactoryAt(
