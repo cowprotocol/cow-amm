@@ -17,6 +17,10 @@ contract DeployAllContractsTest is Test, BalancerSetUp, CowProtocolSetUp, SafeSe
         setUpComposableCowContract();
         setUpBalancerVault();
         setUpSafeExtensibleFallbackHandler();
+
+        vm.setEnv("TOKEN_0", "0x1111111111111111111111111111111111111111");
+        vm.setEnv("TOKEN_1", "0x2222222222222222222222222222222222222222");
+
         script = new DeployAllContracts();
     }
 

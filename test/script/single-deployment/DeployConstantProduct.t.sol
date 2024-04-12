@@ -12,6 +12,10 @@ contract DeployConstantProductTest is Test, CowProtocolSetUp {
 
     function setUp() public {
         setUpSettlementContract();
+
+        vm.setEnv("TOKEN_0", "0x1111111111111111111111111111111111111111");
+        vm.setEnv("TOKEN_1", "0x2222222222222222222222222222222222222222");
+
         script = new DeployConstantProduct();
     }
 

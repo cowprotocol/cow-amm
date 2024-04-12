@@ -8,7 +8,7 @@ import {GPv2Settlement} from "lib/composable-cow/lib/cowprotocol/src/contracts/G
 import {ExtensibleFallbackHandler} from "lib/composable-cow/lib/safe/contracts/handler/ExtensibleFallbackHandler.sol";
 import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
-import {CowAmmModule} from "src/CowAmmModule.sol";
+import {CowAmmModule, IERC20} from "src/CowAmmModule.sol";
 import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
@@ -58,7 +58,9 @@ contract DeployCowAmmModule is EnvReader, Utils {
             GPv2Settlement(payable(solutionSettler)),
             ExtensibleFallbackHandler(extensibleFallbackHandler),
             ComposableCoW(composableCow),
-            IConditionalOrder(_handler)
+            IConditionalOrder(_handler),
+            IERC20(vm.envAddress("TOKEN_0")),
+            IERC20(vm.envAddress("TOKEN_1"))
         );
     }
 }

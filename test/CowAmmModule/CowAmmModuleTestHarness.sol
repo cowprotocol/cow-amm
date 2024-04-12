@@ -41,8 +41,8 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
             )
         );
 
-        constantProduct = new ConstantProduct(address(settlement));
-        cowAmmModule = new CowAmmModule(settlement, eHandler, composableCow, constantProduct);
+        constantProduct = new ConstantProduct(address(settlement), token0, token1);
+        cowAmmModule = new CowAmmModule(settlement, eHandler, composableCow, constantProduct, token0, token1);
     }
 
     function setUpDefaultSafe() internal {
@@ -53,7 +53,7 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
     }
 
     function getDefaultData() internal view returns (ConstantProduct.Data memory) {
-        return ConstantProduct.Data(token0, token1, 0, DEFAULT_PRICE_ORACLE, bytes("some oracle data"), DEFAULT_APPDATA);
+        return ConstantProduct.Data(0, DEFAULT_PRICE_ORACLE, bytes("some oracle data"), DEFAULT_APPDATA);
     }
 
     function setUpDefaultCowAmm() internal {
@@ -62,12 +62,7 @@ abstract contract CowAmmModuleTestHarness is BaseComposableCoWTest {
 
         vm.prank(address(safe));
         cowAmmModule.createAmm(
-            ammData.token0,
-            ammData.token1,
-            ammData.minTradedToken0,
-            address(ammData.priceOracle),
-            ammData.priceOracleData,
-            ammData.appData
+            ammData.minTradedToken0, address(ammData.priceOracle), ammData.priceOracleData, ammData.appData
         );
     }
 
