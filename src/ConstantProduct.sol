@@ -223,16 +223,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * the logic inside the original function, it frees up some stack slots and
      * reduces "stack too deep" issues.
      * @param owner the contract who is the owner of the order
-     * @param staticInput the trading parameters of all discrete orders cut
+     * @param _tradingParams the trading parameters of all discrete orders cut
      * from this conditional order
      * @return order the tradeable order for submission to the CoW Protocol API
      */
-    function _getTradeableOrder(address owner, bytes calldata staticInput)
+    function _getTradeableOrder(address owner, bytes calldata _tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        ConstantProduct.TradingParams memory tradingParams = abi.decode(staticInput, (TradingParams));
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
         (uint256 priceNumerator, uint256 priceDenominator) =
             tradingParams.priceOracle.getPrice(address(token0), address(token1), tradingParams.priceOracleData);
         (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
@@ -327,16 +327,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param owner the contract who is the owner of the order
      * @param orderHash the hash of the current order as defined by the
      * `GPv2Order` library.
-     * @param staticInput the trading parameters of all discrete orders cut
+     * @param _tradingParams the trading parameters of all discrete orders cut
      * from this conditional order
      * @param order `GPv2Order.Data` of a discrete order to be verified.
      */
-    function _verify(address owner, bytes32 orderHash, bytes calldata staticInput, GPv2Order.Data calldata order)
+    function _verify(address owner, bytes32 orderHash, bytes calldata _tradingParams, GPv2Order.Data calldata order)
         internal
         view
     {
-        requireMatchingCommitment(owner, orderHash, staticInput, order);
-        ConstantProduct.TradingParams memory tradingParams = abi.decode(staticInput, (TradingParams));
+        requireMatchingCommitment(owner, orderHash, _tradingParams, order);
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
 
         IERC20 sellToken = token0;
         IERC20 buyToken = token1;
