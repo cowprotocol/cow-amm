@@ -179,7 +179,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
     }
 
     /**
-     * @notice Disable any form of trading on CoW Swap by this AMM.
+     * @notice Disable any form of trading on CoW Protocol by this AMM.
      */
     function disableTrading() external onlyManager {
         tradingParamsHash = NO_TRADING;
