@@ -265,7 +265,7 @@ contract ConstantProduct is IConditionalOrderGenerator, IERC1271 {
      * @return order the tradeable order for submission to the CoW Protocol API
      */
     function _getTradeableOrder(address owner, TradingParams memory tradingParams)
-        internal
+        public
         view
         returns (GPv2Order.Data memory order)
     {
