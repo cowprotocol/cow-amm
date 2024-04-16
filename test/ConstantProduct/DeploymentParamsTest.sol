@@ -18,7 +18,6 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         ConstantProduct constantProduct = new ConstantProduct(solutionSettler, token0, token1);
         assertEq(address(constantProduct.solutionSettler()), address(solutionSettler));
         assertEq(constantProduct.solutionSettlerDomainSeparator(), solutionSettler.domainSeparator());
-        assertEq(address(constantProduct.vaultRelayer()), address(solutionSettler.vaultRelayer()));
         assertEq(address(constantProduct.token0()), address(token0));
         assertEq(address(constantProduct.token1()), address(token1));
     }
@@ -44,47 +43,42 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         vm.mockCallRevert(
             address(token),
             abi.encodeCall(IERC20.approve, (spenderBadApproval, type(uint256).max)),
-            "`approve` is an expected call"
+            "mock revert on approval"
         );
         vm.mockCallRevert(address(token), hex"", abi.encode("Unexpected call to token contract"));
-    }
-
-    function revertApproveVaultRelayerToken(string memory name) private returns (IERC20) {
-        return revertingToken(name, defaultDeployer(), solutionSettler.vaultRelayer());
     }
 
     function revertApproveDeployerToken(string memory name) private returns (IERC20) {
         return revertingToken(name, solutionSettler.vaultRelayer(), defaultDeployer());
     }
 
-    function testDeploymentAllowsVaultRelayerToken0() public {
-        IERC20 reverting = revertApproveVaultRelayerToken("reverting");
-        IERC20 regular = approvedToken("regular");
-        vm.expectRevert("`approve` is an expected call");
-        vm.prank(defaultDeployer());
-        new ConstantProduct(solutionSettler, reverting, regular);
+    function epectUnlimitedApproval(IERC20 token, address spender) private {
+        vm.expectCall(address(token), abi.encodeCall(IERC20.approve, (spender, type(uint256).max)), 1);
     }
 
-    function testDeploymentAllowsVaultRelayerToken1() public {
-        IERC20 reverting = revertApproveVaultRelayerToken("reverting");
-        IERC20 regular = approvedToken("regular");
-        vm.expectRevert("`approve` is an expected call");
+    function testDeploymentAllowsVaultRelayer() public {
+        IERC20 token0 = approvedToken("regular token 0");
+        IERC20 token1 = approvedToken("regular token 1");
+        address vaultRelayer = address(solutionSettler.vaultRelayer());
+        epectUnlimitedApproval(token0, vaultRelayer);
+        epectUnlimitedApproval(token1, vaultRelayer);
         vm.prank(defaultDeployer());
-        new ConstantProduct(solutionSettler, regular, reverting);
+        new ConstantProduct(solutionSettler, token0, token1);
     }
 
-    function testDeploymentAllowsDeployerToken0() public {
+    function testDeploymentAllowsDeployer() public {
+        IERC20 token0 = approvedToken("regular token 0");
+        IERC20 token1 = approvedToken("regular token 1");
+        epectUnlimitedApproval(token0, defaultDeployer());
+        epectUnlimitedApproval(token1, defaultDeployer());
+        vm.prank(defaultDeployer());
+        new ConstantProduct(solutionSettler, token0, token1);
+    }
+
+    function testDeploymentRevertsIfApprovalReverts() public {
         IERC20 reverting = revertApproveDeployerToken("reverting");
         IERC20 regular = approvedToken("regular");
-        vm.expectRevert("`approve` is an expected call");
-        vm.prank(defaultDeployer());
-        new ConstantProduct(solutionSettler, reverting, regular);
-    }
-
-    function testDeploymentAllowsDeployerToken1() public {
-        IERC20 reverting = revertApproveDeployerToken("reverting");
-        IERC20 regular = approvedToken("regular");
-        vm.expectRevert("`approve` is an expected call");
+        vm.expectRevert("mock revert on approval");
         vm.prank(defaultDeployer());
         new ConstantProduct(solutionSettler, regular, reverting);
     }

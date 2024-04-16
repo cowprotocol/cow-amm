@@ -82,11 +82,6 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @notice The domain separator used for hashing CoW Protocol orders.
      */
     bytes32 public immutable solutionSettlerDomainSeparator;
-    /**
-     * @notice The address that needs to be approved for each token to trade
-     * on CoW Protocol.
-     */
-    address public immutable vaultRelayer;
 
     /**
      * @notice It associates every order owner to the only order hash that can
@@ -158,14 +153,15 @@ contract ConstantProduct is IConditionalOrderGenerator {
     constructor(ISettlement _solutionSettler, IERC20 _token0, IERC20 _token1) {
         solutionSettler = _solutionSettler;
         solutionSettlerDomainSeparator = _solutionSettler.domainSeparator();
-        vaultRelayer = _solutionSettler.vaultRelayer();
 
         approveUnlimited(_token0, msg.sender);
         approveUnlimited(_token1, msg.sender);
         manager = msg.sender;
 
+        address vaultRelayer = _solutionSettler.vaultRelayer();
         approveUnlimited(_token0, vaultRelayer);
         approveUnlimited(_token1, vaultRelayer);
+
         token0 = _token0;
         token1 = _token1;
     }
