@@ -3,12 +3,12 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {console} from "forge-std/Script.sol";
 
-import {ConstantProduct, IERC20} from "src/ConstantProduct.sol";
+import {ConstantProductFactory} from "src/ConstantProductFactory.sol";
 
 import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
 
-contract DeployConstantProduct is EnvReader, Utils {
+contract DeployConstantProductFactory is EnvReader, Utils {
     constructor() {
         solutionSettler = addressEnvOrDefault("SETTLEMENT_CONTRACT", DEFAULT_SETTLEMENT_CONTRACT);
         console.log("Settlement contract at %s.", solutionSettler);
@@ -16,11 +16,11 @@ contract DeployConstantProduct is EnvReader, Utils {
     }
 
     function run() public virtual {
-        deployConstantProduct();
+        deployConstantProductFactory();
     }
 
-    function deployConstantProduct() internal returns (ConstantProduct) {
+    function deployConstantProductFactory() internal returns (ConstantProductFactory) {
         vm.broadcast();
-        return new ConstantProduct(solutionSettler, IERC20(vm.envAddress("TOKEN_0")), IERC20(vm.envAddress("TOKEN_1")));
+        return new ConstantProductFactory(solutionSettler);
     }
 }

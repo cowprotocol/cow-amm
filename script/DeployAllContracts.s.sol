@@ -2,24 +2,20 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {DeployUniswapV2PriceOracle, UniswapV2PriceOracle} from "./single-deployment/UniswapV2PriceOracle.s.sol";
-import {DeployConstantProduct, ConstantProduct} from "./single-deployment/ConstantProduct.s.sol";
+import {DeployConstantProductFactory, ConstantProductFactory} from "./single-deployment/ConstantProductFactory.s.sol";
 import {
     DeployBalancerWeightedPoolPriceOracle,
     BalancerWeightedPoolPriceOracle
 } from "./single-deployment/BalancerWeightedPoolPriceOracle.s.sol";
-import {DeployCowAmmModule, CowAmmModule} from "./single-deployment/CowAmmModule.s.sol";
 
 contract DeployAllContracts is
-    DeployConstantProduct,
+    DeployConstantProductFactory,
     DeployUniswapV2PriceOracle,
-    DeployBalancerWeightedPoolPriceOracle,
-    DeployCowAmmModule
+    DeployBalancerWeightedPoolPriceOracle
 {
     function run()
         public
-        override(
-            DeployConstantProduct, DeployUniswapV2PriceOracle, DeployBalancerWeightedPoolPriceOracle, DeployCowAmmModule
-        )
+        override(DeployConstantProductFactory, DeployUniswapV2PriceOracle, DeployBalancerWeightedPoolPriceOracle)
     {
         deployAll();
     }
@@ -27,15 +23,13 @@ contract DeployAllContracts is
     function deployAll()
         public
         returns (
-            ConstantProduct constantProduct,
+            ConstantProductFactory constantProductFactory,
             UniswapV2PriceOracle uniswapV2PriceOracle,
-            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle,
-            CowAmmModule cowAmmModule
+            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle
         )
     {
-        constantProduct = deployConstantProduct();
+        constantProductFactory = deployConstantProductFactory();
         uniswapV2PriceOracle = deployUniswapV2PriceOracle();
         balancerWeightedPoolPriceOracle = deployBalancerWeightedPoolPriceOracle();
-        cowAmmModule = deployCowAmmModule(address(constantProduct));
     }
 }
