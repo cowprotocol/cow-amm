@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1271} from "lib/openzeppelin/contracts/interfaces/IERC1271.sol";
 import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {
@@ -24,8 +25,9 @@ import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol"
  * its orders.
  * Order creation and execution is based on the Composable CoW base contracts.
  */
-contract ConstantProduct is IConditionalOrderGenerator {
+contract ConstantProduct is IConditionalOrderGenerator, IERC1271 {
     using SafeERC20 for IERC20;
+    using GPv2Order for GPv2Order.Data;
 
     /// All data used by an order to validate the AMM conditions.
     struct TradingParams {
@@ -136,6 +138,19 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * ones.
      */
     error OrderDoesNotMatchDefaultTradeableOrder();
+    /**
+     * @notice On signature verification, the hash of the order supplied as part
+     * of the signature does not match the provided message hash.
+     * This usually means that the verification function is being provided a
+     * signature that belongs to a different order.
+     */
+    error OrderDoesNotMatchMessageHash();
+    /**
+     * @notice The order trade parameters that were provided during signature
+     * verification does not match the data stored in this contract _or_ the
+     * AMM has not enabled trading.
+     */
+    error TradingParamsDoNotMatchHash();
 
     modifier onlyManager() {
         if (manager != msg.sender) {
@@ -203,6 +218,27 @@ contract ConstantProduct is IConditionalOrderGenerator {
     }
 
     /**
+     * @inheritdoc IERC1271
+     */
+    function isValidSignature(bytes32 _hash, bytes calldata signature) external view returns (bytes4) {
+        (GPv2Order.Data memory order, TradingParams memory tradingParams) =
+            abi.decode(signature, (GPv2Order.Data, TradingParams));
+
+        if (hash(tradingParams) != tradingParamsHash) {
+            revert TradingParamsDoNotMatchHash();
+        }
+        bytes32 orderHash = order.hash(solutionSettlerDomainSeparator);
+        if (orderHash != _hash) {
+            revert OrderDoesNotMatchMessageHash();
+        }
+        _verify(address(this), orderHash, tradingParams, order);
+
+        // A signature is valid according to EIP-1271 if this function returns
+        // its selector as the so-called "magic value".
+        return this.isValidSignature.selector;
+    }
+
+    /**
      * @notice The order returned by this function is the order that needs to be
      * executed for the price on the owner AMM to match that of the reference
      * pair.
@@ -214,7 +250,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
         override
         returns (GPv2Order.Data memory)
     {
-        return _getTradeableOrder(owner, staticInput);
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(staticInput, (TradingParams));
+        return _getTradeableOrder(owner, tradingParams);
     }
 
     /**
@@ -223,16 +260,15 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * the logic inside the original function, it frees up some stack slots and
      * reduces "stack too deep" issues.
      * @param owner the contract who is the owner of the order
-     * @param _tradingParams the trading parameters of all discrete orders cut
+     * @param tradingParams the trading parameters of all discrete orders cut
      * from this conditional order
      * @return order the tradeable order for submission to the CoW Protocol API
      */
-    function _getTradeableOrder(address owner, bytes calldata _tradingParams)
+    function _getTradeableOrder(address owner, TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
         (uint256 priceNumerator, uint256 priceDenominator) =
             tradingParams.priceOracle.getPrice(address(token0), address(token1), tradingParams.priceOracleData);
         (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
@@ -316,7 +352,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
         bytes calldata,
         GPv2Order.Data calldata order
     ) external view override {
-        _verify(owner, orderHash, staticInput, order);
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(staticInput, (TradingParams));
+        _verify(owner, orderHash, tradingParams, order);
     }
 
     /**
@@ -327,16 +364,15 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param owner the contract who is the owner of the order
      * @param orderHash the hash of the current order as defined by the
      * `GPv2Order` library.
-     * @param _tradingParams the trading parameters of all discrete orders cut
+     * @param tradingParams the trading parameters of all discrete orders cut
      * from this conditional order
      * @param order `GPv2Order.Data` of a discrete order to be verified.
      */
-    function _verify(address owner, bytes32 orderHash, bytes calldata _tradingParams, GPv2Order.Data calldata order)
+    function _verify(address owner, bytes32 orderHash, TradingParams memory tradingParams, GPv2Order.Data memory order)
         internal
         view
     {
-        requireMatchingCommitment(owner, orderHash, _tradingParams, order);
-        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
+        requireMatchingCommitment(owner, orderHash, tradingParams, order);
 
         IERC20 sellToken = token0;
         IERC20 buyToken = token1;
@@ -443,8 +479,8 @@ contract ConstantProduct is IConditionalOrderGenerator {
     function requireMatchingCommitment(
         address owner,
         bytes32 orderHash,
-        bytes calldata tradingParams,
-        GPv2Order.Data calldata order
+        TradingParams memory tradingParams,
+        GPv2Order.Data memory order
     ) internal view {
         bytes32 committedOrderHash = commitment[owner];
         if (orderHash != committedOrderHash) {
@@ -477,11 +513,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param rhs another CoW Swap order
      * @return true if the order parameters match, false otherwise
      */
-    function matchFreeOrderParams(GPv2Order.Data calldata lhs, GPv2Order.Data memory rhs)
-        internal
-        pure
-        returns (bool)
-    {
+    function matchFreeOrderParams(GPv2Order.Data memory lhs, GPv2Order.Data memory rhs) internal pure returns (bool) {
         bool sameSellToken = lhs.sellToken == rhs.sellToken;
         bool sameBuyToken = lhs.buyToken == rhs.buyToken;
         bool sameSellAmount = lhs.sellAmount == rhs.sellAmount;
