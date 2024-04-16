@@ -18,7 +18,6 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         ConstantProduct constantProduct = new ConstantProduct(solutionSettler, token0, token1);
         assertEq(address(constantProduct.solutionSettler()), address(solutionSettler));
         assertEq(constantProduct.solutionSettlerDomainSeparator(), solutionSettler.domainSeparator());
-        assertEq(address(constantProduct.vaultRelayer()), address(solutionSettler.vaultRelayer()));
         assertEq(address(constantProduct.token0()), address(token0));
         assertEq(address(constantProduct.token1()), address(token1));
     }
