@@ -56,8 +56,8 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         IERC20 token0 = approvedToken("regular token 0");
         IERC20 token1 = approvedToken("regular token 1");
         address vaultRelayer = address(solutionSettler.vaultRelayer());
-        epectUnlimitedApproval(token0, vaultRelayer);
-        epectUnlimitedApproval(token1, vaultRelayer);
+        expectUnlimitedApproval(token0, vaultRelayer);
+        expectUnlimitedApproval(token1, vaultRelayer);
         vm.prank(defaultDeployer());
         new ConstantProduct(solutionSettler, token0, token1);
     }
@@ -65,8 +65,8 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     function testDeploymentAllowsDeployer() public {
         IERC20 token0 = approvedToken("regular token 0");
         IERC20 token1 = approvedToken("regular token 1");
-        epectUnlimitedApproval(token0, defaultDeployer());
-        epectUnlimitedApproval(token1, defaultDeployer());
+        expectUnlimitedApproval(token0, defaultDeployer());
+        expectUnlimitedApproval(token1, defaultDeployer());
         vm.prank(defaultDeployer());
         new ConstantProduct(solutionSettler, token0, token1);
     }
