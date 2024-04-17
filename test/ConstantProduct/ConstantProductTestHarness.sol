@@ -10,6 +10,15 @@ import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {Utils} from "test/libraries/Utils.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
+    using GPv2Order for GPv2Order.Data;
+
+    struct SignatureData {
+        GPv2Order.Data order;
+        bytes32 orderHash;
+        ConstantProduct.TradingParams tradingParams;
+        bytes signature;
+    }
+
     address internal vaultRelayer = Utils.addressFromString("vault relayer");
     address private USDC = Utils.addressFromString("USDC");
     address private WETH = Utils.addressFromString("WETH");
@@ -95,6 +104,14 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         );
     }
 
+    function defaultSignatureAndHashes() internal returns (SignatureData memory out) {
+        ConstantProduct.TradingParams memory tradingParams = getDefaultTradingParams();
+        GPv2Order.Data memory order = getDefaultOrder();
+        bytes32 orderHash = order.hash(solutionSettler.domainSeparator());
+        bytes memory signature = abi.encode(order, tradingParams);
+        out = SignatureData(order, orderHash, tradingParams, signature);
+    }
+
     // This function calls `getTradeableOrder` and immediately checks that the
     // order is valid for the default commitment.
     function checkedGetTradeableOrder(ConstantProduct.TradingParams memory tradingParams)
@@ -103,16 +120,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         returns (GPv2Order.Data memory order)
     {
         order = constantProduct.getTradeableOrder(tradingParams);
-        verifyWrapper(tradingParams, order);
-    }
-
-    // This function calls `verify` while filling the order hash with the
-    // default commitment.
-    function verifyWrapper(ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order)
-        internal
-        view
-    {
-        constantProduct.verify(DEFAULT_COMMITMENT, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {

@@ -223,7 +223,10 @@ contract ConstantProduct is IERC1271 {
         if (orderHash != _hash) {
             revert OrderDoesNotMatchMessageHash();
         }
-        verify(orderHash, tradingParams, order);
+
+        requireMatchingCommitment(orderHash, tradingParams, order);
+
+        verify(tradingParams, order);
 
         // A signature is valid according to EIP-1271 if this function returns
         // its selector as the so-called "magic value".
@@ -310,15 +313,11 @@ contract ConstantProduct is IERC1271 {
     /**
      * @notice This function checks that the input order is admissible for the
      * constant-product curve for the given trading parameters.
-     * @param orderHash the hash of the current order as defined by the
-     * `GPv2Order` library.
      * @param tradingParams the trading parameters of all discrete orders cut
      * from this AMM
      * @param order `GPv2Order.Data` of a discrete order to be verified.
      */
-    function verify(bytes32 orderHash, TradingParams memory tradingParams, GPv2Order.Data memory order) public view {
-        requireMatchingCommitment(orderHash, tradingParams, order);
-
+    function verify(TradingParams memory tradingParams, GPv2Order.Data memory order) public view {
         IERC20 sellToken = token0;
         IERC20 buyToken = token1;
         uint256 sellReserve = sellToken.balanceOf(address(this));

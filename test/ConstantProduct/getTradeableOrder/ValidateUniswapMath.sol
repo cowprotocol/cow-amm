@@ -54,7 +54,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
             address(order.sellToken) == address(constantProduct.token0()),
             "this test was intended for the case sellToken == token0"
         );
-        verifyWrapper(defaultTradingParams, order);
+        constantProduct.verify(defaultTradingParams, order);
     }
 
     function testGeneratedInvertedTradeWithRoundingErrors() public {
@@ -71,6 +71,6 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
             address(order.sellToken) == address(constantProduct.token1()),
             "this test was intended for the case sellToken == token1"
         );
-        verifyWrapper(defaultTradingParams, order);
+        constantProduct.verify(defaultTradingParams, order);
     }
 }
