@@ -48,7 +48,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         return revertingToken(name, solutionSettler.vaultRelayer(), defaultDeployer());
     }
 
-    function epectUnlimitedApproval(IERC20 token, address spender) private {
+    function expectUnlimitedApproval(IERC20 token, address spender) private {
         vm.expectCall(address(token), abi.encodeCall(IERC20.approve, (spender, type(uint256).max)), 1);
     }
 
@@ -97,7 +97,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
 
     function testDeploymentSucceedsIfApproveReturnsNoData() public {
         IERC20 regular = approvedToken("regular");
-        IERC20 noDataApproval = IERC20(Utils.addressFromString("this token returns false on approval"));
+        IERC20 noDataApproval = IERC20(Utils.addressFromString("this token returns no data on approval"));
         mockSafeApprove(noDataApproval, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockZeroAllowance(noDataApproval, expectedDeploymentAddress(), defaultDeployer());
         vm.mockCall(
