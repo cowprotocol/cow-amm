@@ -20,24 +20,6 @@ contract ConstantProductFactory {
     ISettlement public immutable settler;
 
     /**
-     * @notice Sanity check to make sure that `getTradeableOrderWithSignature`
-     * is being called with parameters that were supposed to be handled by this
-     * factory.
-     */
-    error CanOnlyHandleOrdersForItself();
-    /**
-     * @notice Sanity check to make sure that `getTradeableOrderWithSignature`
-     * is being called with parameters that are currently enabled for trading
-     * on the AMM.
-     *
-     * @param computed the hash of the input parameters
-     * @param ammHash the hash of the parameters that are allowed to be traded
-     * on the AMM. If the hash is empty, then trading for this order has been
-     * disabled and there is currently no open order available
-     */
-    error ParamsHashDoesNotMatchEnabledOrder(bytes32 computed, bytes32 ammHash);
-
-    /**
      * @param _settler The address of the GPv2Settlement contract.
      */
     constructor(ISettlement _settler) {
@@ -65,16 +47,25 @@ contract ConstantProductFactory {
         bytes calldata, // offchainInput
         bytes32[] calldata // proof
     ) external view returns (GPv2Order.Data memory order, bytes memory signature) {
+        // This contract mimics the interface of ConditionalCoW to talk to the
+        // watchtower. In principle we'd still get a valid order if the handler
+        // is set to any address. However, we create conditional orders on this
+        // contract with this contract as the handler, so to make sure that the
+        // user isn't trying to forward this order to the incorrect contract,
+        // we revert with this error message.
         if (address(params.handler) != address(this)) {
-            revert CanOnlyHandleOrdersForItself();
+            revert IConditionalOrder.OrderNotValid("can only handle own orders");
         }
 
         ConstantProduct.TradingParams memory tradingParams =
             abi.decode(params.staticInput, (ConstantProduct.TradingParams));
-        bytes32 inputHash = amm.hash(tradingParams);
-        bytes32 ammHash = amm.tradingParamsHash();
-        if (inputHash != ammHash) {
-            revert ParamsHashDoesNotMatchEnabledOrder(inputHash, ammHash);
+
+        // Check that `getTradeableOrderWithSignature` is being called with
+        // parameters that are currently enabled for trading on the AMM.
+        // If the parameters are different, this order can be deleted on the
+        // watchtower.
+        if (amm.hash(tradingParams) != amm.tradingParamsHash()) {
+            revert IConditionalOrder.OrderNotValid("invalid trading parameters");
         }
 
         // Note: the salt in params is ignored.

@@ -20,7 +20,7 @@ abstract contract GetTradeableOrderWithSignature is ConstantProductFactoryTestHa
             abi.encode(tradingParams)
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ConstantProductFactory.CanOnlyHandleOrdersForItself.selector));
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "can only handle own orders"));
         constantProductFactory.getTradeableOrderWithSignature(constantProduct, params, hex"", new bytes32[](0));
     }
 
@@ -35,13 +35,7 @@ abstract contract GetTradeableOrderWithSignature is ConstantProductFactoryTestHa
         modifiedParams.appData = keccak256("GetTradeableOrderWithSignature: any different app data");
         bytes32 hashModifiedParams = constantProduct.hash(modifiedParams);
         require(hashEnabledParams != hashModifiedParams, "Incorrect test setup");
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ConstantProductFactory.ParamsHashDoesNotMatchEnabledOrder.selector,
-                hashModifiedParams,
-                hashEnabledParams
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid trading parameters"));
         getTradeableOrderWithSignatureWrapper(constantProduct, modifiedParams);
     }
 
