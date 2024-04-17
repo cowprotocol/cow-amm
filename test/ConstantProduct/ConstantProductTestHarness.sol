@@ -10,7 +10,6 @@ import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {Utils} from "test/libraries/Utils.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
-    address internal orderOwner = Utils.addressFromString("order owner");
     address internal vaultRelayer = Utils.addressFromString("vault relayer");
     address private USDC = Utils.addressFromString("USDC");
     address private WETH = Utils.addressFromString("WETH");
@@ -69,9 +68,9 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         return getDefaultTradingParams();
     }
 
-    function setUpDefaultCommitment(address owner) internal {
+    function setUpDefaultCommitment() internal {
         vm.prank(address(solutionSettler));
-        constantProduct.commit(owner, DEFAULT_COMMITMENT);
+        constantProduct.commit(DEFAULT_COMMITMENT);
     }
 
     function setUpDefaultReserves(address owner) internal {
@@ -98,23 +97,22 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
 
     // This function calls `getTradeableOrder` and immediately checks that the
     // order is valid for the default commitment.
-    function checkedGetTradeableOrder(address owner, ConstantProduct.TradingParams memory tradingParams)
+    function checkedGetTradeableOrder(ConstantProduct.TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        order = constantProduct.getTradeableOrder(owner, tradingParams);
-        verifyWrapper(owner, tradingParams, order);
+        order = constantProduct.getTradeableOrder(tradingParams);
+        verifyWrapper(tradingParams, order);
     }
 
     // This function calls `verify` while filling the order hash with the
     // default commitment.
-    function verifyWrapper(
-        address owner,
-        ConstantProduct.TradingParams memory tradingParams,
-        GPv2Order.Data memory order
-    ) internal view {
-        constantProduct.verify(owner, DEFAULT_COMMITMENT, tradingParams, order);
+    function verifyWrapper(ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order)
+        internal
+        view
+    {
+        constantProduct.verify(DEFAULT_COMMITMENT, tradingParams, order);
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {

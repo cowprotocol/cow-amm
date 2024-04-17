@@ -70,7 +70,7 @@ contract ConstantProductFactory {
 
         // Note: the salt in params is ignored.
 
-        order = amm.getTradeableOrder(address(amm), tradingParams);
+        order = amm.getTradeableOrder(tradingParams);
         signature = abi.encode(order, tradingParams);
     }
 }

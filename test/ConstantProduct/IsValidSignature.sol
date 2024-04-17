@@ -38,7 +38,7 @@ abstract contract IsValidSignature is ConstantProductTestHarness {
         // There are many ways to trigger failure in _verify. The most robust is
         // likely to just set a commit that is different from the signed order.
         vm.prank(address(solutionSettler));
-        constantProduct.commit(address(constantProduct), keccak256("Any bad commitment"));
+        constantProduct.commit(keccak256("Any bad commitment"));
 
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchCommitmentHash.selector));
         constantProduct.isValidSignature(data.orderHash, data.signature);
@@ -51,13 +51,12 @@ abstract contract IsValidSignature is ConstantProductTestHarness {
         // Setup to make the order pass verification
         setUpDefaultPair();
         setUpDefaultReserves(address(constantProduct));
-        setUpDefaultCommitment(address(constantProduct));
         vm.prank(address(solutionSettler));
-        constantProduct.commit(address(constantProduct), data.orderHash);
+        constantProduct.commit(data.orderHash);
 
         // Make sure that the order would pass verification. If this reverts,
         // then this test's setup should be updated.
-        constantProduct.verify(address(constantProduct), data.orderHash, data.tradingParams, data.order);
+        constantProduct.verify(data.orderHash, data.tradingParams, data.order);
 
         bytes4 result = constantProduct.isValidSignature(data.orderHash, data.signature);
         assertEq(result, IERC1271.isValidSignature.selector);
