@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
+import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {
@@ -12,6 +13,7 @@ import {
 } from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
+import {ISettlement} from "./interfaces/ISettlement.sol";
 import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol";
 
 /**
@@ -23,6 +25,8 @@ import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol"
  * Order creation and execution is based on the Composable CoW base contracts.
  */
 contract ConstantProduct is IConditionalOrderGenerator {
+    using SafeERC20 for IERC20;
+
     /// All data used by an order to validate the AMM conditions.
     struct Data {
         /// The minimum amount of token0 that needs to be traded for an order
@@ -50,11 +54,12 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * calling `getTradeableOrder`.
      */
     bytes32 public constant EMPTY_COMMITMENT = bytes32(0);
+
     /**
      * @notice The address of the CoW Protocol settlement contract. It is the
      * only address that can set commitments.
      */
-    address public immutable solutionSettler;
+    ISettlement public immutable solutionSettler;
     /**
      * @notice The first of the two tokens traded by this AMM.
      */
@@ -63,6 +68,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @notice The second of the two tokens traded by this AMM.
      */
     IERC20 public immutable token1;
+    /**
+     * @notice The address that can execute administrative tasks on this AMM,
+     * as for example enabling/disabling trading or withdrawing funds.
+     */
+    address public immutable manager;
+    /**
+     * @notice The domain separator used for hashing CoW Protocol orders.
+     */
+    bytes32 public immutable solutionSettlerDomainSeparator;
+
     /**
      * @notice It associates every order owner to the only order hash that can
      * be validated by calling `verify`. The hash corresponding to the constant
@@ -94,9 +109,21 @@ contract ConstantProduct is IConditionalOrderGenerator {
     /**
      * @param _solutionSettler The CoW Protocol contract used to settle user
      * orders on the current chain.
+     * @param _token0 The first of the two tokens traded by this AMM.
+     * @param _token1 The second of the two tokens traded by this AMM.
      */
-    constructor(address _solutionSettler, IERC20 _token0, IERC20 _token1) {
+    constructor(ISettlement _solutionSettler, IERC20 _token0, IERC20 _token1) {
         solutionSettler = _solutionSettler;
+        solutionSettlerDomainSeparator = _solutionSettler.domainSeparator();
+
+        approveUnlimited(_token0, msg.sender);
+        approveUnlimited(_token1, msg.sender);
+        manager = msg.sender;
+
+        address vaultRelayer = _solutionSettler.vaultRelayer();
+        approveUnlimited(_token0, vaultRelayer);
+        approveUnlimited(_token1, vaultRelayer);
+
         token0 = _token0;
         token1 = _token1;
     }
@@ -111,7 +138,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * verification function.
      */
     function commit(address owner, bytes32 orderHash) public {
-        if (msg.sender != solutionSettler) {
+        if (msg.sender != address(solutionSettler)) {
             revert CommitOutsideOfSettlement();
         }
         commitment[owner] = orderHash;
@@ -304,6 +331,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
      */
     function supportsInterface(bytes4 interfaceId) external view virtual override returns (bool) {
         return interfaceId == type(IConditionalOrderGenerator).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
+
+    /**
+     * @notice Approves the spender to transfer an unlimited amount of tokens
+     * and reverts if the approval was unsuccessful.
+     * @param token The ERC-20 token to approve.
+     * @param spender The address that can transfer on behalf of this contract.
+     */
+    function approveUnlimited(IERC20 token, address spender) internal {
+        token.safeApprove(spender, type(uint256).max);
     }
 
     /**

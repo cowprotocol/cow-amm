@@ -4,6 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {console} from "forge-std/Script.sol";
 
 import {ConstantProductFactory} from "src/ConstantProductFactory.sol";
+import {ISettlement} from "src/interfaces/ISettlement.sol";
 
 import {EnvReader} from "script/libraries/EnvReader.sol";
 import {Utils} from "script/libraries/Utils.sol";
@@ -21,6 +22,6 @@ contract DeployConstantProductFactory is EnvReader, Utils {
 
     function deployConstantProductFactory() internal returns (ConstantProductFactory) {
         vm.broadcast();
-        return new ConstantProductFactory(solutionSettler);
+        return new ConstantProductFactory(ISettlement(solutionSettler));
     }
 }

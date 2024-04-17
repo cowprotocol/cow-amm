@@ -11,7 +11,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
     bytes32 private orderHashAlternative = keccak256("some other order hash");
 
     function testRevertsIfCommitDoesNotMatch() public {
-        vm.prank(solutionSettler);
+        vm.prank(address(solutionSettler));
         constantProduct.commit(orderOwner, orderHash);
         GPv2Order.Data memory order = getDefaultOrder();
         ConstantProduct.Data memory data = getDefaultData();

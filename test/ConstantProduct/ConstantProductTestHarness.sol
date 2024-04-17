@@ -5,32 +5,50 @@ import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.
 
 import {ConstantProduct, GPv2Order, IERC20} from "src/ConstantProduct.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
+import {ISettlement} from "src/interfaces/ISettlement.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     address internal orderOwner = Utils.addressFromString("order owner");
+    address internal vaultRelayer = Utils.addressFromString("vault relayer");
     address private USDC = Utils.addressFromString("USDC");
     address private WETH = Utils.addressFromString("WETH");
     address private DEFAULT_PAIR = Utils.addressFromString("default USDC/WETH pair");
     address private DEFAULT_RECEIVER = Utils.addressFromString("default receiver");
+    address private DEFAULT_SOLUTION_SETTLER = Utils.addressFromString("settlement contract");
     bytes32 private DEFAULT_APPDATA = keccak256(bytes("unit test"));
     bytes32 private DEFAULT_COMMITMENT = keccak256(bytes("order hash"));
+    bytes32 private DEFAULT_DOMAIN_SEPARATOR = keccak256(bytes("domain separator hash"));
 
-    address internal solutionSettler = Utils.addressFromString("settlement contract");
+    ISettlement internal solutionSettler = ISettlement(DEFAULT_SOLUTION_SETTLER);
     ConstantProduct internal constantProduct;
     UniswapV2PriceOracle internal uniswapV2PriceOracle;
 
     function setUp() public virtual override(BaseComposableCoWTest) {
         super.setUp();
-
+        address constantProductAddress = vm.computeCreateAddress(address(this), vm.getNonce(address(this)));
+        setUpSolutionSettler();
+        setUpAmmDeployment(constantProductAddress);
         constantProduct = new ConstantProduct(solutionSettler, IERC20(USDC), IERC20(WETH));
         uniswapV2PriceOracle = new UniswapV2PriceOracle();
     }
 
+    function setUpSolutionSettler() internal {
+        vm.mockCall(
+            DEFAULT_SOLUTION_SETTLER,
+            abi.encodeCall(ISettlement.domainSeparator, ()),
+            abi.encode(DEFAULT_DOMAIN_SEPARATOR)
+        );
+        vm.mockCall(DEFAULT_SOLUTION_SETTLER, abi.encodeCall(ISettlement.vaultRelayer, ()), abi.encode(vaultRelayer));
+        vm.mockCallRevert(
+            DEFAULT_SOLUTION_SETTLER, hex"", abi.encode("Called unexpected function on mock settlement contract")
+        );
+    }
+
     function setUpDefaultPair() internal {
-        vm.mockCall(DEFAULT_PAIR, abi.encodeWithSelector(IUniswapV2Pair.token0.selector), abi.encode(USDC));
-        vm.mockCall(DEFAULT_PAIR, abi.encodeWithSelector(IUniswapV2Pair.token1.selector), abi.encode(WETH));
+        vm.mockCall(DEFAULT_PAIR, abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(USDC));
+        vm.mockCall(DEFAULT_PAIR, abi.encodeCall(IUniswapV2Pair.token1, ()), abi.encode(WETH));
         // Reverts for everything else
         vm.mockCallRevert(DEFAULT_PAIR, hex"", abi.encode("Called unexpected function on mock pair"));
         IUniswapV2Pair pair = IUniswapV2Pair(DEFAULT_PAIR);
@@ -52,7 +70,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     function setUpDefaultCommitment(address owner) internal {
-        vm.prank(solutionSettler);
+        vm.prank(address(solutionSettler));
         constantProduct.commit(owner, DEFAULT_COMMITMENT);
     }
 
@@ -150,5 +168,28 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
             GPv2Order.BALANCE_ERC20, // bytes32 sellTokenBalance;
             GPv2Order.BALANCE_ERC20 // bytes32 buyTokenBalance;
         );
+    }
+
+    function setUpAmmDeployment(address constantProductAddress) internal {
+        setUpTokenForDeployment(IERC20(USDC), constantProductAddress);
+        setUpTokenForDeployment(IERC20(WETH), constantProductAddress);
+    }
+
+    function setUpTokenForDeployment(IERC20 token, address constantProductAddress) internal {
+        mockSafeApprove(token, constantProductAddress, solutionSettler.vaultRelayer());
+        mockSafeApprove(token, constantProductAddress, address(this));
+    }
+
+    function mockSafeApprove(IERC20 token, address owner, address spender) internal {
+        mockZeroAllowance(token, owner, spender);
+        mockApprove(token, spender);
+    }
+
+    function mockApprove(IERC20 token, address spender) internal {
+        vm.mockCall(address(token), abi.encodeCall(IERC20.approve, (spender, type(uint256).max)), abi.encode(true));
+    }
+
+    function mockZeroAllowance(IERC20 token, address owner, address spender) internal {
+        vm.mockCall(address(token), abi.encodeCall(IERC20.allowance, (owner, spender)), abi.encode(0));
     }
 }

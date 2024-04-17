@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
+import {ISettlement} from "./ConstantProduct.sol";
+
 /**
  * @title CoW AMM Factory
  * @author CoW Protocol Developers
@@ -13,12 +15,12 @@ contract ConstantProductFactory {
     /**
      * @notice The settlement contract for CoW Protocol on this network.
      */
-    address public immutable settler;
+    ISettlement public immutable settler;
 
     /**
      * @param _settler The address of the GPv2Settlement contract.
      */
-    constructor(address _settler) {
+    constructor(ISettlement _settler) {
         settler = _settler;
     }
 }
