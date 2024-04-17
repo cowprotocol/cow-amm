@@ -35,7 +35,7 @@ contract ConstantProductFactory {
      * the AMM. If the hash is empty, then trading for this order has been
      * disabled and there is currently no open order available
      */
-    error ParamsHashDoesNotMatchEnabledOrder(bytes32 computed, bytes32 amm);
+    error ParamsHashDoesNotMatchEnabledOrder(bytes32 computed, bytes32 ammHash);
 
     /**
      * @param _settler The address of the GPv2Settlement contract.
