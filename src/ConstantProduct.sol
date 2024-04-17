@@ -28,7 +28,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
     using SafeERC20 for IERC20;
 
     /// All data used by an order to validate the AMM conditions.
-    struct Data {
+    struct TradingParams {
         /// The minimum amount of token0 that needs to be traded for an order
         /// to be created on getTradeableOrder.
         uint256 minTradedToken0;
@@ -54,6 +54,11 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * calling `getTradeableOrder`.
      */
     bytes32 public constant EMPTY_COMMITMENT = bytes32(0);
+    /**
+     * @notice The value representing that no trading parameters are currently
+     * accepted as valid by this contract, meaning that no trading can occur.
+     */
+    bytes32 public constant NO_TRADING = bytes32(0);
 
     /**
      * @notice The address of the CoW Protocol settlement contract. It is the
@@ -85,7 +90,33 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * documentation.
      */
     mapping(address => bytes32) public commitment;
+    /**
+     * The hash of the data describing which `TradingParams` currently apply
+     * to this AMM. If this parameter is set to `NO_TRADING`, then the AMM
+     * does not accept any order as valid.
+     * If trading is enabled, then this value will be the [`hash`] of the only
+     * admissible [`TradingParams`].
+     */
+    bytes32 public tradingParamsHash;
 
+    /**
+     * Emitted when the owner disables all trades by the AMM. Existing open
+     * order will not be tradeable. Note that the AMM could resume trading with
+     * different parameters at a later point.
+     */
+    event TradingDisabled();
+    /**
+     * Emitted when the owner enables the AMM to trade on CoW Protocol.
+     * @param hash The hash of the trading parameters.
+     * @param params Trading has been enabled for these parameters.
+     */
+    event TradingEnabled(bytes32 indexed hash, TradingParams params);
+
+    /**
+     * @notice This function is permissioned and can only be called by the
+     * contract's manager.
+     */
+    error OnlyManagerCanCall();
     /**
      * @notice The `commit` function can only be called inside a CoW Swap
      * settlement. This error is thrown when the function is called from another
@@ -105,6 +136,13 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * ones.
      */
     error OrderDoesNotMatchDefaultTradeableOrder();
+
+    modifier onlyManager() {
+        if (manager != msg.sender) {
+            revert OnlyManagerCanCall();
+        }
+        _;
+    }
 
     /**
      * @param _solutionSettler The CoW Protocol contract used to settle user
@@ -126,6 +164,26 @@ contract ConstantProduct is IConditionalOrderGenerator {
 
         token0 = _token0;
         token1 = _token1;
+    }
+
+    /**
+     * @notice Once this function is called, it will be possible to trade with
+     * this AMM on CoW Protocol.
+     * @param tradingParams Trading is enabled with the parameters specified
+     * here.
+     */
+    function enableTrading(TradingParams calldata tradingParams) external onlyManager {
+        bytes32 _tradingParamsHash = hash(tradingParams);
+        tradingParamsHash = _tradingParamsHash;
+        emit TradingEnabled(_tradingParamsHash, tradingParams);
+    }
+
+    /**
+     * @notice Disable any form of trading on CoW Protocol by this AMM.
+     */
+    function disableTrading() external onlyManager {
+        tradingParamsHash = NO_TRADING;
+        emit TradingDisabled();
     }
 
     /**
@@ -165,18 +223,18 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * the logic inside the original function, it frees up some stack slots and
      * reduces "stack too deep" issues.
      * @param owner the contract who is the owner of the order
-     * @param staticInput the static input for all discrete orders cut from this
-     * conditional order
+     * @param _tradingParams the trading parameters of all discrete orders cut
+     * from this conditional order
      * @return order the tradeable order for submission to the CoW Protocol API
      */
-    function _getTradeableOrder(address owner, bytes calldata staticInput)
+    function _getTradeableOrder(address owner, bytes calldata _tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
         (uint256 priceNumerator, uint256 priceDenominator) =
-            data.priceOracle.getPrice(address(token0), address(token1), data.priceOracleData);
+            tradingParams.priceOracle.getPrice(address(token0), address(token1), tradingParams.priceOracleData);
         (uint256 selfReserve0, uint256 selfReserve1) = (token0.balanceOf(owner), token1.balanceOf(owner));
 
         IERC20 sellToken;
@@ -223,7 +281,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
             tradedAmountToken0 = buyAmount;
         }
 
-        if (tradedAmountToken0 < data.minTradedToken0) {
+        if (tradedAmountToken0 < tradingParams.minTradedToken0) {
             revertPollAtNextBlock("traded amount too small");
         }
 
@@ -234,7 +292,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
             sellAmount,
             buyAmount,
             Utils.validToBucket(MAX_ORDER_DURATION),
-            data.appData,
+            tradingParams.appData,
             0,
             GPv2Order.KIND_SELL,
             true,
@@ -269,16 +327,16 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param owner the contract who is the owner of the order
      * @param orderHash the hash of the current order as defined by the
      * `GPv2Order` library.
-     * @param staticInput the static input for all discrete orders cut from this
-     * conditional order
+     * @param _tradingParams the trading parameters of all discrete orders cut
+     * from this conditional order
      * @param order `GPv2Order.Data` of a discrete order to be verified.
      */
-    function _verify(address owner, bytes32 orderHash, bytes calldata staticInput, GPv2Order.Data calldata order)
+    function _verify(address owner, bytes32 orderHash, bytes calldata _tradingParams, GPv2Order.Data calldata order)
         internal
         view
     {
-        requireMatchingCommitment(owner, orderHash, staticInput, order);
-        ConstantProduct.Data memory data = abi.decode(staticInput, (Data));
+        requireMatchingCommitment(owner, orderHash, _tradingParams, order);
+        ConstantProduct.TradingParams memory tradingParams = abi.decode(_tradingParams, (TradingParams));
 
         IERC20 sellToken = token0;
         IERC20 buyToken = token1;
@@ -303,7 +361,7 @@ contract ConstantProduct is IConditionalOrderGenerator {
         if (order.validTo > block.timestamp + MAX_ORDER_DURATION) {
             revert IConditionalOrder.OrderNotValid("validity too far in the future");
         }
-        if (order.appData != data.appData) {
+        if (order.appData != tradingParams.appData) {
             revert IConditionalOrder.OrderNotValid("invalid appData");
         }
         if (order.feeAmount != 0) {
@@ -378,14 +436,14 @@ contract ConstantProduct is IConditionalOrderGenerator {
      * @param owner the contract that owns the order
      * @param orderHash the hash of the current order as defined by the
      * `GPv2Order` library.
-     * @param staticInput the static input for all discrete orders cut from this
-     * conditional order
+     * @param tradingParams the trading parameters of all discrete orders cut
+     * from this conditional order
      * @param order `GPv2Order.Data` of a discrete order to be verified
      */
     function requireMatchingCommitment(
         address owner,
         bytes32 orderHash,
-        bytes calldata staticInput,
+        bytes calldata tradingParams,
         GPv2Order.Data calldata order
     ) internal view {
         bytes32 committedOrderHash = commitment[owner];
@@ -393,11 +451,22 @@ contract ConstantProduct is IConditionalOrderGenerator {
             if (committedOrderHash != EMPTY_COMMITMENT) {
                 revert OrderDoesNotMatchCommitmentHash();
             }
-            GPv2Order.Data memory computedOrder = _getTradeableOrder(owner, staticInput);
+            GPv2Order.Data memory computedOrder = _getTradeableOrder(owner, tradingParams);
             if (!matchFreeOrderParams(order, computedOrder)) {
                 revert OrderDoesNotMatchDefaultTradeableOrder();
             }
         }
+    }
+
+    /**
+     * @dev Computes an identifier that uniquely represents the parameters in
+     * the function input parameters.
+     * @param tradingParams Bytestring that decodes to `TradingParams`
+     * @return The hash of the input parameter, intended to be used as a unique
+     * identifier
+     */
+    function hash(TradingParams memory tradingParams) public pure returns (bytes32) {
+        return keccak256(abi.encode(tradingParams));
     }
 
     /**

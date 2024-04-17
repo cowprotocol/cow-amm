@@ -31,7 +31,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
 
     function setUpOrderWithReserves(uint256 amountToken0, uint256 amountToken1)
         internal
-        returns (ConstantProduct.Data memory data, GPv2Order.Data memory order)
+        returns (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order)
     {
         setUpDefaultCommitment(orderOwner);
         setUpAmmWithReserves(amountToken0, amountToken1);
@@ -41,7 +41,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = 0;
         order.buyAmount = 0;
 
-        data = ConstantProduct.Data(
+        tradingParams = ConstantProduct.TradingParams(
             0, uniswapV2PriceOracle, abi.encode(abi.encode(UniswapV2PriceOracle.Data(pair))), order.appData
         );
     }
@@ -61,14 +61,15 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
     function testExactAmountsInOut() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
 
         // The next line is there so that we can see at a glance that the out
         // amount is reasonable given the in amount, since the math could be
@@ -81,14 +82,15 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // trade.
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolOut, poolIn);
 
         order.sellAmount = 1 ether;
         // Large enough compared to the sell amount, but not so large that it
         // causes overflow issues.
         order.buyAmount = type(uint128).max;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testVeryLowSellAmountDoesNotRevert() public {
@@ -96,18 +98,20 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // comparatively high), the AMM should always be willing to trade.
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolOut, poolIn);
 
         order.sellAmount = 1;
         order.buyAmount = 1 ether;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testOneTooMuchOut() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
@@ -115,13 +119,14 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testOneTooLittleIn() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolOut, poolIn);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolOut, poolIn);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
@@ -129,13 +134,14 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn - 1;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testInvertInOutToken() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
@@ -143,7 +149,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testInvertedTokenVeryLargeBuyAmountDoesNotRevert() public {
@@ -151,14 +157,15 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // trade.
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolIn, poolOut);
 
         order.sellAmount = 1 ether;
         // Large enough compared to the sell amount, but not so large that it
         // causes overflow issues.
         order.buyAmount = type(uint128).max;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testInvertedTokenVeryLowSellAmountDoesNotRevert() public {
@@ -166,18 +173,20 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // comparatively high), the AMM should always be willing to trade.
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolIn, poolOut);
 
         order.sellAmount = 1;
         order.buyAmount = 1 ether;
 
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testInvertedTokenOneTooMuchOut() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
@@ -186,13 +195,14 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 
     function testInvertedTokensOneTooLittleIn() public {
         uint256 poolOut = 1100 ether;
         uint256 poolIn = 10 ether;
-        (ConstantProduct.Data memory data, GPv2Order.Data memory order) = setUpOrderWithReserves(poolIn, poolOut);
+        (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order) =
+            setUpOrderWithReserves(poolIn, poolOut);
 
         uint256 amountOut = 100 ether;
         uint256 amountIn = getExpectedAmountIn([poolIn, poolOut], amountOut);
@@ -201,6 +211,6 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn - 1;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, data, order);
+        verifyWrapper(orderOwner, tradingParams, order);
     }
 }

@@ -22,6 +22,10 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         assertEq(address(constantProduct.token1()), address(token1));
     }
 
+    function testAmmIsNotTradingAfterDeployment() public {
+        assertEq(constantProduct.tradingParamsHash(), constantProduct.NO_TRADING());
+    }
+
     function approvedToken(string memory name) private returns (IERC20 token) {
         token = IERC20(Utils.addressFromString(name));
         mockSafeApprove(token, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
