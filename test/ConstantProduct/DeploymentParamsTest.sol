@@ -52,7 +52,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         return revertingToken(name, solutionSettler.vaultRelayer(), defaultDeployer());
     }
 
-    function epectUnlimitedApproval(IERC20 token, address spender) private {
+    function expectUnlimitedApproval(IERC20 token, address spender) private {
         vm.expectCall(address(token), abi.encodeCall(IERC20.approve, (spender, type(uint256).max)), 1);
     }
 
@@ -60,8 +60,8 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         IERC20 token0 = approvedToken("regular token 0");
         IERC20 token1 = approvedToken("regular token 1");
         address vaultRelayer = address(solutionSettler.vaultRelayer());
-        epectUnlimitedApproval(token0, vaultRelayer);
-        epectUnlimitedApproval(token1, vaultRelayer);
+        expectUnlimitedApproval(token0, vaultRelayer);
+        expectUnlimitedApproval(token1, vaultRelayer);
         vm.prank(defaultDeployer());
         new ConstantProduct(solutionSettler, token0, token1);
     }
@@ -69,8 +69,8 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     function testDeploymentAllowsDeployer() public {
         IERC20 token0 = approvedToken("regular token 0");
         IERC20 token1 = approvedToken("regular token 1");
-        epectUnlimitedApproval(token0, defaultDeployer());
-        epectUnlimitedApproval(token1, defaultDeployer());
+        expectUnlimitedApproval(token0, defaultDeployer());
+        expectUnlimitedApproval(token1, defaultDeployer());
         vm.prank(defaultDeployer());
         new ConstantProduct(solutionSettler, token0, token1);
     }
@@ -101,7 +101,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
 
     function testDeploymentSucceedsIfApproveReturnsNoData() public {
         IERC20 regular = approvedToken("regular");
-        IERC20 noDataApproval = IERC20(Utils.addressFromString("this token returns false on approval"));
+        IERC20 noDataApproval = IERC20(Utils.addressFromString("this token returns no data on approval"));
         mockSafeApprove(noDataApproval, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockZeroAllowance(noDataApproval, expectedDeploymentAddress(), defaultDeployer());
         vm.mockCall(
