@@ -96,60 +96,25 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         );
     }
 
-    // This function calls `getTradeableOrder` while filling all unused
-    // parameters with arbitrary data.
-    function getTradeableOrderUncheckedWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
+    // This function calls `getTradeableOrder` and immediately checks that the
+    // order is valid for the default commitment.
+    function checkedGetTradeableOrder(address owner, ConstantProduct.TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        order = constantProduct.getTradeableOrder(
-            owner,
-            Utils.addressFromString("sender"),
-            keccak256(bytes("context")),
-            abi.encode(tradingParams),
-            bytes("offchain input")
-        );
-    }
-
-    // This function calls `getTradeableOrder` while filling all unused
-    // parameters with arbitrary data. It also immediately checks that the order
-    // is valid.
-    function getTradeableOrderWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
-        internal
-        view
-        returns (GPv2Order.Data memory order)
-    {
-        order = getTradeableOrderUncheckedWrapper(owner, tradingParams);
+        order = constantProduct.getTradeableOrder(owner, tradingParams);
         verifyWrapper(owner, tradingParams, order);
     }
 
-    // This function calls `verify` while filling all unused parameters with
-    // arbitrary data and the order hash with the default commitment.
+    // This function calls `verify` while filling the order hash with the
+    // default commitment.
     function verifyWrapper(
         address owner,
         ConstantProduct.TradingParams memory tradingParams,
         GPv2Order.Data memory order
     ) internal view {
-        verifyWrapper(owner, DEFAULT_COMMITMENT, tradingParams, order);
-    }
-
-    function verifyWrapper(
-        address owner,
-        bytes32 orderHash,
-        ConstantProduct.TradingParams memory tradingParams,
-        GPv2Order.Data memory order
-    ) internal view {
-        constantProduct.verify(
-            owner,
-            Utils.addressFromString("sender"),
-            orderHash,
-            keccak256(bytes("domain separator")),
-            keccak256(bytes("context")),
-            abi.encode(tradingParams),
-            bytes("offchain input"),
-            order
-        );
+        constantProduct.verify(owner, DEFAULT_COMMITMENT, tradingParams, order);
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {

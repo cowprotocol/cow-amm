@@ -17,7 +17,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         ConstantProduct.TradingParams memory tradingParams = getDefaultTradingParams();
 
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchCommitmentHash.selector));
-        verifyWrapper(orderOwner, orderHashAlternative, tradingParams, order);
+        constantProduct.verify(orderOwner, orderHashAlternative, tradingParams, order);
     }
 
     function testTradeableOrderPassesValidationWithZeroCommit() public {
@@ -30,8 +30,8 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(42, 1337);
 
-        GPv2Order.Data memory order = getTradeableOrderUncheckedWrapper(orderOwner, defaultTradingParams);
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, order);
+        GPv2Order.Data memory order = constantProduct.getTradeableOrder(orderOwner, defaultTradingParams);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, order);
     }
 
     function testZeroCommitRevertsForOrdersOtherThanTradeableOrder() public {
@@ -44,7 +44,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(42, 1337);
 
-        GPv2Order.Data memory originalOrder = getTradeableOrderUncheckedWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory originalOrder = constantProduct.getTradeableOrder(orderOwner, defaultTradingParams);
         GPv2Order.Data memory modifiedOrder;
 
         // All GPv2Order.Data parameters are included in this test. They are:
@@ -64,68 +64,68 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.sellToken = IERC20(Utils.addressFromString("bad sell token"));
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.buyToken = IERC20(Utils.addressFromString("bad buy token"));
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.receiver = Utils.addressFromString("bad receiver");
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
         );
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.sellAmount = modifiedOrder.sellAmount - 1;
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.buyAmount = modifiedOrder.buyAmount + 1;
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.validTo = modifiedOrder.validTo - 1;
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.appData = keccak256("bad app data");
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid appData"));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.feeAmount = modifiedOrder.feeAmount + 1;
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "fee amount must be zero"));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.kind = GPv2Order.KIND_BUY;
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.partiallyFillable = !modifiedOrder.partiallyFillable;
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector));
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.sellTokenBalance = GPv2Order.BALANCE_EXTERNAL;
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "sellTokenBalance must be erc20")
         );
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
 
         modifiedOrder = deepClone(originalOrder);
         modifiedOrder.buyTokenBalance = GPv2Order.BALANCE_EXTERNAL;
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "buyTokenBalance must be erc20")
         );
-        verifyWrapper(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
+        constantProduct.verify(orderOwner, orderHash, defaultTradingParams, modifiedOrder);
     }
 
     function deepClone(GPv2Order.Data memory order) internal pure returns (GPv2Order.Data memory) {

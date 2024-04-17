@@ -12,7 +12,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(orderOwner);
         setUpDefaultReferencePairReserves(42, 1337);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         // Test all parameters with the exception of sell/buy tokens and amounts
         assertEq(order.receiver, GPv2Order.RECEIVER_SAME_AS_OWNER);
         assertEq(order.validTo, constantProduct.MAX_ORDER_DURATION());
@@ -30,14 +30,14 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReferencePairReserves(42, 1337);
 
         GPv2Order.Data memory order;
-        order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         assertEq(order.validTo, constantProduct.MAX_ORDER_DURATION());
 
         uint256 smallOffset = 42;
         require(smallOffset < constantProduct.MAX_ORDER_DURATION());
         vm.warp(block.timestamp + constantProduct.MAX_ORDER_DURATION() + smallOffset);
 
-        order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         assertEq(order.validTo, 2 * constantProduct.MAX_ORDER_DURATION());
     }
 
@@ -49,17 +49,17 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         uint256 currentBlock = 1337;
         vm.roll(currentBlock);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         require(order.sellToken == constantProduct.token0(), "test was design for token0 to be the sell token");
         defaultTradingParams.minTradedToken0 = order.sellAmount;
-        order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         defaultTradingParams.minTradedToken0 = order.sellAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
                 IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "traded amount too small"
             )
         );
-        getTradeableOrderUncheckedWrapper(orderOwner, defaultTradingParams);
+        constantProduct.getTradeableOrder(orderOwner, defaultTradingParams);
     }
 
     function testRevertsIfAmountTooLowOnBuyToken() public {
@@ -70,17 +70,17 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         uint256 currentBlock = 1337;
         vm.roll(currentBlock);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         require(order.buyToken == constantProduct.token0(), "test was design for token0 to be the buy token");
         defaultTradingParams.minTradedToken0 = order.buyAmount;
-        order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         defaultTradingParams.minTradedToken0 = order.buyAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
                 IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "traded amount too small"
             )
         );
-        getTradeableOrderUncheckedWrapper(orderOwner, defaultTradingParams);
+        constantProduct.getTradeableOrder(orderOwner, defaultTradingParams);
     }
 
     function testSellAmountSubtractionUnderflow() public {
@@ -98,6 +98,6 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
                 IWatchtowerCustomErrors.PollTryAtBlock.selector, currentBlock + 1, "subtraction underflow"
             )
         );
-        getTradeableOrderUncheckedWrapper(orderOwner, defaultTradingParams);
+        constantProduct.getTradeableOrder(orderOwner, defaultTradingParams);
     }
 }

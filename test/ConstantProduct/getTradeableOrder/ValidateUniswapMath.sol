@@ -12,7 +12,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         uint256 ownerReserve1 = 10 ether;
         setUpDefaultWithReserves(orderOwner, ownerReserve0, ownerReserve1);
         setUpDefaultReferencePairReserves(1 ether, 10 ether);
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
 
         assertEq(address(order.sellToken), address(constantProduct.token0()));
         assertEq(address(order.buyToken), address(constantProduct.token1()));
@@ -31,7 +31,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         // The limit price on the reference pool is 3:1. That of the order is
         // 1:2.
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         assertEq(address(order.sellToken), address(constantProduct.token1()));
         assertEq(address(order.buyToken), address(constantProduct.token0()));
 
@@ -49,7 +49,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         setUpDefaultWithReserves(orderOwner, 10 ether, 10 ether + roundingTrigger);
         setUpDefaultReferencePairReserves(1 ether + roundingTrigger, 10 ether);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         require(
             address(order.sellToken) == address(constantProduct.token0()),
             "this test was intended for the case sellToken == token0"
@@ -66,7 +66,7 @@ abstract contract ValidateUniswapMath is ConstantProductTestHarness {
         setUpDefaultWithReserves(orderOwner, 12 ether, 24 ether);
         setUpDefaultReferencePairReserves(126 ether + roundingTrigger, 42 ether);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(orderOwner, defaultTradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(orderOwner, defaultTradingParams);
         require(
             address(order.sellToken) == address(constantProduct.token1()),
             "this test was intended for the case sellToken == token1"

@@ -45,7 +45,7 @@ abstract contract GetTradeableOrderWithSignature is ConstantProductFactoryTestHa
         setUpDefaultReferencePairReserves(42, 1337);
         constantProduct.enableTrading(tradingParams);
 
-        GPv2Order.Data memory order = getTradeableOrderWrapper(address(constantProduct), tradingParams);
+        GPv2Order.Data memory order = checkedGetTradeableOrder(address(constantProduct), tradingParams);
         (GPv2Order.Data memory orderSigned,) = getTradeableOrderWithSignatureWrapper(constantProduct, tradingParams);
         assertEq(orderSigned.hash(bytes32(0)), order.hash(bytes32(0)));
     }
