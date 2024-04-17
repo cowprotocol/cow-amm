@@ -8,6 +8,7 @@ import {DeploymentParamsTest} from "./ConstantProduct/DeploymentParamsTest.sol";
 import {IERC165Test} from "./ConstantProduct/IERC165Test.sol";
 import {EnableTrading} from "./ConstantProduct/EnableTrading.sol";
 import {DisableTrading} from "./ConstantProduct/DisableTrading.sol";
+import {IsValidSignature} from "./ConstantProduct/IsValidSignature.sol";
 
 contract ConstantProductTest is
     VerifyTest,
@@ -16,5 +17,6 @@ contract ConstantProductTest is
     DeploymentParamsTest,
     IERC165Test,
     EnableTrading,
-    DisableTrading
+    DisableTrading,
+    IsValidSignature
 {}
