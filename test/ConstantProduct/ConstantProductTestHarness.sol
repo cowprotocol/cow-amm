@@ -143,13 +143,13 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     }
 
     function setUpAmmDeployment(address constantProductAddress) internal {
-        setUpTokenForDeployment(IERC20(USDC), constantProductAddress);
-        setUpTokenForDeployment(IERC20(WETH), constantProductAddress);
+        setUpTokenForDeployment(IERC20(USDC), constantProductAddress, address(this));
+        setUpTokenForDeployment(IERC20(WETH), constantProductAddress, address(this));
     }
 
-    function setUpTokenForDeployment(IERC20 token, address constantProductAddress) internal {
+    function setUpTokenForDeployment(IERC20 token, address constantProductAddress, address owner) internal {
         mockSafeApprove(token, constantProductAddress, solutionSettler.vaultRelayer());
-        mockSafeApprove(token, constantProductAddress, address(this));
+        mockSafeApprove(token, constantProductAddress, owner);
     }
 
     function mockSafeApprove(IERC20 token, address owner, address spender) internal {
