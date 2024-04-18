@@ -16,7 +16,7 @@ abstract contract CommitTest is ConstantProductTestHarness {
         constantProduct.commit(0x4242424242424242424242424242424242424242424242424242424242424242);
     }
 
-    function testCommittingSetsCommitmentInMapping() public {
+    function testCommittingSetsCommitment() public {
         bytes32 commitment = 0x4242424242424242424242424242424242424242424242424242424242424242;
         assertEq(constantProduct.commitment(), bytes32(0));
         vm.prank(address(solutionSettler));
