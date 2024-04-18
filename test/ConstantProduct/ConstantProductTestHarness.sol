@@ -10,7 +10,15 @@ import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {Utils} from "test/libraries/Utils.sol";
 
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
-    address internal orderOwner = Utils.addressFromString("order owner");
+    using GPv2Order for GPv2Order.Data;
+
+    struct SignatureData {
+        GPv2Order.Data order;
+        bytes32 orderHash;
+        ConstantProduct.TradingParams tradingParams;
+        bytes signature;
+    }
+
     address internal vaultRelayer = Utils.addressFromString("vault relayer");
     address private USDC = Utils.addressFromString("USDC");
     address private WETH = Utils.addressFromString("WETH");
@@ -69,9 +77,9 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         return getDefaultTradingParams();
     }
 
-    function setUpDefaultCommitment(address owner) internal {
+    function setUpDefaultCommitment() internal {
         vm.prank(address(solutionSettler));
-        constantProduct.commit(owner, DEFAULT_COMMITMENT);
+        constantProduct.commit(DEFAULT_COMMITMENT);
     }
 
     function setUpDefaultReserves(address owner) internal {
@@ -96,60 +104,23 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         );
     }
 
-    // This function calls `getTradeableOrder` while filling all unused
-    // parameters with arbitrary data.
-    function getTradeableOrderUncheckedWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
+    function defaultSignatureAndHashes() internal returns (SignatureData memory out) {
+        ConstantProduct.TradingParams memory tradingParams = getDefaultTradingParams();
+        GPv2Order.Data memory order = getDefaultOrder();
+        bytes32 orderHash = order.hash(solutionSettler.domainSeparator());
+        bytes memory signature = abi.encode(order, tradingParams);
+        out = SignatureData(order, orderHash, tradingParams, signature);
+    }
+
+    // This function calls `getTradeableOrder` and immediately checks that the
+    // order is valid for the default commitment.
+    function checkedGetTradeableOrder(ConstantProduct.TradingParams memory tradingParams)
         internal
         view
         returns (GPv2Order.Data memory order)
     {
-        order = constantProduct.getTradeableOrder(
-            owner,
-            Utils.addressFromString("sender"),
-            keccak256(bytes("context")),
-            abi.encode(tradingParams),
-            bytes("offchain input")
-        );
-    }
-
-    // This function calls `getTradeableOrder` while filling all unused
-    // parameters with arbitrary data. It also immediately checks that the order
-    // is valid.
-    function getTradeableOrderWrapper(address owner, ConstantProduct.TradingParams memory tradingParams)
-        internal
-        view
-        returns (GPv2Order.Data memory order)
-    {
-        order = getTradeableOrderUncheckedWrapper(owner, tradingParams);
-        verifyWrapper(owner, tradingParams, order);
-    }
-
-    // This function calls `verify` while filling all unused parameters with
-    // arbitrary data and the order hash with the default commitment.
-    function verifyWrapper(
-        address owner,
-        ConstantProduct.TradingParams memory tradingParams,
-        GPv2Order.Data memory order
-    ) internal view {
-        verifyWrapper(owner, DEFAULT_COMMITMENT, tradingParams, order);
-    }
-
-    function verifyWrapper(
-        address owner,
-        bytes32 orderHash,
-        ConstantProduct.TradingParams memory tradingParams,
-        GPv2Order.Data memory order
-    ) internal view {
-        constantProduct.verify(
-            owner,
-            Utils.addressFromString("sender"),
-            orderHash,
-            keccak256(bytes("domain separator")),
-            keccak256(bytes("context")),
-            abi.encode(tradingParams),
-            bytes("offchain input"),
-            order
-        );
+        order = constantProduct.getTradeableOrder(tradingParams);
+        constantProduct.verify(tradingParams, order);
     }
 
     function getDefaultOrder() internal view returns (GPv2Order.Data memory) {

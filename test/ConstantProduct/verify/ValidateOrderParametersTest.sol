@@ -12,8 +12,8 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         returns (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder)
     {
         defaultTradingParams = setUpDefaultTradingParams();
-        setUpDefaultReserves(orderOwner);
-        setUpDefaultCommitment(orderOwner);
+        setUpDefaultReserves(address(constantProduct));
+        setUpDefaultCommitment();
         defaultOrder = getDefaultOrder();
     }
 
@@ -21,7 +21,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
             setUpBasicOrder();
 
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testCanInvertTokens() public {
@@ -29,7 +29,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             setUpBasicOrder();
 
         (defaultOrder.sellToken, defaultOrder.buyToken) = (defaultOrder.buyToken, defaultOrder.sellToken);
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfInvalidTokenCombination() public {
@@ -37,9 +37,11 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             setUpBasicOrder();
 
         IERC20 badToken = IERC20(Utils.addressFromString("bad token"));
-        vm.mockCall(address(badToken), abi.encodeCall(IERC20.balanceOf, (orderOwner)), abi.encode(1337));
+        vm.mockCall(address(badToken), abi.encodeCall(IERC20.balanceOf, (address(constantProduct))), abi.encode(1337));
         IERC20 badTokenExtra = IERC20(Utils.addressFromString("extra bad token"));
-        vm.mockCall(address(badTokenExtra), abi.encodeCall(IERC20.balanceOf, (orderOwner)), abi.encode(1337));
+        vm.mockCall(
+            address(badTokenExtra), abi.encodeCall(IERC20.balanceOf, (address(constantProduct))), abi.encode(1337)
+        );
 
         IERC20[2][4] memory sellTokenInvalidCombinations = [
             [badToken, badToken],
@@ -59,7 +61,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             defaultOrder.buyToken = sellTokenInvalidCombinations[i][1];
 
             vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid sell token"));
-            verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+            constantProduct.verify(defaultTradingParams, defaultOrder);
         }
 
         for (uint256 i = 0; i < buyTokenInvalidCombinations.length; i += 1) {
@@ -67,7 +69,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             defaultOrder.buyToken = buyTokenInvalidCombinations[i][1];
 
             vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid buy token"));
-            verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+            constantProduct.verify(defaultTradingParams, defaultOrder);
         }
     }
 
@@ -79,7 +81,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
         );
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfExpiresFarInTheFuture() public {
@@ -90,7 +92,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "validity too far in the future")
         );
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfDifferentAppData() public {
@@ -99,7 +101,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
 
         defaultOrder.appData = keccak256(bytes("bad app data"));
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid appData"));
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfNonzeroFee() public {
@@ -108,7 +110,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
 
         defaultOrder.feeAmount = 1;
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "fee amount must be zero"));
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfSellTokenBalanceIsNotErc20() public {
@@ -119,7 +121,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "sellTokenBalance must be erc20")
         );
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 
     function testRevertsIfBuyTokenBalanceIsNotErc20() public {
@@ -130,6 +132,6 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "buyTokenBalance must be erc20")
         );
-        verifyWrapper(orderOwner, defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultTradingParams, defaultOrder);
     }
 }

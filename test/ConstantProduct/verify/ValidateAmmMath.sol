@@ -19,12 +19,12 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
 
         vm.mockCall(
             address(pair.token0()),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(constantProduct)),
             abi.encode(amountToken0)
         );
         vm.mockCall(
             address(pair.token1()),
-            abi.encodeWithSelector(IERC20.balanceOf.selector, orderOwner),
+            abi.encodeWithSelector(IERC20.balanceOf.selector, address(constantProduct)),
             abi.encode(amountToken1)
         );
     }
@@ -33,7 +33,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         internal
         returns (ConstantProduct.TradingParams memory tradingParams, GPv2Order.Data memory order)
     {
-        setUpDefaultCommitment(orderOwner);
+        setUpDefaultCommitment();
         setUpAmmWithReserves(amountToken0, amountToken1);
         order = getDefaultOrder();
         order.sellToken = IERC20(pair.token0());
@@ -69,7 +69,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
 
         // The next line is there so that we can see at a glance that the out
         // amount is reasonable given the in amount, since the math could be
@@ -90,7 +90,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // causes overflow issues.
         order.buyAmount = type(uint128).max;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testVeryLowSellAmountDoesNotRevert() public {
@@ -104,7 +104,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = 1;
         order.buyAmount = 1 ether;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testOneTooMuchOut() public {
@@ -119,7 +119,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testOneTooLittleIn() public {
@@ -134,7 +134,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn - 1;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testInvertInOutToken() public {
@@ -149,7 +149,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = amountOut;
         order.buyAmount = amountIn;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testInvertedTokenVeryLargeBuyAmountDoesNotRevert() public {
@@ -165,7 +165,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         // causes overflow issues.
         order.buyAmount = type(uint128).max;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testInvertedTokenVeryLowSellAmountDoesNotRevert() public {
@@ -179,7 +179,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.sellAmount = 1;
         order.buyAmount = 1 ether;
 
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testInvertedTokenOneTooMuchOut() public {
@@ -195,7 +195,7 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 
     function testInvertedTokensOneTooLittleIn() public {
@@ -211,6 +211,6 @@ abstract contract ValidateAmmMath is ConstantProductTestHarness {
         order.buyAmount = amountIn - 1;
 
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "received amount too low"));
-        verifyWrapper(orderOwner, tradingParams, order);
+        constantProduct.verify(tradingParams, order);
     }
 }
