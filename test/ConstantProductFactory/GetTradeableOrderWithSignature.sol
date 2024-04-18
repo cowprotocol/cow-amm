@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {IERC1271} from "lib/openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
-import {ConstantProductFactory, ConstantProduct, GPv2Order} from "src/ConstantProductFactory.sol";
+import {ConstantProduct, GPv2Order} from "src/ConstantProductFactory.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
