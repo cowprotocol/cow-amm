@@ -33,6 +33,8 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         order = checkedGetTradeableOrder(defaultTradingParams);
         assertEq(order.validTo, constantProduct.MAX_ORDER_DURATION());
 
+        // Bump time so that it falls somewhere in the middle of the next
+        // bucket.
         uint256 smallOffset = 42;
         require(smallOffset < constantProduct.MAX_ORDER_DURATION());
         vm.warp(block.timestamp + constantProduct.MAX_ORDER_DURATION() + smallOffset);
@@ -46,13 +48,19 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(address(constantProduct));
         setUpDefaultReferencePairReserves(42, 1337);
 
+        // The revert message depends on the block. To make this more visible,
+        // we set an arbitrary block number.
         uint256 currentBlock = 1337;
         vm.roll(currentBlock);
 
         GPv2Order.Data memory order = checkedGetTradeableOrder(defaultTradingParams);
         require(order.sellToken == constantProduct.token0(), "test was design for token0 to be the sell token");
+
+        // If the minimum is exactly the trade amount, there's no revert.
         defaultTradingParams.minTradedToken0 = order.sellAmount;
-        order = checkedGetTradeableOrder(defaultTradingParams);
+        checkedGetTradeableOrder(defaultTradingParams);
+
+        // If it's just one more, it reverts.
         defaultTradingParams.minTradedToken0 = order.sellAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -67,13 +75,19 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         setUpDefaultReserves(address(constantProduct));
         setUpDefaultReferencePairReserves(1337, 42);
 
+        // The revert message depends on the block. To make this more visible,
+        // we set an arbitrary block number.
         uint256 currentBlock = 1337;
         vm.roll(currentBlock);
 
         GPv2Order.Data memory order = checkedGetTradeableOrder(defaultTradingParams);
         require(order.buyToken == constantProduct.token0(), "test was design for token0 to be the buy token");
+
+        // If the minimum is exactly the trade amount, there's no revert.
         defaultTradingParams.minTradedToken0 = order.buyAmount;
-        order = checkedGetTradeableOrder(defaultTradingParams);
+        checkedGetTradeableOrder(defaultTradingParams);
+
+        // If it's just one more, it reverts.
         defaultTradingParams.minTradedToken0 = order.buyAmount + 1;
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -85,11 +99,14 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
 
     function testSellAmountSubtractionUnderflow() public {
         ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
+        // The amounts are chosen so to trigger a subtraction overflow.
         (uint256 selfReserve0, uint256 selfReserve1) = (1337, 1337);
         (uint256 uniswapReserve0, uint256 uniswapReserve1) = (1, 1);
         setUpDefaultWithReserves(address(constantProduct), selfReserve0, selfReserve1);
         setUpDefaultReferencePairReserves(uniswapReserve0, uniswapReserve1);
 
+        // The revert message depends on the block. To make this more visible,
+        // we set an arbitrary block number.
         uint256 currentBlock = 1337;
         vm.roll(currentBlock);
 
