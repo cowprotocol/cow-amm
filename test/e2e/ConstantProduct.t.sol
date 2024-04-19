@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {BaseComposableCoWTest, Safe, TestAccount} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
+import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
 import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProduct.sol";
 import {ConstantProductFactory, IConditionalOrder} from "src/ConstantProductFactory.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {Utils} from "test/libraries/Utils.sol";
-import {TestAccountHelper} from "test/libraries/TestAccountHelper.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";
-import {SafeHelper} from "test/libraries/SafeHelper.sol";
 
 contract E2EConditionalOrderTest is BaseComposableCoWTest {
-    using TestAccountHelper for TestAccount[];
     using UniswapV2Helper for IUniswapV2Factory;
-    using SafeHelper for Safe;
 
     IERC20 public DAI;
     IERC20 public WETH;
@@ -55,7 +51,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
 
         uint256 startAmountDai = 2_000 ether;
         uint256 startAmountWeth = 1 ether;
-        // Deal the AMM reserves to the safe.
+        // Deal the AMM reserves to the owner.
         deal(address(DAI), address(owner), startAmountDai);
         deal(address(WETH), address(owner), startAmountWeth);
 
