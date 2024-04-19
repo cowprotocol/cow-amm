@@ -251,14 +251,14 @@ contract ConstantProductFactory {
         // watch tower) may expect that the salt doesn't repeat. However, there
         // can be at most one valid order per AMM at a time, and any conflicting
         // order would have been invalidated before a conflict can occur.
-        bytes32 contitionalOrdersalt = bytes32(0);
+        bytes32 conditionalOrderSalt = bytes32(0);
         // The following event will be pickd up by the watchtower offchain
         // service, which is responsible for automatically posting CoW AMM
         // orders on the CoW Protocol orderbook.
         emit ComposableCoW.ConditionalOrderCreated(
             address(amm),
             IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(this)), contitionalOrdersalt, abi.encode(tradingParams)
+                IConditionalOrder(address(this)), conditionalOrderSalt, abi.encode(tradingParams)
             )
         );
     }
