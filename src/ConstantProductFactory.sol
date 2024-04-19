@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
+import {ComposableCoW, IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
 import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ConstantProduct, IERC20, ISettlement, GPv2Order} from "./ConstantProduct.sol";
+import {ConstantProduct, IERC20, ISettlement, GPv2Order, IPriceOracle} from "./ConstantProduct.sol";
 
 /**
  * @title CoW AMM Factory
@@ -29,6 +29,20 @@ contract ConstantProductFactory {
     mapping(ConstantProduct => address) public owner;
 
     /**
+     * @notice A CoW AMM has been enabled for trading.
+     * @param amm The address of the AMM that can now trade on CoW Protocol.
+     * @param owner The owner of the AMM.
+     */
+    event TradingEnabled(ConstantProduct indexed amm, address indexed owner);
+    /**
+     * @notice A CoW AMM stopped trading; no CoW Protocol orders can be settled
+     * until trading is enabled again.
+     * @param amm The address of the AMM that stops trading on CoW Protocol.
+     * @param owner The owner of the AMM.
+     */
+    event TradingDisabled(ConstantProduct indexed amm, address indexed owner);
+
+    /**
      * @notice This function is permissioned and can only be called by the
      * owner of the AMM that is involved in the transaction.
      * @param owner The owner of the AMM.
@@ -47,6 +61,79 @@ contract ConstantProductFactory {
      */
     constructor(ISettlement _settler) {
         settler = _settler;
+    }
+
+    /**
+     * @notice Creates a new CoW AMM with the specified imput parameters.
+     * @param token0 The address of the first token in the pair.
+     * @param amount0 The initial amount of the first token in the pair.
+     * @param token1 The address of the second token in the pair.
+     * @param amount1 The initial amount of the second token in the pair.
+     * @param minTradedToken0 The minimum amount of token0 before the AMM
+     * attempts auto-rebalance.
+     * @param priceOracle The address of the price oracle to use for the AMM.
+     * @param priceOracleData The data to pass to the price oracle.
+     * @param appData The app data to pass to the AMM.
+     * @return amm The address of the newly deployed AMM.
+     */
+    function create(
+        IERC20 token0,
+        uint256 amount0,
+        IERC20 token1,
+        uint256 amount1,
+        uint256 minTradedToken0,
+        IPriceOracle priceOracle,
+        bytes calldata priceOracleData,
+        bytes32 appData
+    ) external returns (ConstantProduct amm) {
+        amm = new ConstantProduct(settler, token0, token1);
+        owner[amm] = msg.sender;
+
+        deposit(amm, amount0, amount1);
+
+        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
+            minTradedToken0: minTradedToken0,
+            priceOracle: priceOracle,
+            priceOracleData: priceOracleData,
+            appData: appData
+        });
+        _enableTrading(amm, data);
+    }
+
+    /**
+     * @notice Change the parameters used for trading on the specified AMM. Only
+     * a single order per AMM can be valid at a time, meaning that any previous
+     * order stops being tradeable.
+     * @param amm The address of the AMM whose parameters to change.
+     * @param minTradedToken0 The minimum amount of token0 before the AMM
+     * attempts auto-rebalance.
+     * @param priceOracle The address of the price oracle to use for the AMM.
+     * @param priceOracleData The data to pass to the price oracle.
+     * @param appData The app data to pass to the AMM.
+     */
+    function updateParameters(
+        ConstantProduct amm,
+        uint256 minTradedToken0,
+        IPriceOracle priceOracle,
+        bytes calldata priceOracleData,
+        bytes32 appData
+    ) external onlyOwner(amm) {
+        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
+            minTradedToken0: minTradedToken0,
+            priceOracle: priceOracle,
+            priceOracleData: priceOracleData,
+            appData: appData
+        });
+        _disableTrading(amm);
+        _enableTrading(amm, data);
+    }
+
+    /**
+     * @notice Disable trading for an AMM managed by this contract.
+     * @param amm The AMM for which to disable trading.
+     */
+    function disableTrading(ConstantProduct amm) external onlyOwner(amm) {
+        _disableTrading(amm);
     }
 
     /**
@@ -118,5 +205,38 @@ contract ConstantProductFactory {
     function deposit(ConstantProduct amm, uint256 amount0, uint256 amount1) public {
         amm.token0().safeTransferFrom(msg.sender, address(amm), amount0);
         amm.token1().safeTransferFrom(msg.sender, address(amm), amount1);
+    }
+
+    /**
+     * @notice Enable trading for an existing AMM that is managed by this
+     * contract.
+     * @param amm The AMM for which to enable trading.
+     * @param tradingParams The parameters used by the CoW AMM to create the
+     * order.
+     */
+    function _enableTrading(ConstantProduct amm, ConstantProduct.TradingParams memory tradingParams) internal {
+        amm.enableTrading(tradingParams);
+        emit TradingEnabled(amm, msg.sender);
+        // The salt is unused by this contract. External tools (for example the
+        // watch tower) may expect that the salt doesn't repeat. However, there
+        // can be at most one valid order per AMM at a time, and any conflicting
+        // order would have been invalidated before a conflict can occur.
+        bytes32 salt = bytes32(0);
+        // The following event will be pickd up by the watchtower offchain
+        // service, which is responsible for automatically posting CoW AMM
+        // orders on the CoW Protocol orderbook.
+        emit ComposableCoW.ConditionalOrderCreated(
+            address(amm),
+            IConditionalOrder.ConditionalOrderParams(IConditionalOrder(address(this)), salt, abi.encode(tradingParams))
+        );
+    }
+
+    /**
+     * @notice Disable trading for an AMM managed by this contract.
+     * @param amm The AMM for which to disable trading.
+     */
+    function _disableTrading(ConstantProduct amm) internal {
+        amm.disableTrading();
+        emit TradingDisabled(amm, msg.sender);
     }
 }
