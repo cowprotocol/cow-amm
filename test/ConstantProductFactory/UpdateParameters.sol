@@ -74,7 +74,9 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
     function setupInitialAMM() private returns (ConstantProduct) {
         uint256 amount0 = 12345;
         uint256 amount1 = 67890;
-        mocksForTokenCreation(addressOfNextDeployedAMM());
+        mocksForTokenCreation(
+            constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1)
+        );
         return constantProductFactory.create(
             mockableToken0,
             amount0,
