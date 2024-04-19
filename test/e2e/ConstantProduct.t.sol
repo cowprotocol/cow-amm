@@ -6,6 +6,7 @@ import {BaseComposableCoWTest, Safe, TestAccount} from "lib/composable-cow/test/
 import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProduct.sol";
 import {ConstantProductFactory, IConditionalOrder} from "src/ConstantProductFactory.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
+import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {Utils} from "test/libraries/Utils.sol";
 import {TestAccountHelper} from "test/libraries/TestAccountHelper.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";
@@ -50,27 +51,42 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
     }
 
     function testE2ESettle() public {
-        ConstantProduct.TradingParams memory tradingParams = ConstantProduct.TradingParams({
-            minTradedToken0: 0,
-            priceOracle: uniswapV2PriceOracle,
-            priceOracleData: abi.encode(UniswapV2PriceOracle.Data(pair)),
-            appData: keccak256("order app data")
-        });
-        IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams({
-            handler: IConditionalOrder(address(ammFactory)),
-            salt: keccak256("e2e:any salt"),
-            staticInput: abi.encode(tradingParams)
-        });
-        ConstantProduct amm = new ConstantProduct(ISettlement(address(settlement)), DAI, WETH);
+        address owner = 0x1234567890123456789012345678901234567890;
 
         uint256 startAmountDai = 2_000 ether;
         uint256 startAmountWeth = 1 ether;
         // Deal the AMM reserves to the safe.
-        deal(address(DAI), address(amm), startAmountDai);
-        deal(address(WETH), address(amm), startAmountWeth);
+        deal(address(DAI), address(owner), startAmountDai);
+        deal(address(WETH), address(owner), startAmountWeth);
 
-        amm.enableTrading(tradingParams);
+        vm.startPrank(owner);
+        DAI.approve(address(ammFactory), type(uint256).max);
+        WETH.approve(address(ammFactory), type(uint256).max);
 
+        // Funds have been allocated.
+        assertEq(DAI.balanceOf(owner), startAmountDai);
+        assertEq(WETH.balanceOf(owner), startAmountWeth);
+
+        uint256 minTradedToken0 = 0;
+        bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
+        bytes32 appData = keccak256("order app data");
+        ConstantProduct amm = ammFactory.create(
+            DAI, startAmountDai, WETH, startAmountWeth, minTradedToken0, uniswapV2PriceOracle, priceOracleData, appData
+        );
+        vm.stopPrank();
+
+        // Funds have been transferred to the AMM.
+        assertEq(DAI.balanceOf(owner), 0);
+        assertEq(WETH.balanceOf(owner), 0);
+
+        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
+            minTradedToken0: minTradedToken0,
+            priceOracle: uniswapV2PriceOracle,
+            priceOracleData: priceOracleData,
+            appData: appData
+        });
+        IConditionalOrder.ConditionalOrderParams memory params =
+            super.createOrder(IConditionalOrder(address(ammFactory)), keccak256("e2e:any salt"), abi.encode(data));
         (GPv2Order.Data memory order, bytes memory sig) =
             ammFactory.getTradeableOrderWithSignature(amm, params, hex"", new bytes32[](0));
 
@@ -86,13 +102,24 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
 
         uint256 endBalanceDai = DAI.balanceOf(address(amm));
         uint256 endBalanceWeth = WETH.balanceOf(address(amm));
-        uint256 expectedDifferenceDai = 416.666666666666664667 ether;
-        uint256 expectedDifferenceWeth = 0.166666666666666666 ether;
-        assertEq(startAmountDai + expectedDifferenceDai, endBalanceDai);
-        assertEq(startAmountWeth, endBalanceWeth + expectedDifferenceWeth);
-        // Explicit price to see that it's reasonable
-        assertEq(expectedDifferenceDai / expectedDifferenceWeth, 2_499);
+        {
+            // Braces to avoid stack too deep.
+            uint256 expectedDifferenceDai = 416.666666666666664667 ether;
+            uint256 expectedDifferenceWeth = 0.166666666666666666 ether;
+            assertEq(startAmountDai + expectedDifferenceDai, endBalanceDai);
+            assertEq(startAmountWeth, endBalanceWeth + expectedDifferenceWeth);
+            // Explicit price to see that it's reasonable
+            assertEq(expectedDifferenceDai / expectedDifferenceWeth, 2_499);
+        }
 
-        amm.disableTrading();
+        vm.prank(owner);
+        ammFactory.disableTrading(amm);
+
+        vm.prank(owner);
+        ammFactory.withdraw(amm, endBalanceDai, endBalanceWeth);
+
+        // Funds have been transferred to the owner.
+        assertEq(DAI.balanceOf(owner), endBalanceDai);
+        assertEq(WETH.balanceOf(owner), endBalanceWeth);
     }
 }
