@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {ConstantProduct, ConstantProductFactory} from "src/ConstantProductFactory.sol";
+import {ConstantProduct, ConstantProductFactory, IPriceOracle} from "src/ConstantProductFactory.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
@@ -36,7 +36,7 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
         uint256 minTradedToken0 = 42;
-        address priceOracle = Utils.addressFromString("DisableTrading: price oracle");
+        IPriceOracle priceOracle = IPriceOracle(Utils.addressFromString("DisableTrading: price oracle"));
         bytes memory priceOracleData = bytes("some price oracle data");
         bytes32 appData = keccak256("DisableTrading: app data");
 

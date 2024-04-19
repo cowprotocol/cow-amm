@@ -44,7 +44,6 @@ abstract contract Deposit is ConstantProductFactoryTestHarness {
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
 
-        //constantProductFactory.setOwner(constantProduct, owner);
         address token0 = address(constantProduct.token0());
         address token1 = address(constantProduct.token1());
         vm.mockCall(
@@ -64,7 +63,6 @@ abstract contract Deposit is ConstantProductFactoryTestHarness {
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
 
-        //constantProductFactory.setOwner(constantProduct, owner);
         address token0 = address(constantProduct.token0());
         address token1 = address(constantProduct.token1());
         vm.mockCall(

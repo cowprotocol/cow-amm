@@ -17,7 +17,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
     uint256 private amount0 = 1234;
     uint256 private amount1 = 5678;
     uint256 private minTradedToken0 = 42;
-    address private priceOracle = Utils.addressFromString("Create: price oracle");
+    IPriceOracle private priceOracle = IPriceOracle(Utils.addressFromString("Create: price oracle"));
     bytes private priceOracleData = bytes("some price oracle data");
     bytes32 private appData = keccak256("Create: app data");
 
@@ -43,7 +43,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
         assertEq(address(amm.token1()), address(mockableToken1));
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -58,7 +58,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
         );
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -98,21 +98,20 @@ abstract contract Create is ConstantProductFactoryTestHarness {
 
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
-        bytes32 salt = bytes32(bytes20(address(this))) | bytes32(block.timestamp);
         vm.expectEmit();
         emit ConstantProductFactory.TradingEnabled(ConstantProduct(expectedAMM), address(this));
         vm.expectEmit();
         emit ComposableCoW.ConditionalOrderCreated(
             expectedAMM,
             IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(constantProductFactory)), salt, abi.encode(params)
+                IConditionalOrder(address(constantProductFactory)), bytes32(0), abi.encode(params)
             )
         );
-        ConstantProduct amm = constantProductFactory.create(
+        constantProductFactory.create(
             mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
         );
     }
