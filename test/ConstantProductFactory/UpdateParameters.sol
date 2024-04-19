@@ -62,11 +62,10 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
         vm.expectEmit();
         emit ConstantProductFactory.TradingEnabled(amm, address(this));
         vm.expectEmit();
-        bytes32 salt = bytes32(bytes20(address(this))) | bytes32(block.timestamp);
         emit ComposableCoW.ConditionalOrderCreated(
             address(amm),
             IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(constantProductFactory)), salt, abi.encode(params)
+                IConditionalOrder(address(constantProductFactory)), bytes32(0), abi.encode(params)
             )
         );
         constantProductFactory.updateParameters(amm, newMinTradedToken0, newPriceOracle, newPriceOracleData, newAppData);

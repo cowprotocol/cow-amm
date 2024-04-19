@@ -102,14 +102,13 @@ abstract contract Create is ConstantProductFactoryTestHarness {
             priceOracleData: priceOracleData,
             appData: appData
         });
-        bytes32 salt = bytes32(bytes20(address(this))) | bytes32(block.timestamp);
         vm.expectEmit();
         emit ConstantProductFactory.TradingEnabled(ConstantProduct(expectedAMM), address(this));
         vm.expectEmit();
         emit ComposableCoW.ConditionalOrderCreated(
             expectedAMM,
             IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(constantProductFactory)), salt, abi.encode(params)
+                IConditionalOrder(address(constantProductFactory)), bytes32(0), abi.encode(params)
             )
         );
         constantProductFactory.create(
