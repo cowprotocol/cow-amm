@@ -71,14 +71,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
         bytes32 appData = keccak256("order app data");
         ConstantProduct amm = ammFactory.create(
-            DAI,
-            startAmountDai,
-            WETH,
-            startAmountWeth,
-            minTradedToken0,
-            address(uniswapV2PriceOracle),
-            priceOracleData,
-            appData
+            DAI, startAmountDai, WETH, startAmountWeth, minTradedToken0, uniswapV2PriceOracle, priceOracleData, appData
         );
         vm.stopPrank();
 
