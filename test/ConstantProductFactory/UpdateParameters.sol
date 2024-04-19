@@ -56,7 +56,6 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
             priceOracleData: newPriceOracleData,
             appData: newAppData
         });
-        bytes32 newParamsHash = amm.hash(params);
 
         vm.expectEmit();
         emit ConstantProductFactory.TradingDisabled(amm, address(this));

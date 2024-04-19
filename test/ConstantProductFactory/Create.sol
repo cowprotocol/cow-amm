@@ -112,7 +112,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
                 IConditionalOrder(address(constantProductFactory)), salt, abi.encode(params)
             )
         );
-        ConstantProduct amm = constantProductFactory.create(
+        constantProductFactory.create(
             mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
         );
     }
