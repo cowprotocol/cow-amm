@@ -45,10 +45,6 @@ abstract contract ConstantProductFactoryTestHarness is ConstantProductTestHarnes
         setUpTokenForDeployment(mockableToken0, constantProductAddress, address(constantProductFactory));
         setUpTokenForDeployment(mockableToken1, constantProductAddress, address(constantProductFactory));
     }
-
-    function addressOfNextDeployedAMM() internal view returns (address) {
-        return vm.computeCreateAddress(address(constantProductFactory), vm.getNonce(address(constantProductFactory)));
-    }
 }
 
 contract EditableOwnerConstantProductFactory is ConstantProductFactory {

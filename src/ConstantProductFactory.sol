@@ -86,7 +86,7 @@ contract ConstantProductFactory {
         bytes calldata priceOracleData,
         bytes32 appData
     ) external returns (ConstantProduct amm) {
-        amm = new ConstantProduct(settler, token0, token1);
+        amm = new ConstantProduct{salt: salt(msg.sender)}(settler, token0, token1);
         owner[amm] = msg.sender;
 
         deposit(amm, amount0, amount1);
@@ -196,6 +196,36 @@ contract ConstantProductFactory {
     }
 
     /**
+     * @notice Computes the determinisitic address of a CoW AMM deployment.
+     * @param ammOwner The (expected) owner of the AMM.
+     * @param token0 The address of the first token traded by the AMM.
+     * @param token1 The address of the second token traded by the AMM.
+     * @return The deterministic address at which this contract deploys a CoW
+     * AMM for the specified input parameters.
+     */
+    function ammDeterministicAddress(address ammOwner, IERC20 token0, IERC20 token1) external view returns (address) {
+        // https://eips.ethereum.org/EIPS/eip-1014#specification
+        bytes32 create2Hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt(ammOwner),
+                keccak256(
+                    bytes.concat(
+                        type(ConstantProduct).creationCode,
+                        // Input parameters are appended at the end of the
+                        // creation bytecode.
+                        abi.encode(settler, token0, token1)
+                    )
+                )
+            )
+        );
+
+        // Take the last 20 bytes of the hash as the address.
+        return address(uint160(uint256(create2Hash)));
+    }
+
+    /**
      * @notice Deposit sender's funds into the the AMM contract, assuming that
      * the sender has approved this contract to spend both tokens.
      * @param amm the AMM where to send the funds
@@ -221,13 +251,15 @@ contract ConstantProductFactory {
         // watch tower) may expect that the salt doesn't repeat. However, there
         // can be at most one valid order per AMM at a time, and any conflicting
         // order would have been invalidated before a conflict can occur.
-        bytes32 salt = bytes32(0);
+        bytes32 conditionalOrderSalt = bytes32(0);
         // The following event will be pickd up by the watchtower offchain
         // service, which is responsible for automatically posting CoW AMM
         // orders on the CoW Protocol orderbook.
         emit ComposableCoW.ConditionalOrderCreated(
             address(amm),
-            IConditionalOrder.ConditionalOrderParams(IConditionalOrder(address(this)), salt, abi.encode(tradingParams))
+            IConditionalOrder.ConditionalOrderParams(
+                IConditionalOrder(address(this)), conditionalOrderSalt, abi.encode(tradingParams)
+            )
         );
     }
 
@@ -238,5 +270,14 @@ contract ConstantProductFactory {
     function _disableTrading(ConstantProduct amm) internal {
         amm.disableTrading();
         emit TradingDisabled(amm, msg.sender);
+    }
+
+    /**
+     * @notice Salt parameter used for deterministic AMM deployments.
+     * @param ammOwner The (expected) owner of the AMM.
+     * @return The salt to use for deploying the AMM with CREATE2.
+     */
+    function salt(address ammOwner) internal pure returns (bytes32) {
+        return bytes32(uint256(uint160(ammOwner)));
     }
 }
