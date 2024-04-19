@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.0 <0.9.0;
 
-import {ConstantProductFactory, ConstantProduct, GPv2Order, IConditionalOrder} from "src/ConstantProductFactory.sol";
+import {
+    ConstantProductFactory,
+    ConstantProduct,
+    GPv2Order,
+    IConditionalOrder,
+    ISettlement
+} from "src/ConstantProductFactory.sol";
 
 import {ConstantProductTestHarness} from "test/ConstantProduct/ConstantProductTestHarness.sol";
 
@@ -27,5 +33,13 @@ abstract contract ConstantProductFactoryTestHarness is ConstantProductTestHarnes
         return constantProductFactory.getTradeableOrderWithSignature(
             amm, params, bytes("ConstantProductFactoryTestHarness: offchainData"), new bytes32[](2)
         );
+    }
+}
+
+contract EditableOwnerConstantProductFactory is ConstantProductFactory {
+    constructor(ISettlement s) ConstantProductFactory(s) {}
+
+    function setOwner(ConstantProduct amm, address newOwner) external {
+        owner[amm] = newOwner;
     }
 }

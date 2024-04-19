@@ -2,8 +2,9 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
+import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ConstantProduct, ISettlement, GPv2Order} from "./ConstantProduct.sol";
+import {ConstantProduct, IERC20, ISettlement, GPv2Order} from "./ConstantProduct.sol";
 
 /**
  * @title CoW AMM Factory
@@ -14,16 +15,49 @@ import {ConstantProduct, ISettlement, GPv2Order} from "./ConstantProduct.sol";
  * enabling/disabling trading and updating trade parameters.
  */
 contract ConstantProductFactory {
+    using SafeERC20 for IERC20;
+
     /**
      * @notice The settlement contract for CoW Protocol on this network.
      */
     ISettlement public immutable settler;
 
     /**
+     * @notice For each AMM created by this contract, this mapping stores its
+     * owner.
+     */
+    mapping(ConstantProduct => address) public owner;
+
+    /**
+     * @notice This function is permissioned and can only be called by the
+     * owner of the AMM that is involved in the transaction.
+     * @param owner The owner of the AMM.
+     */
+    error OnlyOwnerCanCall(address owner);
+
+    modifier onlyOwner(ConstantProduct amm) {
+        if (owner[amm] != msg.sender) {
+            revert OnlyOwnerCanCall(owner[amm]);
+        }
+        _;
+    }
+
+    /**
      * @param _settler The address of the GPv2Settlement contract.
      */
     constructor(ISettlement _settler) {
         settler = _settler;
+    }
+
+    /**
+     * @notice Take funds from the AMM and sends them to the owner.
+     * @param amm the AMM whose funds to withdraw
+     * @param amount0 amount of AMM's token0 to withdraw
+     * @param amount1 amount of AMM's token1 to withdraw
+     */
+    function withdraw(ConstantProduct amm, uint256 amount0, uint256 amount1) external onlyOwner(amm) {
+        amm.token0().safeTransferFrom(address(amm), msg.sender, amount0);
+        amm.token1().safeTransferFrom(address(amm), msg.sender, amount1);
     }
 
     /**
@@ -72,5 +106,17 @@ contract ConstantProductFactory {
 
         order = amm.getTradeableOrder(tradingParams);
         signature = abi.encode(order, tradingParams);
+    }
+
+    /**
+     * @notice Deposit sender's funds into the the AMM contract, assuming that
+     * the sender has approved this contract to spend both tokens.
+     * @param amm the AMM where to send the funds
+     * @param amount0 amount of AMM's token0 to deposit
+     * @param amount1 amount of AMM's token1 to deposit
+     */
+    function deposit(ConstantProduct amm, uint256 amount0, uint256 amount1) public {
+        amm.token0().safeTransferFrom(msg.sender, address(amm), amount0);
+        amm.token1().safeTransferFrom(msg.sender, address(amm), amount1);
     }
 }
