@@ -82,7 +82,7 @@ contract ConstantProductFactory {
         IERC20 token1,
         uint256 amount1,
         uint256 minTradedToken0,
-        address priceOracle,
+        IPriceOracle priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
     ) external returns (ConstantProduct amm) {
@@ -93,7 +93,7 @@ contract ConstantProductFactory {
 
         ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -114,13 +114,13 @@ contract ConstantProductFactory {
     function updateParameters(
         ConstantProduct amm,
         uint256 minTradedToken0,
-        address priceOracle,
+        IPriceOracle priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
     ) external onlyOwner(amm) {
         ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -217,18 +217,11 @@ contract ConstantProductFactory {
     function _enableTrading(ConstantProduct amm, ConstantProduct.TradingParams memory tradingParams) internal {
         amm.enableTrading(tradingParams);
         emit TradingEnabled(amm, msg.sender);
-        // The salt is unused by this contract. However, external tools (for
-        // example the watch tower) may expect that the salt doesn't repeat.
-        // This cannot be achieved without extra state or bubbling up the nonce
-        // parameter to the caller.
-        // We assume that external tools are able to handle the case where the
-        // exact same order is created two times in the same block for the
-        // exact same parameters, AMM address, and owner.
-        // Note that there can be at most one active order per AMM by
-        // construction, and a repeating salt means that the order was created,
-        // cancelled, and then recreated with the same parameters on the same
-        // block.
-        bytes32 salt = bytes32(bytes20(msg.sender)) | bytes32(block.timestamp);
+        // The salt is unused by this contract. External tools (for example the
+        // watch tower) may expect that the salt doesn't repeat. However, there
+        // can be at most one valid order per AMM at a time, and any conflicting
+        // order would have been invalidated before a conflict can occur.
+        bytes32 salt = bytes32(0);
         // The following event will be pickd up by the watchtower offchain
         // service, which is responsible for automatically posting CoW AMM
         // orders on the CoW Protocol orderbook.
