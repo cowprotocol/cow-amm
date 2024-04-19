@@ -82,7 +82,7 @@ contract ConstantProductFactory {
         IERC20 token1,
         uint256 amount1,
         uint256 minTradedToken0,
-        address priceOracle,
+        IPriceOracle priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
     ) external returns (ConstantProduct amm) {
@@ -93,7 +93,7 @@ contract ConstantProductFactory {
 
         ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -114,13 +114,13 @@ contract ConstantProductFactory {
     function updateParameters(
         ConstantProduct amm,
         uint256 minTradedToken0,
-        address priceOracle,
+        IPriceOracle priceOracle,
         bytes calldata priceOracleData,
         bytes32 appData
     ) external onlyOwner(amm) {
         ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });

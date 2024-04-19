@@ -15,8 +15,9 @@ import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHar
 abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
     uint256 private initMinTradedToken0 = 42;
     uint256 private newMinTradedToken0 = 1337;
-    address private initPriceOracle = Utils.addressFromString("UpdateParameters: price oracle");
-    address private newPriceOracle = Utils.addressFromString("UpdateParameters: updated price oracle");
+    IPriceOracle private initPriceOracle = IPriceOracle(Utils.addressFromString("UpdateParameters: price oracle"));
+    IPriceOracle private newPriceOracle =
+        IPriceOracle(Utils.addressFromString("UpdateParameters: updated price oracle"));
     bytes private initPriceOracleData = bytes("some price oracle data");
     bytes private newPriceOracleData = bytes("some updated price oracle data");
     bytes32 private initAppData = keccak256("UpdateParameters: app data");
@@ -36,7 +37,7 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
         ConstantProduct amm = setupInitialAMM();
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: newMinTradedToken0,
-            priceOracle: IPriceOracle(newPriceOracle),
+            priceOracle: newPriceOracle,
             priceOracleData: newPriceOracleData,
             appData: newAppData
         });
@@ -51,7 +52,7 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
         ConstantProduct amm = setupInitialAMM();
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: newMinTradedToken0,
-            priceOracle: IPriceOracle(newPriceOracle),
+            priceOracle: newPriceOracle,
             priceOracleData: newPriceOracleData,
             appData: newAppData
         });

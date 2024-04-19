@@ -17,7 +17,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
     uint256 private amount0 = 1234;
     uint256 private amount1 = 5678;
     uint256 private minTradedToken0 = 42;
-    address private priceOracle = Utils.addressFromString("Create: price oracle");
+    IPriceOracle private priceOracle = IPriceOracle(Utils.addressFromString("Create: price oracle"));
     bytes private priceOracleData = bytes("some price oracle data");
     bytes32 private appData = keccak256("Create: app data");
 
@@ -43,7 +43,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
         assertEq(address(amm.token1()), address(mockableToken1));
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -58,7 +58,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
         );
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
@@ -98,7 +98,7 @@ abstract contract Create is ConstantProductFactoryTestHarness {
 
         ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
             minTradedToken0: minTradedToken0,
-            priceOracle: IPriceOracle(priceOracle),
+            priceOracle: priceOracle,
             priceOracleData: priceOracleData,
             appData: appData
         });
