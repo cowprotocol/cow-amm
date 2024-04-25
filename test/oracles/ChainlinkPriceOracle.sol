@@ -3,7 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Test, console2} from "forge-std/Test.sol";
 
-import {ChainlinkPriceOracle, AggregatorV3Interface, IWatchtowerCustomErrors} from "src/oracles/ChainlinkPriceOracle.sol";
+import {
+    ChainlinkPriceOracle, AggregatorV3Interface, IWatchtowerCustomErrors
+} from "src/oracles/ChainlinkPriceOracle.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
 
@@ -84,7 +86,11 @@ contract ChainlinkPriceOracleTest is Test {
 
     function testRevertsIfOracleIsStale() public {
         vm.warp(31337 + 2 days);
-        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"
+            )
+        );
         (uint256 priceNumerator, uint256 priceDenominator) =
             oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
     }
@@ -103,7 +109,11 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedAnsweredInRound
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"
+            )
+        );
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
         // token1 is stale
         vm.mockCall(
@@ -128,7 +138,11 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedAnsweredInRound
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"
+            )
+        );
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
     }
 }
