@@ -9,15 +9,15 @@ import {IWatchtowerCustomErrors} from "../interfaces/IWatchtowerCustomErrors.sol
  * @author GUNBOATs
  * @dev This contract creates an oracle that is compatible with the IPriceOracle
  * interface and can be used by a CoW AMM to determine the current price of the
- * traded tokens from Chainlink Data Feeds with decimals lower than 18.
+ * traded tokens from Chainlink Data Feeds with decimals lower or equal to 18.
  */
 
 contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
     /**
      * @param token0Feed Address of token0 oracle
      * @param token1Feed Address of token1 oracle
-     * @param timeThreshold Amount of seconds before it consider as stale oracle
-     * @param backoff Duration to indicated how long the watchtower will wait for oracle to refresh
+     * @param timeThreshold Amount of seconds before the oracle is considered stale
+     * @param backoff Duration to indicate how long the watchtower should wait for the oracle to refresh
      */
     struct Data {
         address token0Feed;
@@ -27,7 +27,7 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
     }
     /**
      * @dev There is no mapping between Chainlink oracle and the token address,
-     * so the user must check the that the oracle is corresponds to the token themselves.
+     * so the user must check that the oracle corresponds to the token themselves.
      * @inheritdoc IPriceOracle
      */
 
@@ -71,10 +71,10 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
             priceDenominator = uint256(token0Answer);
         } else {
             /**
-             * While most oracle in Chainlink used 8 for USD pair and 18 for ETH pair,
-             * AMPL/USD has 18 decimals so in the rare case we will have to normalized it.
-             * Oracle with more than 18 decimals exists, since as Synthetix Debt Shares,
-             * but it cannot be traded and thus not in scope of this contract.
+             * While most oracles in Chainlink use 8 decimals for USD pair and 18 for ETH pair,
+             * AMPL/USD has 18 decimals so in the rare case we will have to normalize it.
+             * Oracles with more than 18 decimals exist, since as Synthetix Debt Shares,
+             * but they cannot be traded and thus are not in scope of this contract.
              */
             priceNumerator = uint256(token1Answer) * (10 ** (18 - token1Decimals));
             priceDenominator = uint256(token0Answer) * (10 ** (18 - token0Decimals));
