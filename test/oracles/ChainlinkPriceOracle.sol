@@ -4,7 +4,10 @@ pragma solidity >=0.8.0 <0.9.0;
 import {Test, console2} from "forge-std/Test.sol";
 
 import {
-    ChainlinkPriceOracle, AggregatorV3Interface, IWatchtowerCustomErrors
+    ChainlinkPriceOracle,
+    AggregatorV3Interface,
+    IWatchtowerCustomErrors,
+    IConditionalOrder
 } from "src/oracles/ChainlinkPriceOracle.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
@@ -82,6 +85,19 @@ contract ChainlinkPriceOracleTest is Test {
             oracle.getPrice(USDC, AMPL, abi.encode(ChainlinkPriceOracle.Data(USDCOracle, AMPLOracle, 1 days, 1 days)));
         assertEq(priceNumerator, 1.1e18);
         assertEq(priceDenominator, 1e18);
+    }
+
+    function testRevertsUnsupportedDecimals() public {
+        address badToken = Utils.addressFromString("bad token");
+        address badOracle = Utils.addressFromString("bad oracle");
+        vm.mockCall(badOracle, abi.encodeCall(AggregatorV3Interface.decimals, ()), abi.encode(uint8(19)));
+        vm.mockCall(
+            badOracle,
+            abi.encodeCall(AggregatorV3Interface.latestRoundData, ()),
+            abi.encode(unusedRoundId, int256(1.1e18), unusedStartedAt, updatedAt, unusedAnsweredInRound)
+        );
+        vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "Unsupported decimals (>18)"));
+        oracle.getPrice(USDC, badToken, abi.encode(ChainlinkPriceOracle.Data(USDCOracle, badOracle, 1 days, 1 days)));
     }
 
     function testRevertsIfOracleIsStale() public {

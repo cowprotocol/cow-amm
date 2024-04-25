@@ -3,7 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {AggregatorV3Interface} from "../interfaces/AggregatorV3Interface.sol";
 import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
+import {IConditionalOrder} from "lib/composable-cow/src/interfaces/IConditionalOrder.sol";
 import {IWatchtowerCustomErrors} from "../interfaces/IWatchtowerCustomErrors.sol";
+
 /**
  * @title Chainlink Price Oracle
  * @author GUNBOATs
@@ -24,6 +26,7 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
         uint256 timeThreshold;
         uint256 backoff;
     }
+
     /**
      * @dev There is no mapping between Chainlink oracle and the token address,
      * so the user must check that the oracle corresponds to the token themselves.
@@ -64,6 +67,9 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
         }
         uint256 token0Decimals = token0Feed.decimals();
         uint256 token1Decimals = token1Feed.decimals();
+        if (token0Decimals > 18 || token1Decimals > 18) {
+            revert IConditionalOrder.OrderNotValid("Unsupported decimals (>18)");
+        }
         if (token0Decimals == token1Decimals) {
             priceNumerator = uint256(token1Answer);
             priceDenominator = uint256(token0Answer);
