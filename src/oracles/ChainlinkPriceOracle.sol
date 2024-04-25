@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {AggregatorV3Interface} from "../interfaces/AggregatorV3Interface.sol";
 import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
-
+import {IWatchtowerCustomErrors} from "../interfaces/IWatchtowerCustomErrors.sol";
 /**
  * @title Chainlink Price Oracle
  * @author GUNBOATs
@@ -11,16 +11,19 @@ import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
  * interface and can be used by a CoW AMM to determine the current price of the
  * traded tokens from Chainlink Data Feeds with decimals lower than 18.
  */
-contract ChainlinkPriceOracle is IPriceOracle {
+
+contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
     /**
      * @param token0Feed Address of token0 oracle
      * @param token1Feed Address of token1 oracle
-     * @param timeThreshold amount of seconds before it consider as stale oracle
+     * @param timeThreshold Amount of seconds before it consider as stale oracle
+     * @param backoff Duration to indicated how long the watchtower will wait for oracle to refresh
      */
     struct Data {
         address token0Feed;
         address token1Feed;
         uint256 timeThreshold;
+        uint256 backoff;
     }
     /**
      * @dev There is no mapping between Chainlink oracle and the token address,
@@ -55,11 +58,12 @@ contract ChainlinkPriceOracle is IPriceOracle {
             /* uint80 answerInRound */
         ) = token1Feed.latestRoundData();
         uint256 timestamp = block.timestamp;
-        require(
-            timestamp - token0Timestamp < OracleData.timeThreshold
-                && timestamp - token1Timestamp < OracleData.timeThreshold,
-            "stale oracle"
-        );
+        if (
+            timestamp - token0Timestamp >= OracleData.timeThreshold
+                || timestamp - token1Timestamp >= OracleData.timeThreshold
+        ) {
+            revert PollTryAtEpoch(block.timestamp + OracleData.backoff, "stale oracle");
+        }
         uint256 token0Decimals = token0Feed.decimals();
         uint256 token1Decimals = token1Feed.decimals();
         if (token0Decimals == token1Decimals) {

@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {Test, console2} from "forge-std/Test.sol";
 
-import {ChainlinkPriceOracle, AggregatorV3Interface} from "src/oracles/ChainlinkPriceOracle.sol";
+import {ChainlinkPriceOracle, AggregatorV3Interface, IWatchtowerCustomErrors} from "src/oracles/ChainlinkPriceOracle.sol";
 
 import {Utils} from "test/libraries/Utils.sol";
 
@@ -53,7 +53,12 @@ contract ChainlinkPriceOracleTest is Test {
     }
 
     function getDefaultOracleData() internal view returns (ChainlinkPriceOracle.Data memory data) {
-        data = ChainlinkPriceOracle.Data({token0Feed: USDCOracle, token1Feed: WETHOracle, timeThreshold: 1 days});
+        data = ChainlinkPriceOracle.Data({
+            token0Feed: USDCOracle,
+            token1Feed: WETHOracle,
+            timeThreshold: 1 days,
+            backoff: 1 days
+        });
     }
 
     function testReturnsExpectedPrice() public {
@@ -65,21 +70,21 @@ contract ChainlinkPriceOracleTest is Test {
 
     function testReturnsInvertedPrice() public {
         (uint256 priceNumerator, uint256 priceDenominator) =
-            oracle.getPrice(WETH, USDC, abi.encode(WETHOracle, USDCOracle, 1 days));
+            oracle.getPrice(WETH, USDC, abi.encode(ChainlinkPriceOracle.Data(WETHOracle, USDCOracle, 1 days, 1 days)));
         assertEq(priceNumerator, 1e8);
         assertEq(priceDenominator, 1000e8);
     }
 
     function testNormalizedDecimals() public {
         (uint256 priceNumerator, uint256 priceDenominator) =
-            oracle.getPrice(USDC, AMPL, abi.encode(ChainlinkPriceOracle.Data(USDCOracle, AMPLOracle, 1 days)));
+            oracle.getPrice(USDC, AMPL, abi.encode(ChainlinkPriceOracle.Data(USDCOracle, AMPLOracle, 1 days, 1 days)));
         assertEq(priceNumerator, 1.1e18);
         assertEq(priceDenominator, 1e18);
     }
 
     function testRevertsIfOracleIsStale() public {
         vm.warp(31337 + 2 days);
-        vm.expectRevert("stale oracle");
+        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
         (uint256 priceNumerator, uint256 priceDenominator) =
             oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
     }
@@ -98,7 +103,7 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedAnsweredInRound
             )
         );
-        vm.expectRevert("stale oracle");
+        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
         // token1 is stale
         vm.mockCall(
@@ -123,7 +128,7 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedAnsweredInRound
             )
         );
-        vm.expectRevert("stale oracle");
+        vm.expectRevert(abi.encodeWithSelector(IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"));
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
     }
 }
