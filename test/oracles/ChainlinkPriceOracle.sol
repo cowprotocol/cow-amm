@@ -21,10 +21,11 @@ contract ChainlinkPriceOracleTest is Test {
     uint256 unusedStartedAt = 420;
     uint256 updatedAt = 31336;
     uint80 unusedAnsweredInRound = 70;
+
     function setUp() public {
         oracle = new ChainlinkPriceOracle();
         vm.warp(31337);
-        
+
         vm.mockCall(USDCOracle, abi.encodeCall(AggregatorV3Interface.decimals, ()), abi.encode(uint8(8)));
         vm.mockCall(WETHOracle, abi.encodeCall(AggregatorV3Interface.decimals, ()), abi.encode(uint8(8)));
         vm.mockCall(AMPLOracle, abi.encodeCall(AggregatorV3Interface.decimals, ()), abi.encode(uint8(18)));
@@ -37,71 +38,41 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedStartedAt,
                 updatedAt,
                 unusedAnsweredInRound
-                )
+            )
         );
         vm.mockCall(
             WETHOracle,
             abi.encodeCall(AggregatorV3Interface.latestRoundData, ()),
-            abi.encode(
-                unusedRoundId,
-                int256(1000e8),
-                unusedStartedAt,
-                updatedAt,
-                unusedAnsweredInRound
-            )
+            abi.encode(unusedRoundId, int256(1000e8), unusedStartedAt, updatedAt, unusedAnsweredInRound)
         );
         vm.mockCall(
             AMPLOracle,
             abi.encodeCall(AggregatorV3Interface.latestRoundData, ()),
-            abi.encode(
-                unusedRoundId,
-                int256(1.1e18),
-                unusedStartedAt,
-                updatedAt,
-                unusedAnsweredInRound
-            )
+            abi.encode(unusedRoundId, int256(1.1e18), unusedStartedAt, updatedAt, unusedAnsweredInRound)
         );
     }
-    
+
     function getDefaultOracleData() internal view returns (ChainlinkPriceOracle.Data memory data) {
-        data = ChainlinkPriceOracle.Data(
-            {
-                token0Feed: USDCOracle,
-                token1Feed: WETHOracle,
-                timeThreshold: 1 days
-            }
-        );
+        data = ChainlinkPriceOracle.Data({token0Feed: USDCOracle, token1Feed: WETHOracle, timeThreshold: 1 days});
     }
 
     function testReturnsExpectedPrice() public {
         (uint256 priceNumerator, uint256 priceDenominator) =
             oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
-            assertEq(priceNumerator, 1000e8);
-            assertEq(priceDenominator, 1e8);
+        assertEq(priceNumerator, 1000e8);
+        assertEq(priceDenominator, 1e8);
     }
 
     function testReturnsInvertedPrice() public {
         (uint256 priceNumerator, uint256 priceDenominator) =
-            oracle.getPrice(WETH, USDC, abi.encode(
-                WETHOracle,
-                USDCOracle,
-                1 days
-            ));
+            oracle.getPrice(WETH, USDC, abi.encode(WETHOracle, USDCOracle, 1 days));
         assertEq(priceNumerator, 1e8);
         assertEq(priceDenominator, 1000e8);
     }
 
     function testNormalizedDecimals() public {
         (uint256 priceNumerator, uint256 priceDenominator) =
-            oracle.getPrice(USDC, AMPL, abi.encode(
-                ChainlinkPriceOracle.Data(
-                    USDCOracle,
-                    AMPLOracle,
-                    1 days
-                )
-            ));
-        console2.log(priceNumerator);
-        console2.log(priceDenominator);
+            oracle.getPrice(USDC, AMPL, abi.encode(ChainlinkPriceOracle.Data(USDCOracle, AMPLOracle, 1 days)));
         assertEq(priceNumerator, 1.1e18);
         assertEq(priceDenominator, 1e18);
     }
@@ -125,7 +96,7 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedStartedAt,
                 2 days + 31336,
                 unusedAnsweredInRound
-                )
+            )
         );
         vm.expectRevert("stale oracle");
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
@@ -139,7 +110,7 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedStartedAt,
                 31336,
                 unusedAnsweredInRound
-                )
+            )
         );
         vm.mockCall(
             WETHOracle,
@@ -150,7 +121,7 @@ contract ChainlinkPriceOracleTest is Test {
                 unusedStartedAt,
                 2 days + 31336,
                 unusedAnsweredInRound
-                )
+            )
         );
         vm.expectRevert("stale oracle");
         oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
