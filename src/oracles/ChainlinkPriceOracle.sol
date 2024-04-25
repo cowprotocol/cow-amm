@@ -11,7 +11,6 @@ import {IWatchtowerCustomErrors} from "../interfaces/IWatchtowerCustomErrors.sol
  * interface and can be used by a CoW AMM to determine the current price of the
  * traded tokens from Chainlink Data Feeds with decimals lower or equal to 18.
  */
-
 contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
     /**
      * @param token0Feed Address of token0 oracle
@@ -30,15 +29,14 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
      * so the user must check that the oracle corresponds to the token themselves.
      * @inheritdoc IPriceOracle
      */
-
     function getPrice(address, address, bytes calldata data)
         external
         view
         returns (uint256 priceNumerator, uint256 priceDenominator)
     {
-        Data memory OracleData = abi.decode(data, (Data));
-        AggregatorV3Interface token0Feed = AggregatorV3Interface(OracleData.token0Feed);
-        AggregatorV3Interface token1Feed = AggregatorV3Interface(OracleData.token1Feed);
+        Data memory oracleData = abi.decode(data, (Data));
+        AggregatorV3Interface token0Feed = AggregatorV3Interface(oracleData.token0Feed);
+        AggregatorV3Interface token1Feed = AggregatorV3Interface(oracleData.token1Feed);
         (
             /* uint80 roundId*/
             ,
@@ -59,10 +57,10 @@ contract ChainlinkPriceOracle is IPriceOracle, IWatchtowerCustomErrors {
         ) = token1Feed.latestRoundData();
         uint256 timestamp = block.timestamp;
         if (
-            timestamp - token0Timestamp >= OracleData.timeThreshold
-                || timestamp - token1Timestamp >= OracleData.timeThreshold
+            timestamp - token0Timestamp >= oracleData.timeThreshold
+                || timestamp - token1Timestamp >= oracleData.timeThreshold
         ) {
-            revert PollTryAtEpoch(block.timestamp + OracleData.backoff, "stale oracle");
+            revert PollTryAtEpoch(block.timestamp + oracleData.backoff, "stale oracle");
         }
         uint256 token0Decimals = token0Feed.decimals();
         uint256 token1Decimals = token1Feed.decimals();
