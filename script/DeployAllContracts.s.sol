@@ -7,15 +7,22 @@ import {
     DeployBalancerWeightedPoolPriceOracle,
     BalancerWeightedPoolPriceOracle
 } from "./single-deployment/BalancerWeightedPoolPriceOracle.s.sol";
+import {DeployChainlinkPriceOracle, ChainlinkPriceOracle} from "./single-deployment/ChainlinkPriceOracle.s.sol";
 
 contract DeployAllContracts is
     DeployConstantProductFactory,
     DeployUniswapV2PriceOracle,
-    DeployBalancerWeightedPoolPriceOracle
+    DeployBalancerWeightedPoolPriceOracle,
+    DeployChainlinkPriceOracle
 {
     function run()
         public
-        override(DeployConstantProductFactory, DeployUniswapV2PriceOracle, DeployBalancerWeightedPoolPriceOracle)
+        override(
+            DeployConstantProductFactory,
+            DeployUniswapV2PriceOracle,
+            DeployBalancerWeightedPoolPriceOracle,
+            DeployChainlinkPriceOracle
+        )
     {
         deployAll();
     }
@@ -25,11 +32,13 @@ contract DeployAllContracts is
         returns (
             ConstantProductFactory constantProductFactory,
             UniswapV2PriceOracle uniswapV2PriceOracle,
-            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle
+            BalancerWeightedPoolPriceOracle balancerWeightedPoolPriceOracle,
+            ChainlinkPriceOracle chainlinkPriceOracle
         )
     {
         constantProductFactory = deployConstantProductFactory();
         uniswapV2PriceOracle = deployUniswapV2PriceOracle();
         balancerWeightedPoolPriceOracle = deployBalancerWeightedPoolPriceOracle();
+        chainlinkPriceOracle = deployChainlinkPriceOracle();
     }
 }

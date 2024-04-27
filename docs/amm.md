@@ -69,6 +69,29 @@ poolId=0x1111111111111111111111111111111111111111111111111111111111111111
 cast abi-encode 'f((bytes32))' "($poolId)"
 ```
 
+### ChainlinkPriceOracle
+
+The Chainlink price oracle returns the limit price from reading two [Chainlink Data Feed](https://docs.chain.link/data-feeds/price-feeds/addresses).
+
+The oracle data contains four parameters:
+- `address token0Feed`: Address of Chainlink price oracle for token0
+- `address token1Feed`: Address of Chainlink price oracle for token1
+- `uint256 timeThreshold`: Amount of seconds before the oracle is considered stale
+- `uint256 backoff`: Amount of seconds for watch tower to wait before retrying from stale oracle.
+s
+While this oracle is intended to support Chainlink Data Feed, it can also read from any contract that implement `AggregatorV3` interface, as long as `decimals` in the feed is less than 18. The contract will handle decimals scaling automatically (such as AMPL/USD with 18 decimals). There is no check for token to corresponds with the feed address. The users will have to check for correctness by themselves.
+
+Some feed like Forex and commodity pair will not avaliable outside their market hours. Consider setting `2 days` as backoff duration for those address.
+
+If foundry is available in your system, you can generate the bytes calldata with the following command:
+```sh
+token0Feed=0x1111111111111111111111111111111111111111
+token1Feed=0x2222222222222222222222222222222222222222
+timeThreshold=86400
+backoff=172800
+cast abi-encode 'f((address, address, uint256, uint256))' "($token0Feed, $token1Feed, $timeThreshold, $backoff)"
+```
+
 ## I'm a solver. How do I use CoW AMM liquidity?
 
 CoW AMM orders already appear in the CoW Protocol orderbook, so you're already using its liquidity.
