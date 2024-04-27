@@ -16,4 +16,9 @@ contract IWatchtowerCustomErrors {
      * try again at the specified block.
      */
     error PollTryAtBlock(uint256 blockNumber, string message);
+    /**
+     * No order is currently available for trading, but the watchtower should
+     * try again after the timestamp.
+     */
+    error PollTryAtEpoch(uint256 timestamp, string message);
 }
