@@ -29,18 +29,20 @@ contract ConstantProductFactory {
     mapping(ConstantProduct => address) public owner;
 
     /**
-     * @notice A CoW AMM has been enabled for trading.
+     * @notice A CoW AMM has been created. The emitted AMM parameters are
+     * immutable for the new AMM.
      * @param amm The address of the AMM that can now trade on CoW Protocol.
      * @param owner The owner of the AMM.
+     * @param token0 The first token traded by the AMM.
+     * @param token1 The second token traded by the AMM.
      */
-    event TradingEnabled(ConstantProduct indexed amm, address indexed owner);
+    event Deployed(ConstantProduct indexed amm, address indexed owner, IERC20 token0, IERC20 token1);
     /**
      * @notice A CoW AMM stopped trading; no CoW Protocol orders can be settled
      * until trading is enabled again.
      * @param amm The address of the AMM that stops trading on CoW Protocol.
-     * @param owner The owner of the AMM.
      */
-    event TradingDisabled(ConstantProduct indexed amm, address indexed owner);
+    event TradingDisabled(ConstantProduct indexed amm);
 
     /**
      * @notice This function is permissioned and can only be called by the
@@ -86,8 +88,10 @@ contract ConstantProductFactory {
         bytes calldata priceOracleData,
         bytes32 appData
     ) external returns (ConstantProduct amm) {
-        amm = new ConstantProduct{salt: salt(msg.sender)}(settler, token0, token1);
-        owner[amm] = msg.sender;
+        address ammOwner = msg.sender;
+        amm = new ConstantProduct{salt: salt(ammOwner)}(settler, token0, token1);
+        emit Deployed(amm, ammOwner, token0, token1);
+        owner[amm] = ammOwner;
 
         deposit(amm, amount0, amount1);
 
@@ -246,7 +250,6 @@ contract ConstantProductFactory {
      */
     function _enableTrading(ConstantProduct amm, ConstantProduct.TradingParams memory tradingParams) internal {
         amm.enableTrading(tradingParams);
-        emit TradingEnabled(amm, msg.sender);
         // The salt is unused by this contract. External tools (for example the
         // watch tower) may expect that the salt doesn't repeat. However, there
         // can be at most one valid order per AMM at a time, and any conflicting
@@ -269,7 +272,7 @@ contract ConstantProductFactory {
      */
     function _disableTrading(ConstantProduct amm) internal {
         amm.disableTrading();
-        emit TradingDisabled(amm, msg.sender);
+        emit TradingDisabled(amm);
     }
 
     /**

@@ -58,9 +58,7 @@ abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
         });
 
         vm.expectEmit();
-        emit ConstantProductFactory.TradingDisabled(amm, address(this));
-        vm.expectEmit();
-        emit ConstantProductFactory.TradingEnabled(amm, address(this));
+        emit ConstantProductFactory.TradingDisabled(amm);
         vm.expectEmit();
         emit ComposableCoW.ConditionalOrderCreated(
             address(amm),
