@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.24;
 
 import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -56,6 +56,16 @@ contract ConstantProduct is IERC1271 {
      * accepted as valid by this contract, meaning that no trading can occur.
      */
     bytes32 public constant NO_TRADING = bytes32(0);
+    /**
+     * @notice The transient storage slot specified in this variable stores the
+     * value of the order commitment, that is, the only order hash that can be
+     * validated by calling `isValidSignature`.
+     * The hash corresponding to the constant `EMPTY_COMMITMENT` has special
+     * semantics, discussed in the related documentation.
+     * @dev This value is:
+     * uint256(keccak256("CoWAMM.ConstantProduct.commitment")) - 1
+     */
+    uint256 public constant COMMITMENT_SLOT = 0x6c3c90245457060f6517787b2c4b8cf500ca889d2304af02043bd5b513e3b593;
 
     /**
      * @notice The address of the CoW Protocol settlement contract. It is the
@@ -80,12 +90,6 @@ contract ConstantProduct is IERC1271 {
      */
     bytes32 public immutable solutionSettlerDomainSeparator;
 
-    /**
-     * @notice The only order hash that can be validated by calling `verify`.
-     * The hash corresponding to the constant `EMPTY_COMMITMENT` has special
-     * semantics, discussed in the related documentation.
-     */
-    bytes32 public commitment;
     /**
      * The hash of the data describing which `TradingParams` currently apply
      * to this AMM. If this parameter is set to `NO_TRADING`, then the AMM
@@ -206,7 +210,9 @@ contract ConstantProduct is IERC1271 {
         if (msg.sender != address(solutionSettler)) {
             revert CommitOutsideOfSettlement();
         }
-        commitment = orderHash;
+        assembly ("memory-safe") {
+            tstore(COMMITMENT_SLOT, orderHash)
+        }
     }
 
     /**
@@ -364,6 +370,12 @@ contract ConstantProduct is IERC1271 {
         // - partiallyFillable
     }
 
+    function commitment() public view returns (bytes32 value) {
+        assembly ("memory-safe") {
+            value := tload(COMMITMENT_SLOT)
+        }
+    }
+
     /**
      * @notice Approves the spender to transfer an unlimited amount of tokens
      * and reverts if the approval was unsuccessful.
@@ -417,7 +429,8 @@ contract ConstantProduct is IERC1271 {
         TradingParams memory tradingParams,
         GPv2Order.Data memory order
     ) internal view {
-        bytes32 committedOrderHash = commitment;
+        bytes32 committedOrderHash = commitment();
+
         if (orderHash != committedOrderHash) {
             if (committedOrderHash != EMPTY_COMMITMENT) {
                 revert OrderDoesNotMatchCommitmentHash();
