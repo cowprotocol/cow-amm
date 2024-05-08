@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "lib/openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC1271} from "lib/openzeppelin/contracts/interfaces/IERC1271.sol";
+import {SafeERC20} from "lib/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
 import {IConditionalOrder, GPv2Order} from "lib/composable-cow/src/BaseConditionalOrder.sol";
