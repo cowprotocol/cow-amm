@@ -102,6 +102,22 @@ Each CoW AMM is a pair that trades two tokens.
 
 Importantly, surplus for a CoW AMM order is measured differently when computing the solver reward payout.
 
+### Listing all CoW AMMs
+
+Every supported chain has an official factory contract, specified in the file `networks.json`.
+
+The creation of new AMMs emits a `Deployed` event from the factory, which lists the AMM address, its owner, and the traded tokens.
+Owner and traded tokens will never change for the AMM identified by that address.
+No AMM can trade more than a single pair of tokens.
+
+Every time a CoW AMM becomes available for trading on CoW Swap, the factory emits an event `ComposableCoW.ConditionalOrderCreated` with the AMM address and the abi-encoded trading parameters.
+This event is fired both for newly deployed AMM and for CoW AMM whose trading has been reenabled after having had been disabled.
+Unlike the AMM deployment parameters, trading parameters _can_ change during the lifetime of the AMM.
+However, at any point in time there can be at most one set of valid trading parameters.
+
+Trading can be disabled at any point in time by the owner.
+Disabiling trading causes the emission of an event `TradingDisabled` that indicates the address of the disabled AMM.
+
 ### Settling a custom order
 
 You need to choose a valid CoW Swap order with the following restrictions:
@@ -121,17 +137,11 @@ You need to choose a valid CoW Swap order with the following restrictions:
 
 You also need to compute:
 - the order hash `hash` as defined in the library `GPv2Order`, and
-- the order signature (example code that generates a valid signature is the `getTradeableOrderWithSignature` function).
+- the order signature (`abi.encode(order, tradingParams)`, where `order` is the order parameters in the `GPv2Order.Data` format and `tradingParams` are the currently enabled trading parameters as indicated by the latest fired event `ComposableCoW.ConditionalOrderCreated`).
 
-This order can be included in a batch as any other CoW Protocol orders with three extra conditions:
+This order can be included in a batch as any other CoW Protocol orders with two extra conditions:
 - One of the pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
-- Must contain at most one order from the AMM in the same batch.
-- One of the post-interactions must reset the commitment by calling `ConstantProduct.commit(EMPTY_COMMITMENT)`.
-
-The last step (clearing the commit) is technically not required for the batch to settle successfully, however it makes the settlement overall cheaper, since it resets the storage slot.
-However, leaving the commit set means that no AMM orders will appear in the orderbook until the commit is reset.
-Not clearing the commit at the end of the batch is considered slashable behavior.
-
+- The batch must contain at most one order from the same AMM.
 
 ## Risk profile
 
