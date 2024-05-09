@@ -326,15 +326,15 @@ contract ConstantProduct is IERC1271 {
     function verify(TradingParams memory tradingParams, GPv2Order.Data memory order) public view {
         IERC20 sellToken = token0;
         IERC20 buyToken = token1;
-        uint256 sellReserve = sellToken.balanceOf(address(this));
-        uint256 buyReserve = buyToken.balanceOf(address(this));
         if (order.sellToken != sellToken) {
             if (order.sellToken != buyToken) {
                 revert IConditionalOrder.OrderNotValid("invalid sell token");
             }
             (sellToken, buyToken) = (buyToken, sellToken);
-            (sellReserve, buyReserve) = (buyReserve, sellReserve);
         }
+        uint256 sellReserve = sellToken.balanceOf(address(this));
+        uint256 buyReserve = buyToken.balanceOf(address(this));
+
         if (order.buyToken != buyToken) {
             revert IConditionalOrder.OrderNotValid("invalid buy token");
         }
