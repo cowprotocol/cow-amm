@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
+import {IERC20} from "lib/openzeppelin/contracts/interfaces/IERC20.sol";
 
 import {
     BalancerWeightedPoolPriceOracle,

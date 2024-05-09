@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {IERC20} from "lib/composable-cow/lib/@openzeppelin/contracts/interfaces/IERC20.sol";
+import {IERC20} from "lib/openzeppelin/contracts/interfaces/IERC20.sol";
 
 /**
  * @title Balancer Vault Interface
