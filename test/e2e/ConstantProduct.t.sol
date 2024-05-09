@@ -12,7 +12,9 @@ import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper
 
 contract E2EConditionalOrderTest is BaseComposableCoWTest {
     using UniswapV2Helper for IUniswapV2Factory;
+    using GPv2Order for GPv2Order.Data;
 
+    address public constant owner = 0x1234567890123456789012345678901234567890;
     IERC20 public DAI;
     IERC20 public WETH;
     IUniswapV2Pair pair;
@@ -47,8 +49,6 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
     }
 
     function testE2ESettle() public {
-        address owner = 0x1234567890123456789012345678901234567890;
-
         uint256 startAmountDai = 2_000 ether;
         uint256 startAmountWeth = 1 ether;
         // Deal the AMM reserves to the owner.
@@ -107,6 +107,92 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
             // Explicit price to see that it's reasonable
             assertEq(expectedDifferenceDai / expectedDifferenceWeth, 2_499);
         }
+
+        vm.prank(owner);
+        ammFactory.disableTrading(amm);
+
+        vm.prank(owner);
+        ammFactory.withdraw(amm, endBalanceDai, endBalanceWeth);
+
+        // Funds have been transferred to the owner.
+        assertEq(DAI.balanceOf(owner), endBalanceDai);
+        assertEq(WETH.balanceOf(owner), endBalanceWeth);
+    }
+
+    function testE2ECustomOrder() public {
+        uint256 startAmountDai = 2_000 ether;
+        uint256 startAmountWeth = 1 ether;
+        // Deal the AMM reserves to the owner.
+        deal(address(DAI), address(owner), startAmountDai);
+        deal(address(WETH), address(owner), startAmountWeth);
+
+        vm.startPrank(owner);
+        DAI.approve(address(ammFactory), type(uint256).max);
+        WETH.approve(address(ammFactory), type(uint256).max);
+
+        // Funds have been allocated.
+        assertEq(DAI.balanceOf(owner), startAmountDai);
+        assertEq(WETH.balanceOf(owner), startAmountWeth);
+
+        uint256 minTradedToken0 = 0;
+        bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
+        bytes32 appData = keccak256("order app data");
+        ConstantProduct amm = ammFactory.create(
+            DAI, startAmountDai, WETH, startAmountWeth, minTradedToken0, uniswapV2PriceOracle, priceOracleData, appData
+        );
+        vm.stopPrank();
+
+        // Funds have been transferred to the AMM.
+        assertEq(DAI.balanceOf(owner), 0);
+        assertEq(WETH.balanceOf(owner), 0);
+
+        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
+            minTradedToken0: minTradedToken0,
+            priceOracle: uniswapV2PriceOracle,
+            priceOracleData: priceOracleData,
+            appData: appData
+        });
+        uint256 sellAmount = 100 ether;
+        uint256 buyAmount = 1 ether;
+
+        // The trade will be settled against bob.
+        deal(address(DAI), bob.addr, startAmountDai);
+        deal(address(WETH), bob.addr, startAmountWeth);
+        vm.startPrank(bob.addr);
+        DAI.approve(address(relayer), type(uint256).max);
+        WETH.approve(address(relayer), type(uint256).max);
+        vm.stopPrank();
+
+        GPv2Order.Data memory order = GPv2Order.Data({
+            sellToken: DAI,
+            buyToken: WETH,
+            receiver: GPv2Order.RECEIVER_SAME_AS_OWNER,
+            sellAmount: sellAmount,
+            buyAmount: buyAmount,
+            validTo: uint32(block.timestamp) + 1,
+            appData: appData,
+            feeAmount: 0,
+            kind: GPv2Order.KIND_SELL,
+            partiallyFillable: true,
+            sellTokenBalance: GPv2Order.BALANCE_ERC20,
+            buyTokenBalance: GPv2Order.BALANCE_ERC20
+        });
+        bytes memory sig = abi.encode(order, data);
+
+        bytes32 domainSeparator = settlement.domainSeparator();
+        // The commit should be part of the settlement for the test to work.
+        // This would require us to vendor quite a lot of helper code from
+        // composable-cow to include interactions in `settle`. For now, we rely
+        // on the fact that Foundry doesn't reset transient storage between
+        // calls.
+        vm.prank(address(settlement));
+        amm.commit(order.hash(domainSeparator));
+        settle(address(amm), bob, order, sig, hex"");
+
+        uint256 endBalanceDai = DAI.balanceOf(address(amm));
+        uint256 endBalanceWeth = WETH.balanceOf(address(amm));
+        assertEq(startAmountDai - sellAmount, endBalanceDai);
+        assertEq(startAmountWeth + buyAmount, endBalanceWeth);
 
         vm.prank(owner);
         ammFactory.disableTrading(amm);
