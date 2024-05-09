@@ -83,7 +83,7 @@ While this oracle is intended to support Chainlink Data Feed, it can also read f
 
 Some feed like Forex and commodity pair will not avaliable outside their market hours. Consider setting `2 days` as backoff duration for those address.
 
-If foundry is available in your system, you can generate the bytes calldata with the following command:
+If Foundry is available in your system, you can generate the bytes calldata with the following command:
 ```sh
 token0Feed=0x1111111111111111111111111111111111111111
 token1Feed=0x2222222222222222222222222222222222222222
@@ -108,10 +108,10 @@ Every supported chain has an official factory contract, specified in the file `n
 
 The creation of new AMMs emits a `Deployed` event from the factory, which lists the AMM address, its owner, and the traded tokens.
 Owner and traded tokens will never change for the AMM identified by that address.
-No AMM can trade more than a single pair of tokens.
+No AMM created by the factory can trade more than a single pair of tokens.
 
-Every time a CoW AMM becomes available for trading on CoW Swap, the factory emits an event `ComposableCoW.ConditionalOrderCreated` with the AMM address and the abi-encoded trading parameters.
-This event is fired both for newly deployed AMM and for CoW AMM whose trading has been reenabled after having had been disabled.
+Every time a CoW AMM becomes available for trading on CoW Swap, the factory emits an event `ComposableCoW.ConditionalOrderCreated` with the AMM address and the ABI-encoded trading parameters.
+This event is fired both for newly deployed AMMs and for CoW AMMs whose trading has been re-enabled after having had been disabled.
 Unlike the AMM deployment parameters, trading parameters _can_ change during the lifetime of the AMM.
 However, at any point in time there can be at most one set of valid trading parameters.
 
@@ -140,8 +140,30 @@ You also need to compute:
 - the order signature (`abi.encode(order, tradingParams)`, where `order` is the order parameters in the `GPv2Order.Data` format and `tradingParams` are the currently enabled trading parameters as indicated by the latest fired event `ComposableCoW.ConditionalOrderCreated`).
 
 This order can be included in a batch as any other CoW Protocol orders with two extra conditions:
-- One of the pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
+- A pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
 - The batch must contain at most one order from the same AMM.
+
+#### Signature encoding example
+
+If Foundry is available in your system, you can generate the signature bytes with the following command:
+```sh
+sellToken='0xaa111111111111111111111111111111111111aa'
+buyToken='0xaa222222222222222222222222222222222222aa'
+receiver='0x0000000000000000000000000000000000000000'
+sellAmount='333'
+buyAmount='444'
+validTo='555'
+appData='0x6666666666666666666666666666666666666666666666666666666666666666'
+feeAmount='0'
+kind='f3b277728b3fee749481eb3e0b3b48980dbbab78658fc419025cb16eee346775' # sell
+partiallyFillable='true'
+sellTokenBalance='5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9' # erc20
+buyTokenBalance='5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9' # erc20
+minTradedToken0='777'
+priceOracle='0xaa888888888888888888888888888888888888aa'
+priceOracleData='0x9999'
+cast abi-encode 'f((address,address,address,uint256,uint256,uint32,bytes32,uint256,bytes32,bool,bytes32,bytes32),(uint256,address,bytes,bytes32))' "($sellToken,$buyToken,$receiver,$sellAmount,$buyAmount,$validTo,$appData,$feeAmount,$kind,$partiallyFillable,$sellTokenBalance,$buyTokenBalance)" "($minTradedToken0,$priceOracle,$priceOracleData,$appData)"
+```
 
 ## Risk profile
 
