@@ -107,8 +107,7 @@ contract ChainlinkPriceOracleTest is Test {
                 IWatchtowerCustomErrors.PollTryAtEpoch.selector, block.timestamp + 1 days, "stale oracle"
             )
         );
-        (uint256 priceNumerator, uint256 priceDenominator) =
-            oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
+        oracle.getPrice(USDC, WETH, abi.encode(getDefaultOracleData()));
     }
 
     function testRevertsIfOneOracleIsStale() public {
