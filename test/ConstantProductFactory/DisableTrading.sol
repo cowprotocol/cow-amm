@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.24;
 
 import {ConstantProduct, ConstantProductFactory, IPriceOracle} from "src/ConstantProductFactory.sol";
 
