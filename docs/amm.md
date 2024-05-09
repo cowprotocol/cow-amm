@@ -108,10 +108,10 @@ Every supported chain has an official factory contract, specified in the file `n
 
 The creation of new AMMs emits a `Deployed` event from the factory, which lists the AMM address, its owner, and the traded tokens.
 Owner and traded tokens will never change for the AMM identified by that address.
-No AMM can trade more than a single pair of tokens.
+No AMM created by the factory can trade more than a single pair of tokens.
 
-Every time a CoW AMM becomes available for trading on CoW Swap, the factory emits an event `ComposableCoW.ConditionalOrderCreated` with the AMM address and the abi-encoded trading parameters.
-This event is fired both for newly deployed AMM and for CoW AMM whose trading has been reenabled after having had been disabled.
+Every time a CoW AMM becomes available for trading on CoW Swap, the factory emits an event `ComposableCoW.ConditionalOrderCreated` with the AMM address and the ABI-encoded trading parameters.
+This event is fired both for newly deployed AMMs and for CoW AMMs whose trading has been re-enabled after having had been disabled.
 Unlike the AMM deployment parameters, trading parameters _can_ change during the lifetime of the AMM.
 However, at any point in time there can be at most one set of valid trading parameters.
 
@@ -140,7 +140,7 @@ You also need to compute:
 - the order signature (`abi.encode(order, tradingParams)`, where `order` is the order parameters in the `GPv2Order.Data` format and `tradingParams` are the currently enabled trading parameters as indicated by the latest fired event `ComposableCoW.ConditionalOrderCreated`).
 
 This order can be included in a batch as any other CoW Protocol orders with two extra conditions:
-- One of the pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
+- A pre-interaction must set the commitment by calling `ConstantProduct.commit(hash)`.
 - The batch must contain at most one order from the same AMM.
 
 ## Risk profile
