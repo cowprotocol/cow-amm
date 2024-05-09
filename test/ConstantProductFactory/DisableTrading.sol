@@ -28,7 +28,7 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
         ConstantProduct amm = setupAndCreateAMM();
 
         vm.expectEmit();
-        emit ConstantProductFactory.TradingDisabled(amm, address(this));
+        emit ConstantProductFactory.TradingDisabled(amm);
         constantProductFactory.disableTrading(amm);
     }
 
