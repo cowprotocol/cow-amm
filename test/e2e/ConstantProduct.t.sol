@@ -163,31 +163,35 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         WETH.approve(address(relayer), type(uint256).max);
         vm.stopPrank();
 
-        GPv2Order.Data memory order = GPv2Order.Data({
-            sellToken: DAI,
-            buyToken: WETH,
-            receiver: GPv2Order.RECEIVER_SAME_AS_OWNER,
-            sellAmount: sellAmount,
-            buyAmount: buyAmount,
-            validTo: uint32(block.timestamp) + 1,
-            appData: appData,
-            feeAmount: 0,
-            kind: GPv2Order.KIND_SELL,
-            partiallyFillable: true,
-            sellTokenBalance: GPv2Order.BALANCE_ERC20,
-            buyTokenBalance: GPv2Order.BALANCE_ERC20
-        });
-        bytes memory sig = abi.encode(order, data);
+        {
+            // Braces to avoid stack too deep issues.
+            uint32 latestValidTimestamp = uint32(block.timestamp) + amm.MAX_ORDER_DURATION();
+            GPv2Order.Data memory order = GPv2Order.Data({
+                sellToken: DAI,
+                buyToken: WETH,
+                receiver: GPv2Order.RECEIVER_SAME_AS_OWNER,
+                sellAmount: sellAmount,
+                buyAmount: buyAmount,
+                validTo: latestValidTimestamp,
+                appData: appData,
+                feeAmount: 0,
+                kind: GPv2Order.KIND_SELL,
+                partiallyFillable: true,
+                sellTokenBalance: GPv2Order.BALANCE_ERC20,
+                buyTokenBalance: GPv2Order.BALANCE_ERC20
+            });
+            bytes memory sig = abi.encode(order, data);
 
-        bytes32 domainSeparator = settlement.domainSeparator();
-        // The commit should be part of the settlement for the test to work.
-        // This would require us to vendor quite a lot of helper code from
-        // composable-cow to include interactions in `settle`. For now, we rely
-        // on the fact that Foundry doesn't reset transient storage between
-        // calls.
-        vm.prank(address(settlement));
-        amm.commit(order.hash(domainSeparator));
-        settle(address(amm), bob, order, sig, hex"");
+            bytes32 domainSeparator = settlement.domainSeparator();
+            // The commit should be part of the settlement for the test to work.
+            // This would require us to vendor quite a lot of helper code from
+            // composable-cow to include interactions in `settle`. For now, we
+            // rely on the fact that Foundry doesn't reset transient storage
+            // between calls.
+            vm.prank(address(settlement));
+            amm.commit(order.hash(domainSeparator));
+            settle(address(amm), bob, order, sig, hex"");
+        }
 
         uint256 endBalanceDai = DAI.balanceOf(address(amm));
         uint256 endBalanceWeth = WETH.balanceOf(address(amm));
