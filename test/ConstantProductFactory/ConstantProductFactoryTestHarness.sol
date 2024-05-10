@@ -10,15 +10,12 @@ import {
     IERC20
 } from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductTestHarness} from "test/ConstantProduct/ConstantProductTestHarness.sol";
 
 abstract contract ConstantProductFactoryTestHarness is ConstantProductTestHarness {
     ConstantProductFactory internal constantProductFactory;
-    IERC20 internal mockableToken0 =
-        IERC20(Utils.addressFromString("ConstantProductFactoryTestHarness: mockable token 0"));
-    IERC20 internal mockableToken1 =
-        IERC20(Utils.addressFromString("ConstantProductFactoryTestHarness: mockable token 1"));
+    IERC20 internal mockableToken0 = IERC20(makeAddr("ConstantProductFactoryTestHarness: mockable token 0"));
+    IERC20 internal mockableToken1 = IERC20(makeAddr("ConstantProductFactoryTestHarness: mockable token 1"));
 
     function setUp() public virtual override(ConstantProductTestHarness) {
         super.setUp();

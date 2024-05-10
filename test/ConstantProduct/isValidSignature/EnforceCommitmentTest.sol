@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "src/ConstantProduct.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
@@ -67,7 +66,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         // - bytes32 buyTokenBalance;
 
         modifiedOrder = deepClone(originalOrder);
-        modifiedOrder.sellToken = IERC20(Utils.addressFromString("bad sell token"));
+        modifiedOrder.sellToken = IERC20(makeAddr("bad sell token"));
         expectRevertIsValidSignature(
             abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector),
             defaultTradingParams,
@@ -75,7 +74,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         );
 
         modifiedOrder = deepClone(originalOrder);
-        modifiedOrder.buyToken = IERC20(Utils.addressFromString("bad buy token"));
+        modifiedOrder.buyToken = IERC20(makeAddr("bad buy token"));
         expectRevertIsValidSignature(
             abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchDefaultTradeableOrder.selector),
             defaultTradingParams,
@@ -83,7 +82,7 @@ abstract contract EnforceCommitmentTest is ConstantProductTestHarness {
         );
 
         modifiedOrder = deepClone(originalOrder);
-        modifiedOrder.receiver = Utils.addressFromString("bad receiver");
+        modifiedOrder.receiver = makeAddr("bad receiver");
         expectRevertIsValidSignature(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address"),
             defaultTradingParams,

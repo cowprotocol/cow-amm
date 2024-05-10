@@ -10,14 +10,13 @@ import {
     IConditionalOrder
 } from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "../ConstantProductFactoryTestHarness.sol";
 
 abstract contract CreateAMM is ConstantProductFactoryTestHarness {
     uint256 private amount0 = 1234;
     uint256 private amount1 = 5678;
     uint256 private minTradedToken0 = 42;
-    IPriceOracle private priceOracle = IPriceOracle(Utils.addressFromString("Create: price oracle"));
+    IPriceOracle private priceOracle = IPriceOracle(makeAddr("Create: price oracle"));
     bytes private priceOracleData = bytes("some price oracle data");
     bytes32 private appData = keccak256("Create: app data");
 

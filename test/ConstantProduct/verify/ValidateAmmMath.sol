@@ -4,11 +4,10 @@ pragma solidity ^0.8.24;
 import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "src/ConstantProduct.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateAmmMath is ConstantProductTestHarness {
-    IUniswapV2Pair pair = IUniswapV2Pair(Utils.addressFromString("pair for math verification"));
+    IUniswapV2Pair pair = IUniswapV2Pair(makeAddr("pair for math verification"));
 
     function setUpAmmWithReserves(uint256 amountToken0, uint256 amountToken1) internal {
         vm.mockCall(address(pair), abi.encodeCall(IUniswapV2Pair.token0, ()), abi.encode(constantProduct.token0()));

@@ -3,12 +3,11 @@ pragma solidity ^0.8.24;
 
 import {ConstantProduct, ConstantProductFactory, IPriceOracle} from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract DisableTrading is ConstantProductFactoryTestHarness {
     function testOnlyOwnerCanDisableTrading() public {
-        address notTheOwner = Utils.addressFromString("some address that isn't the owner");
+        address notTheOwner = makeAddr("some address that isn't the owner");
         ConstantProduct amm = setupAndCreateAMM();
         require(constantProductFactory.owner(amm) != notTheOwner, "bad test setup");
 
@@ -36,7 +35,7 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
         uint256 minTradedToken0 = 42;
-        IPriceOracle priceOracle = IPriceOracle(Utils.addressFromString("DisableTrading: price oracle"));
+        IPriceOracle priceOracle = IPriceOracle(makeAddr("DisableTrading: price oracle"));
         bytes memory priceOracleData = bytes("some price oracle data");
         bytes32 appData = keccak256("DisableTrading: app data");
 

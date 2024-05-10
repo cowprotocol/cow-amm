@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "src/ConstantProduct.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
@@ -36,9 +35,9 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
             setUpBasicOrder();
 
-        IERC20 badToken = IERC20(Utils.addressFromString("bad token"));
+        IERC20 badToken = IERC20(makeAddr("bad token"));
         vm.mockCall(address(badToken), abi.encodeCall(IERC20.balanceOf, (address(constantProduct))), abi.encode(1337));
-        IERC20 badTokenExtra = IERC20(Utils.addressFromString("extra bad token"));
+        IERC20 badTokenExtra = IERC20(makeAddr("extra bad token"));
         vm.mockCall(
             address(badTokenExtra), abi.encodeCall(IERC20.balanceOf, (address(constantProduct))), abi.encode(1337)
         );
@@ -77,7 +76,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
         (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
             setUpBasicOrder();
 
-        defaultOrder.receiver = Utils.addressFromString("bad receiver");
+        defaultOrder.receiver = makeAddr("bad receiver");
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
         );

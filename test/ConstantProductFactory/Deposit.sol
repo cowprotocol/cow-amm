@@ -3,12 +3,11 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract Deposit is ConstantProductFactoryTestHarness {
     function testAnyoneCanDeposit() public {
-        address anyone = Utils.addressFromString("Deposit: an arbitrary address");
+        address anyone = makeAddr("Deposit: an arbitrary address");
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
 
