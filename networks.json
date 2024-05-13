@@ -1,8 +1,8 @@
 {
   "BalancerWeightedPoolPriceOracle": {
     "1": {
-      "address": "0xad37FE3dDedF8cdEE1022Da1b17412CFB6495596",
-      "transactionHash": "0x97150c1fa3113c0ddb7dd94edeb0a62cd9829b14017d541b49865c5615037c6e"
+      "address": "0x32dBede1bD6559D7d3ecf279D1207B47cE147137",
+      "transactionHash": "0x9b9836a6992dff16d955da49f26abc3e0678f6240f7a4a3d97054501d65ea297"
     },
     "100": {
       "address": "0x7ede1f69ccbf38ae4a0c2d53d8868a55f4311ba2",
@@ -14,6 +14,10 @@
     }
   },
   "ChainlinkPriceOracle": {
+    "1": {
+      "address": "0xF54c4bcc34a8750382B8fB0f0EC6f1A6C785af9c",
+      "transactionHash": "0x4a6ded6c5928a8e74daa6330408ab0532c8ab3b474cfac884261f16fb0ca659b"
+    },
     "100": {
       "address": "0xbd91a72dc3d9b5d9b16ee8638da1fc65311bd90a",
       "transactionHash": "0x97abf8e06a37851a8d74ec75296656ddc8c2813feed63d4fbb7bf32a332a71bf"
@@ -23,13 +27,11 @@
       "transactionHash": "0x341f7936fe0bd5d80a775a7dbcd33d1df298bd89632bf3971df16745880d4e73"
     }
   },
-  "ConstantProduct": {
-    "1": {
-      "address": "0x34323B933096534e43958F6c7Bf44F2Bb59424DA",
-      "transactionHash": "0xad9697d6a7b6e3283e0d022028a5252a1fe183a63ed35328a6daea9804c3492a"
-    }
-  },
   "ConstantProductFactory": {
+    "1": {
+      "address": "0x40664207e3375FB4b733d4743CE9b159331fd034",
+      "transactionHash": "0xf37fc438ddacb00c28305bd7dea3b79091cd5be3405a2b445717d9faf946fa50"
+    },
     "100": {
       "address": "0xdb1cba3a87f2db53b6e1e6af48e28ed877592ec0",
       "transactionHash": "0x4121efab4ad58ae7ad73b50448cccae0de92905e181648e5e08de3d6d9c66083"
@@ -41,8 +43,8 @@
   },
   "UniswapV2PriceOracle": {
     "1": {
-      "address": "0x573cC0c800048f94e022463b9214D92c2d65e97B",
-      "transactionHash": "0xd4f92c9285fec9911f41b89ca0de448f744bb3fca7fe9034c6e4b71f364f2534"
+      "address": "0xff77a62ADA5a37c2c500107DDc60F1292E030D85",
+      "transactionHash": "0x967564124beb451f546d2311e4b18addf9088888509366e9ab001de371534cf0"
     },
     "100": {
       "address": "0x2145a393887b12f1fe7909d2d0c11dcdb53057ed",
