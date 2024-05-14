@@ -9,22 +9,20 @@ import {
     IConditionalOrder
 } from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract UpdateParameters is ConstantProductFactoryTestHarness {
     uint256 private initMinTradedToken0 = 42;
     uint256 private newMinTradedToken0 = 1337;
-    IPriceOracle private initPriceOracle = IPriceOracle(Utils.addressFromString("UpdateParameters: price oracle"));
-    IPriceOracle private newPriceOracle =
-        IPriceOracle(Utils.addressFromString("UpdateParameters: updated price oracle"));
+    IPriceOracle private initPriceOracle = IPriceOracle(makeAddr("UpdateParameters: price oracle"));
+    IPriceOracle private newPriceOracle = IPriceOracle(makeAddr("UpdateParameters: updated price oracle"));
     bytes private initPriceOracleData = bytes("some price oracle data");
     bytes private newPriceOracleData = bytes("some updated price oracle data");
     bytes32 private initAppData = keccak256("UpdateParameters: app data");
     bytes32 private newAppData = keccak256("UpdateParameters: updated app data");
 
     function testOnlyOwnerCanUpdateParams() public {
-        address notTheOwner = Utils.addressFromString("some address that isn't the owner");
+        address notTheOwner = makeAddr("some address that isn't the owner");
         ConstantProduct amm = setupInitialAMM();
         require(constantProductFactory.owner(amm) != notTheOwner, "bad test setup");
 

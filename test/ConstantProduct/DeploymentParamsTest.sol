@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Utils} from "test/libraries/Utils.sol";
-
 import {ConstantProductTestHarness, ConstantProduct, IERC20} from "./ConstantProductTestHarness.sol";
 
 abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     function testSetsDeploymentParameters() public {
         require(address(solutionSettler) != address(0), "test should use a nonzero address");
-        IERC20 token0 = IERC20(Utils.addressFromString("DeploymentParamsTest: any token0"));
-        IERC20 token1 = IERC20(Utils.addressFromString("DeploymentParamsTest: any token1"));
+        IERC20 token0 = IERC20(makeAddr("DeploymentParamsTest: any token0"));
+        IERC20 token1 = IERC20(makeAddr("DeploymentParamsTest: any token1"));
         mockSafeApprove(token0, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockSafeApprove(token1, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockSafeApprove(token0, expectedDeploymentAddress(), defaultDeployer());
@@ -27,7 +25,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     }
 
     function approvedToken(string memory name) private returns (IERC20 token) {
-        token = IERC20(Utils.addressFromString(name));
+        token = IERC20(makeAddr(name));
         mockSafeApprove(token, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockSafeApprove(token, expectedDeploymentAddress(), defaultDeployer());
         vm.mockCallRevert(address(token), hex"", abi.encode("Unexpected call to token contract"));
@@ -37,7 +35,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         private
         returns (IERC20 token)
     {
-        token = IERC20(Utils.addressFromString(name));
+        token = IERC20(makeAddr(name));
         mockSafeApprove(token, expectedDeploymentAddress(), spenderGoodApproval);
         mockZeroAllowance(token, expectedDeploymentAddress(), spenderBadApproval);
         vm.mockCallRevert(
@@ -85,7 +83,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
 
     function testDeploymentRevertsIfApprovalReturnsFalse() public {
         IERC20 regular = approvedToken("regular");
-        IERC20 falseOnApproval = IERC20(Utils.addressFromString("this token returns false on approval"));
+        IERC20 falseOnApproval = IERC20(makeAddr("this token returns false on approval"));
         mockSafeApprove(falseOnApproval, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockZeroAllowance(falseOnApproval, expectedDeploymentAddress(), defaultDeployer());
         vm.mockCall(
@@ -101,7 +99,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
 
     function testDeploymentSucceedsIfApproveReturnsNoData() public {
         IERC20 regular = approvedToken("regular");
-        IERC20 noDataApproval = IERC20(Utils.addressFromString("this token returns no data on approval"));
+        IERC20 noDataApproval = IERC20(makeAddr("this token returns no data on approval"));
         mockSafeApprove(noDataApproval, expectedDeploymentAddress(), solutionSettler.vaultRelayer());
         mockZeroAllowance(noDataApproval, expectedDeploymentAddress(), defaultDeployer());
         vm.mockCall(
@@ -114,11 +112,11 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         new ConstantProduct(solutionSettler, noDataApproval, regular);
     }
 
-    function defaultDeployer() private pure returns (address) {
-        return Utils.addressFromString("DeploymentParamsTest: deployer");
+    function defaultDeployer() private returns (address) {
+        return makeAddr("DeploymentParamsTest: deployer");
     }
 
-    function expectedDeploymentAddress() private pure returns (address) {
+    function expectedDeploymentAddress() private returns (address) {
         return vm.computeCreateAddress(defaultDeployer(), 0);
     }
 }
