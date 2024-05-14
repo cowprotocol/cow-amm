@@ -186,7 +186,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
     function testPriceFromActualComplexPoolValues() public {
         // Test with Balancer 50KNC-25WETH-25USDC 0x6f0ed6f346007563d3266de350d174a831bde0ca0001000000000000000005db
         // Values from Etherscan
-        IERC20 KNC = IERC20(makeAddr("COW"));
+        IERC20 KNC = IERC20(makeAddr("KNC"));
         IERC20[] memory tokens = new IERC20[](3);
         uint256[] memory balances = new uint256[](3);
         uint256[] memory weights = new uint256[](3);
