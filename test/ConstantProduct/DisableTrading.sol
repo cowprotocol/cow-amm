@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Utils} from "test/libraries/Utils.sol";
-
 import {ConstantProductTestHarness, ConstantProduct} from "./ConstantProductTestHarness.sol";
 
 abstract contract DisableTrading is ConstantProductTestHarness {
@@ -13,7 +11,7 @@ abstract contract DisableTrading is ConstantProductTestHarness {
 
     function testDisableTradingRevertsIfCalledByNonManager() public {
         setUpDisableTrading();
-        vm.prank(Utils.addressFromString("this is not the owner"));
+        vm.prank(makeAddr("this is not the owner"));
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OnlyManagerCanCall.selector));
         constantProduct.disableTrading();
     }

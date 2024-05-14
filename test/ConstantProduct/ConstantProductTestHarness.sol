@@ -7,8 +7,6 @@ import {ConstantProduct, GPv2Order, IERC20} from "src/ConstantProduct.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {ISettlement} from "src/interfaces/ISettlement.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
-
 abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
     using GPv2Order for GPv2Order.Data;
 
@@ -19,12 +17,12 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         bytes signature;
     }
 
-    address internal vaultRelayer = Utils.addressFromString("vault relayer");
-    address private USDC = Utils.addressFromString("USDC");
-    address private WETH = Utils.addressFromString("WETH");
-    address private DEFAULT_PAIR = Utils.addressFromString("default USDC/WETH pair");
-    address private DEFAULT_RECEIVER = Utils.addressFromString("default receiver");
-    address private DEFAULT_SOLUTION_SETTLER = Utils.addressFromString("settlement contract");
+    address internal vaultRelayer = makeAddr("vault relayer");
+    address private USDC = makeAddr("USDC");
+    address private WETH = makeAddr("WETH");
+    address private DEFAULT_PAIR = makeAddr("default USDC/WETH pair");
+    address private DEFAULT_RECEIVER = makeAddr("default receiver");
+    address private DEFAULT_SOLUTION_SETTLER = makeAddr("settlement contract");
     bytes32 private DEFAULT_APPDATA = keccak256(bytes("unit test"));
     bytes32 private DEFAULT_COMMITMENT = keccak256(bytes("order hash"));
     bytes32 private DEFAULT_DOMAIN_SEPARATOR = keccak256(bytes("domain separator hash"));

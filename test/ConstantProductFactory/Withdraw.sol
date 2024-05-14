@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {ConstantProductFactory, IERC20} from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {
     EditableOwnerConstantProductFactory,
     ConstantProductFactoryTestHarness
@@ -12,12 +11,12 @@ import {
 abstract contract Withdraw is ConstantProductFactoryTestHarness {
     uint256 private amount0 = 1234;
     uint256 private amount1 = 5678;
-    address private owner = Utils.addressFromString("Deposit: an arbitrary owner");
+    address private owner = makeAddr("Deposit: an arbitrary owner");
 
     function testWithdrawingIsPermissioned() public {
         EditableOwnerConstantProductFactory factory = new EditableOwnerConstantProductFactory(solutionSettler);
         factory.setOwner(constantProduct, owner);
-        address notOwner = Utils.addressFromString("Deposit: some address that isn't an owner");
+        address notOwner = makeAddr("Deposit: some address that isn't an owner");
 
         vm.prank(notOwner);
         vm.expectRevert(abi.encodeWithSelector(ConstantProductFactory.OnlyOwnerCanCall.selector, owner));

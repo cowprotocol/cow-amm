@@ -3,8 +3,6 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
-
 abstract contract CowProtocolSetUp is Test {
     function setUpSettlementContract() internal {
         address settlementContract = 0x9008D19f58AAbD9eD0D60971565AA8510560ab41;
@@ -13,9 +11,7 @@ abstract contract CowProtocolSetUp is Test {
             settlementContract, abi.encodeWithSignature("domainSeparator()"), abi.encode(bytes32("domain separator"))
         );
         vm.mockCall(
-            settlementContract,
-            abi.encodeWithSignature("vaultRelayer()"),
-            abi.encode(Utils.addressFromString("vault relayer"))
+            settlementContract, abi.encodeWithSignature("vaultRelayer()"), abi.encode(makeAddr("vault relayer"))
         );
         // Reverts for everything else
         vm.mockCallRevert(settlementContract, hex"", abi.encode("Called unexpected function on settlement contract"));

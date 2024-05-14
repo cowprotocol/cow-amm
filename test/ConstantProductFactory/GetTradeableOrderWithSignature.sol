@@ -6,7 +6,6 @@ import {IConditionalOrder} from "lib/composable-cow/src/BaseConditionalOrder.sol
 
 import {ConstantProduct, GPv2Order} from "src/ConstantProductFactory.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract GetTradeableOrderWithSignature is ConstantProductFactoryTestHarness {
@@ -15,7 +14,7 @@ abstract contract GetTradeableOrderWithSignature is ConstantProductFactoryTestHa
     function testRevertsIfHandlerIsNotFactory() public {
         ConstantProduct.TradingParams memory tradingParams = getDefaultTradingParams();
         IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams(
-            IConditionalOrder(Utils.addressFromString("GetTradeableOrderWithSignature: not the factory")),
+            IConditionalOrder(makeAddr("GetTradeableOrderWithSignature: not the factory")),
             keccak256("some salt"),
             abi.encode(tradingParams)
         );

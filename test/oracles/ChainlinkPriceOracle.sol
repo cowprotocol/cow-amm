@@ -10,15 +10,13 @@ import {
     IConditionalOrder
 } from "src/oracles/ChainlinkPriceOracle.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
-
 contract ChainlinkPriceOracleTest is Test {
-    address private USDC = Utils.addressFromString("USDC");
-    address private WETH = Utils.addressFromString("WETH");
-    address private AMPL = Utils.addressFromString("AMPL");
-    address private USDCOracle = Utils.addressFromString("USDC Oracle");
-    address private WETHOracle = Utils.addressFromString("WETH Oracle");
-    address private AMPLOracle = Utils.addressFromString("AMPL Oracle");
+    address private USDC = makeAddr("USDC");
+    address private WETH = makeAddr("WETH");
+    address private AMPL = makeAddr("AMPL");
+    address private USDCOracle = makeAddr("USDC Oracle");
+    address private WETHOracle = makeAddr("WETH Oracle");
+    address private AMPLOracle = makeAddr("AMPL Oracle");
 
     ChainlinkPriceOracle internal oracle;
 
@@ -88,8 +86,8 @@ contract ChainlinkPriceOracleTest is Test {
     }
 
     function testRevertsUnsupportedDecimals() public {
-        address badToken = Utils.addressFromString("bad token");
-        address badOracle = Utils.addressFromString("bad oracle");
+        address badToken = makeAddr("bad token");
+        address badOracle = makeAddr("bad oracle");
         vm.mockCall(badOracle, abi.encodeCall(AggregatorV3Interface.decimals, ()), abi.encode(uint8(19)));
         vm.mockCall(
             badOracle,

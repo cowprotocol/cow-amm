@@ -92,6 +92,20 @@ backoff=172800
 cast abi-encode 'f((address, address, uint256, uint256))' "($token0Feed, $token1Feed, $timeThreshold, $backoff)"
 ```
 
+## Contract code verification on block explorer
+
+You can verify an AMM created from the factory with the following commands:
+```sh
+export ETH_RPC_URL='https://your.rpc.node.here'
+export ETHERSCAN_API_KEY='YOUR-BLOCK-EXPLORER-API-KEY'
+amm='0xaddress-to-verify'
+# end customizable part
+token0=$(cast call "$amm" 'token0()(address)')
+token1=$(cast call "$amm" 'token1()(address)')
+constructor_args=$(cast abi-encode 'constructor(address,address,address)' 0x9008d19f58aabd9ed0d60971565aa8510560ab41 "$token0" "$token1")
+forge verify-contract "$amm" 'src/ConstantProduct.sol:ConstantProduct' --watch --constructor-args "$constructor_args"
+```
+
 ## I'm a solver. How do I use CoW AMM liquidity?
 
 CoW AMM orders already appear in the CoW Protocol orderbook, so you're already using its liquidity.

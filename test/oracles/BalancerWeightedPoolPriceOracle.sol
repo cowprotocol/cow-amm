@@ -11,16 +11,14 @@ import {
     IConditionalOrder
 } from "src/oracles/BalancerWeightedPoolPriceOracle.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
-
 contract BalancerWeightedPoolPriceOracleTest is Test {
-    IERC20 private USDC = IERC20(Utils.addressFromString("USDC"));
-    IERC20 private WETH = IERC20(Utils.addressFromString("WETH"));
+    IERC20 private USDC = IERC20(makeAddr("USDC"));
+    IERC20 private WETH = IERC20(makeAddr("WETH"));
     // Technically, the first 20 bytes should be the pool address.
     // However, this property is not relied on by the Balancer price oracle.
     bytes32 private DEFAULT_POOL_ID = keccak256("Default Balancer pool id");
-    IWeightedPool internal pool = IWeightedPool(Utils.addressFromString("Balancer pool"));
-    IVault internal balancerVault = IVault(Utils.addressFromString("Balancer vault"));
+    IWeightedPool internal pool = IWeightedPool(makeAddr("Balancer pool"));
+    IVault internal balancerVault = IVault(makeAddr("Balancer vault"));
     BalancerWeightedPoolPriceOracle internal oracle;
 
     function setUp() public {
@@ -127,13 +125,13 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
         IERC20[] memory tokens = new IERC20[](4);
         uint256[] memory balances = new uint256[](4);
         uint256[] memory weights = new uint256[](4);
-        tokens[0] = IERC20(Utils.addressFromString("some other token"));
+        tokens[0] = IERC20(makeAddr("some other token"));
         balances[0] = 1337;
         weights[0] = 0.25 ether;
         tokens[1] = USDC;
         balances[1] = 200_000 ether;
         weights[1] = 0.25 ether;
-        tokens[2] = IERC20(Utils.addressFromString("again some other token"));
+        tokens[2] = IERC20(makeAddr("again some other token"));
         balances[2] = 42;
         weights[2] = 0.25 ether;
         tokens[3] = WETH;
@@ -166,7 +164,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
     function testPriceFromActualCowWethPoolValues() public {
         // Test with COW/WETH pool 0xde8c195aa41c11a0c4787372defbbddaa31306d2000200000000000000000181
         // Values from Etherscan
-        IERC20 COW = IERC20(Utils.addressFromString("COW"));
+        IERC20 COW = IERC20(makeAddr("COW"));
         IERC20[] memory tokens = new IERC20[](2);
         uint256[] memory balances = new uint256[](2);
         uint256[] memory weights = new uint256[](2);
@@ -188,7 +186,7 @@ contract BalancerWeightedPoolPriceOracleTest is Test {
     function testPriceFromActualComplexPoolValues() public {
         // Test with Balancer 50KNC-25WETH-25USDC 0x6f0ed6f346007563d3266de350d174a831bde0ca0001000000000000000005db
         // Values from Etherscan
-        IERC20 KNC = IERC20(Utils.addressFromString("COW"));
+        IERC20 KNC = IERC20(makeAddr("KNC"));
         IERC20[] memory tokens = new IERC20[](3);
         uint256[] memory balances = new uint256[](3);
         uint256[] memory weights = new uint256[](3);

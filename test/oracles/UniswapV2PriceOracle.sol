@@ -5,12 +5,10 @@ import {Test} from "forge-std/Test.sol";
 
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 
-import {Utils} from "test/libraries/Utils.sol";
-
 contract UniswapV2PriceOracleTest is Test {
-    address private USDC = Utils.addressFromString("USDC");
-    address private WETH = Utils.addressFromString("WETH");
-    address private DEFAULT_PAIR = Utils.addressFromString("default USDC/WETH pair");
+    address private USDC = makeAddr("USDC");
+    address private WETH = makeAddr("WETH");
+    address private DEFAULT_PAIR = makeAddr("default USDC/WETH pair");
     uint128 private constant reserve0 = 1337;
     uint128 private constant reserve1 = 31337;
 
@@ -52,16 +50,16 @@ contract UniswapV2PriceOracleTest is Test {
 
     function testRevertsIfPairUsesIncorrectToken0() public {
         vm.expectRevert("oracle: invalid token0");
-        oracle.getPrice(Utils.addressFromString("bad token 0"), WETH, abi.encode(getDefaultOracleData()));
+        oracle.getPrice(makeAddr("bad token 0"), WETH, abi.encode(getDefaultOracleData()));
     }
 
     function testRevertsIfPairUsesIncorrectToken1() public {
         vm.expectRevert("oracle: invalid token1");
-        oracle.getPrice(USDC, Utils.addressFromString("bad token 1"), abi.encode(getDefaultOracleData()));
+        oracle.getPrice(USDC, makeAddr("bad token 1"), abi.encode(getDefaultOracleData()));
     }
 
     function testRevertsIfPairUsesIncorrectTokenWhenInverted() public {
         vm.expectRevert("oracle: invalid token0");
-        oracle.getPrice(Utils.addressFromString("bad token 1"), USDC, abi.encode(getDefaultOracleData()));
+        oracle.getPrice(makeAddr("bad token 1"), USDC, abi.encode(getDefaultOracleData()));
     }
 }

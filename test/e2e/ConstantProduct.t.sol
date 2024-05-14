@@ -7,7 +7,6 @@ import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProdu
 import {ConstantProductFactory, IConditionalOrder} from "src/ConstantProductFactory.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {ISettlement} from "src/interfaces/ISettlement.sol";
-import {Utils} from "test/libraries/Utils.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";
 
 contract E2EConditionalOrderTest is BaseComposableCoWTest {
@@ -27,9 +26,8 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         WETH = token1;
         ammFactory = new ConstantProductFactory(ISettlement(address(settlement)));
         uniswapV2PriceOracle = new UniswapV2PriceOracle();
-        IUniswapV2Factory uniswapV2Factory = UniswapV2Helper.deployUniswapV2FactoryAt(
-            vm, Utils.addressFromString("E2EConditionalOrderTest UniswapV2 factory")
-        );
+        IUniswapV2Factory uniswapV2Factory =
+            UniswapV2Helper.deployUniswapV2FactoryAt(vm, makeAddr("E2EConditionalOrderTest UniswapV2 factory"));
         pair = createPair(uniswapV2Factory, DAI, 300_000 ether, WETH, 100 ether);
     }
 
@@ -43,9 +41,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         uniswapVPair = IUniswapV2Pair(factory.createPair(address(token0), address(token1)));
         deal(address(token0), address(uniswapVPair), amountToken0);
         deal(address(token1), address(uniswapVPair), amountToken1);
-        uniswapVPair.mint(
-            Utils.addressFromString("E2EConditionalOrderTest sink address from UniswapV2 liquidity tokens")
-        );
+        uniswapVPair.mint(makeAddr("E2EConditionalOrderTest sink address from UniswapV2 liquidity tokens"));
     }
 
     function testE2ESettle() public {

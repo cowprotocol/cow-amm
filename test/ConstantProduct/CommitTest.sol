@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Utils} from "test/libraries/Utils.sol";
 import {ConstantProductTestHarness, ConstantProduct} from "./ConstantProductTestHarness.sol";
 
 abstract contract CommitTest is ConstantProductTestHarness {
@@ -11,7 +10,7 @@ abstract contract CommitTest is ConstantProductTestHarness {
     }
 
     function testCommitIsPermissioned() public {
-        vm.prank(Utils.addressFromString("some random address"));
+        vm.prank(makeAddr("some random address"));
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.CommitOutsideOfSettlement.selector));
         constantProduct.commit(0x4242424242424242424242424242424242424242424242424242424242424242);
     }
