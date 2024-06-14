@@ -8,7 +8,6 @@ optimizer = true
 optimizer_runs = 100_000
 
 remappings = [
-  "lib/composable-cow:cowprotocol/=lib/composable-cow/lib/cowprotocol/src/contracts/",
   "lib/composable-cow:safe/=lib/composable-cow/lib/safe/contracts/",
   "lib/composable-cow:@openzeppelin/=lib/openzeppelin/contracts/",
   "lib/composable-cow:@openzeppelin/contracts/=lib/openzeppelin/contracts/",
