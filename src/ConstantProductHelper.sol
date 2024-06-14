@@ -38,7 +38,7 @@ contract ConstantProductHelper is IPriceOracle {
      * @returns The GPv2Order.Data struct for the CoW Protocol JIT order and
      * it's associated ERC-1271 signature.
      */
-    function order(ConstantProduct pool, uint256 numerator, uint256 denominator, bytes calldata data)
+    function getOrder(ConstantProduct pool, uint256 numerator, uint256 denominator, bytes calldata data)
         external
         view
         returns (GPv2Order.Data memory, bytes memory)
@@ -57,8 +57,8 @@ contract ConstantProductHelper is IPriceOracle {
             appData: params.appData
         });
 
-        GPv2Order.Data memory returnedOrder = pool.getTradeableOrder(spoofParams);
-        return (pool.getTradeableOrder(spoof), abi.encode(returnedOrder, params));
+        GPv2Order.Data memory order = pool.getOrder(spoof);
+        return (order, abi.encode(order, params));
     }
 
     function getPrice(address, address, bytes calldata)
