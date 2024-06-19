@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {ComposableCoW, IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
 import {SafeERC20} from "lib/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {ICOWAMMPoolFactory} from "./interfaces/ICOWAMMPoolFactory.sol";
 import {ConstantProduct, IERC20, ISettlement, GPv2Order, IPriceOracle} from "./ConstantProduct.sol";
 
 /**
@@ -14,7 +15,7 @@ import {ConstantProduct, IERC20, ISettlement, GPv2Order, IPriceOracle} from "./C
  * The factory deploys new AMM and is responsible for managing deposits,
  * enabling/disabling trading and updating trade parameters.
  */
-contract ConstantProductFactory {
+contract ConstantProductFactory is ICOWAMMPoolFactory {
     using SafeERC20 for IERC20;
 
     /**
@@ -80,6 +81,7 @@ contract ConstantProductFactory {
         address ammOwner = msg.sender;
         amm = new ConstantProduct{salt: salt(ammOwner)}(settler, token0, token1);
         emit Deployed(amm, ammOwner, token0, token1);
+        emit COWAMMPoolCreated(address(amm));
         owner[amm] = ammOwner;
 
         deposit(amm, amount0, amount1);
