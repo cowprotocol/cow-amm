@@ -21,7 +21,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     }
 
     function testAmmIsNotTradingAfterDeployment() public {
-        assertEq(constantProduct.tradingParamsHash(), constantProduct.NO_TRADING());
+        assertEq(constantProduct.tradingEnabled(), false);
     }
 
     function approvedToken(string memory name) private returns (IERC20 token) {

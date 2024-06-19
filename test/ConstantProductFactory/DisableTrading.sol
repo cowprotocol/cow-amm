@@ -16,11 +16,11 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
         constantProductFactory.disableTrading(amm);
     }
 
-    function testResetsTradingParamsHash() public {
+    function testResetsTradingState() public {
         ConstantProduct amm = setupAndCreateAMM();
 
         constantProductFactory.disableTrading(amm);
-        assertEq(amm.tradingParamsHash(), amm.NO_TRADING());
+        assertEq(amm.tradingEnabled(), false);
     }
 
     function testDisableTradingEmitsExpectedEvents() public {
@@ -42,8 +42,6 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
         mocksForTokenCreation(
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1)
         );
-        return constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        return constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 }

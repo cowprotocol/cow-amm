@@ -6,16 +6,9 @@ import {IERC1271} from "lib/openzeppelin/contracts/interfaces/IERC1271.sol";
 import {ConstantProductTestHarness, ConstantProduct} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateOrderHash is ConstantProductTestHarness {
-    function testRevertsIfStaticInputHashDoesNotMatchTradingParamsHash() public {
-        SignatureData memory data = defaultSignatureAndHashes();
-
-        vm.expectRevert(abi.encodeWithSelector(ConstantProduct.TradingParamsDoNotMatchHash.selector));
-        constantProduct.isValidSignature(data.orderHash, data.signature);
-    }
-
     function testRevertsIfOrderInSignatureDoesNotMatchOrderHash() public {
         SignatureData memory data = defaultSignatureAndHashes();
-        constantProduct.enableTrading(data.tradingParams);
+        constantProduct.enableTrading();
 
         bytes32 badOrderHash = keccak256("Some invalid order hash");
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OrderDoesNotMatchMessageHash.selector));
@@ -24,7 +17,7 @@ abstract contract ValidateOrderHash is ConstantProductTestHarness {
 
     function testRevertsIfVerificationFails() public {
         SignatureData memory data = defaultSignatureAndHashes();
-        constantProduct.enableTrading(data.tradingParams);
+        constantProduct.enableTrading();
 
         // There are many ways to trigger failure in _verify. The most robust is
         // likely to just set a commit that is different from the signed order.
@@ -37,7 +30,7 @@ abstract contract ValidateOrderHash is ConstantProductTestHarness {
 
     function testReturnsMagicValueIfTradeable() public {
         SignatureData memory data = defaultSignatureAndHashes();
-        constantProduct.enableTrading(data.tradingParams);
+        constantProduct.enableTrading();
 
         // Setup to make the order pass verification
         setUpDefaultPair();
@@ -47,7 +40,7 @@ abstract contract ValidateOrderHash is ConstantProductTestHarness {
 
         // Make sure that the order would pass verification. If this reverts,
         // then this test's setup should be updated.
-        constantProduct.verify(data.tradingParams, data.order);
+        constantProduct.verify(data.order);
 
         bytes4 result = constantProduct.isValidSignature(data.orderHash, data.signature);
         assertEq(result, IERC1271.isValidSignature.selector);

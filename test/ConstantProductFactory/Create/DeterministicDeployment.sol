@@ -19,9 +19,7 @@ abstract contract DeterministicDeployment is ConstantProductFactoryTestHarness {
         require(constantProductAddress.code.length == 0, "no AMM should be deployed at the start");
         mocksForTokenCreation(constantProductAddress);
 
-        ConstantProduct deployed = constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        ConstantProduct deployed = constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
         assertEq(address(deployed), constantProductAddress);
         assertTrue(constantProductAddress.code.length > 0);
     }
@@ -31,13 +29,9 @@ abstract contract DeterministicDeployment is ConstantProductFactoryTestHarness {
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1);
         mocksForTokenCreation(constantProductAddress);
 
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
         vm.expectRevert(bytes(""));
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 
     function testSameOwnerCanDeployAMMWithDifferentTokens() public {
@@ -52,12 +46,8 @@ abstract contract DeterministicDeployment is ConstantProductFactoryTestHarness {
         setUpTokenForDeployment(extraToken0, ammAddress2, address(constantProductFactory));
         setUpTokenForDeployment(extraToken1, ammAddress2, address(constantProductFactory));
 
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
-        constantProductFactory.create(
-            extraToken0, amount0, extraToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
+        constantProductFactory.create(extraToken0, amount0, extraToken1, amount1);
     }
 
     function testDifferentOwnersCanDeployAMMWithSameParameters() public {
@@ -69,12 +59,8 @@ abstract contract DeterministicDeployment is ConstantProductFactoryTestHarness {
         mocksForTokenCreation(ammOwner2);
 
         vm.prank(owner1);
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
         vm.prank(owner2);
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 }

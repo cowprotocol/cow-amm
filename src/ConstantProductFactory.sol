@@ -71,23 +71,12 @@ contract ConstantProductFactory {
      * @param amount0 The initial amount of the first token in the pair.
      * @param token1 The address of the second token in the pair.
      * @param amount1 The initial amount of the second token in the pair.
-     * @param minTradedToken0 The minimum amount of token0 before the AMM
-     * attempts auto-rebalance.
-     * @param priceOracle The address of the price oracle to use for the AMM.
-     * @param priceOracleData The data to pass to the price oracle.
-     * @param appData The app data to pass to the AMM.
      * @return amm The address of the newly deployed AMM.
      */
-    function create(
-        IERC20 token0,
-        uint256 amount0,
-        IERC20 token1,
-        uint256 amount1,
-        uint256 minTradedToken0,
-        IPriceOracle priceOracle,
-        bytes calldata priceOracleData,
-        bytes32 appData
-    ) external returns (ConstantProduct amm) {
+    function create(IERC20 token0, uint256 amount0, IERC20 token1, uint256 amount1)
+        external
+        returns (ConstantProduct amm)
+    {
         address ammOwner = msg.sender;
         amm = new ConstantProduct{salt: salt(ammOwner)}(settler, token0, token1);
         emit Deployed(amm, ammOwner, token0, token1);
@@ -95,41 +84,7 @@ contract ConstantProductFactory {
 
         deposit(amm, amount0, amount1);
 
-        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: priceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
-        _enableTrading(amm, data);
-    }
-
-    /**
-     * @notice Change the parameters used for trading on the specified AMM. Only
-     * a single order per AMM can be valid at a time, meaning that any previous
-     * order stops being tradeable.
-     * @param amm The address of the AMM whose parameters to change.
-     * @param minTradedToken0 The minimum amount of token0 before the AMM
-     * attempts auto-rebalance.
-     * @param priceOracle The address of the price oracle to use for the AMM.
-     * @param priceOracleData The data to pass to the price oracle.
-     * @param appData The app data to pass to the AMM.
-     */
-    function updateParameters(
-        ConstantProduct amm,
-        uint256 minTradedToken0,
-        IPriceOracle priceOracle,
-        bytes calldata priceOracleData,
-        bytes32 appData
-    ) external onlyOwner(amm) {
-        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: priceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
-        _disableTrading(amm);
-        _enableTrading(amm, data);
+        _enableTrading(amm);
     }
 
     /**
@@ -149,54 +104,6 @@ contract ConstantProductFactory {
     function withdraw(ConstantProduct amm, uint256 amount0, uint256 amount1) external onlyOwner(amm) {
         amm.token0().safeTransferFrom(address(amm), msg.sender, amount0);
         amm.token1().safeTransferFrom(address(amm), msg.sender, amount1);
-    }
-
-    /**
-     * @notice This function exists to let the watchtower off-chain service
-     * automatically create AMM orders and post them on the orderbook. It
-     * outputs an order for the input AMM together with a valid signature.
-     * @dev Some parameters are unused as they refer to features of
-     * ComposableCoW that aren't implemented in this contract. They are still
-     * needed to let the watchtower interact with this contract in the same way
-     * as ComposableCoW.
-     * @param amm owner of the order.
-     * @param params `ConditionalOrderParams` for the order; precisely, the
-     * handler must be this contract, the salt can be any value, and the static
-     * input must be the current trading parameters of the AMM.
-     * @return order discrete order for submitting to CoW Protocol API
-     * @return signature for submitting to CoW Protocol API
-     */
-    function getTradeableOrderWithSignature(
-        ConstantProduct amm,
-        IConditionalOrder.ConditionalOrderParams calldata params,
-        bytes calldata, // offchainInput
-        bytes32[] calldata // proof
-    ) external view returns (GPv2Order.Data memory order, bytes memory signature) {
-        // This contract mimics the interface of ConditionalCoW to talk to the
-        // watchtower. In principle we'd still get a valid order if the handler
-        // is set to any address. However, we create conditional orders on this
-        // contract with this contract as the handler, so to make sure that the
-        // user isn't trying to forward this order to the incorrect contract,
-        // we revert with this error message.
-        if (address(params.handler) != address(this)) {
-            revert IConditionalOrder.OrderNotValid("can only handle own orders");
-        }
-
-        ConstantProduct.TradingParams memory tradingParams =
-            abi.decode(params.staticInput, (ConstantProduct.TradingParams));
-
-        // Check that `getTradeableOrderWithSignature` is being called with
-        // parameters that are currently enabled for trading on the AMM.
-        // If the parameters are different, this order can be deleted on the
-        // watchtower.
-        if (amm.hash(tradingParams) != amm.tradingParamsHash()) {
-            revert IConditionalOrder.OrderNotValid("invalid trading parameters");
-        }
-
-        // Note: the salt in params is ignored.
-
-        order = amm.getTradeableOrder(tradingParams);
-        signature = abi.encode(order, tradingParams);
     }
 
     /**
@@ -245,11 +152,10 @@ contract ConstantProductFactory {
      * @notice Enable trading for an existing AMM that is managed by this
      * contract.
      * @param amm The AMM for which to enable trading.
-     * @param tradingParams The parameters used by the CoW AMM to create the
      * order.
      */
-    function _enableTrading(ConstantProduct amm, ConstantProduct.TradingParams memory tradingParams) internal {
-        amm.enableTrading(tradingParams);
+    function _enableTrading(ConstantProduct amm) internal {
+        amm.enableTrading();
         // The salt is unused by this contract. External tools (for example the
         // watch tower) may expect that the salt doesn't repeat. However, there
         // can be at most one valid order per AMM at a time, and any conflicting
@@ -260,9 +166,7 @@ contract ConstantProductFactory {
         // orders on the CoW Protocol orderbook.
         emit ComposableCoW.ConditionalOrderCreated(
             address(amm),
-            IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(this)), conditionalOrderSalt, abi.encode(tradingParams)
-            )
+            IConditionalOrder.ConditionalOrderParams(IConditionalOrder(address(this)), conditionalOrderSalt, hex"")
         );
     }
 

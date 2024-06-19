@@ -22,22 +22,6 @@ abstract contract ConstantProductFactoryTestHarness is ConstantProductTestHarnes
         constantProductFactory = new ConstantProductFactory(solutionSettler);
     }
 
-    // This function calls `getTradeableOrderWithSignature` while filling all
-    // unused parameters with arbitrary data.
-    function getTradeableOrderWithSignatureWrapper(
-        ConstantProduct amm,
-        ConstantProduct.TradingParams memory tradingParams
-    ) internal view returns (GPv2Order.Data memory order, bytes memory signature) {
-        IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams(
-            IConditionalOrder(address(constantProductFactory)),
-            keccak256("ConstantProductFactoryTestHarness: some salt"),
-            abi.encode(tradingParams)
-        );
-        return constantProductFactory.getTradeableOrderWithSignature(
-            amm, params, bytes("ConstantProductFactoryTestHarness: offchainData"), new bytes32[](2)
-        );
-    }
-
     function mocksForTokenCreation(address constantProductAddress) internal {
         setUpTokenForDeployment(mockableToken0, constantProductAddress, address(constantProductFactory));
         setUpTokenForDeployment(mockableToken1, constantProductAddress, address(constantProductFactory));
