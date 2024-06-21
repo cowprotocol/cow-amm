@@ -67,6 +67,7 @@ async fn main() -> eyre::Result<()> {
             .event(ComposableCoW::ConditionalOrderCreated::SIGNATURE)
             .from_block(start_block)
             .to_block(to_block);
+        println!("Processing blocks: {} - {}", start_block, to_block);
 
         // Get all logs from the latest block that match the filter.
         let logs = provider.get_logs(&filter).await?;
