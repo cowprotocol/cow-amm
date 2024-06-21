@@ -1,0 +1,11 @@
+[package]
+name = "cow-amm-indexer"
+version = "0.1.0"
+edition = "2021"
+description = "Indexer for legacy^2 amms"
+
+[dependencies]
+alloy.workspace = true
+eyre.workspace = true
+futures.workspace = true
+tokio.workspace = true
