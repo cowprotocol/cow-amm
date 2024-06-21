@@ -1,14 +1,18 @@
 {
-	"name": "Foundry",
-	"image": "mcr.microsoft.com/devcontainers/base:0",
-	"features": {
-		"ghcr.io/nlordell/features/foundry": {},
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"JuanBlanco.solidity"
-			]
-		}
-	}
+    "name": "Foundry + Rust Development Container",
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "features": {
+        "ghcr.io/devcontainers/features/rust:1": {
+            "version": "nightly-2024-06-07"
+        },
+	    "ghcr.io/nlordell/features/foundry": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "rust-lang.rust-analyzer"
+            ]
+        }
+    }
 }
+
