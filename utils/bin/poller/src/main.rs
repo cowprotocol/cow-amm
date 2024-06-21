@@ -52,7 +52,7 @@ async fn main() -> eyre::Result<()> {
     // First configure the helper and the overrides
     const HELPER: &str = "0xBEEF5AFeBEef5aFeBEeF5AfEBEef5AfEBEef5AFE";
     let helper = ConstantProductHelper::new(HELPER.parse()?, provider.clone());
-    let mut overrides: HashMap<Address, AccountOverride> = HashMap::new();
+    let mut overrides = HashMap::new();
     overrides.insert(
         HELPER.parse()?,
         AccountOverride {
