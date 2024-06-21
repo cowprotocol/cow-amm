@@ -11,7 +11,7 @@ remappings = [
   "lib/composable-cow:safe/=lib/composable-cow/lib/safe/contracts/",
   "lib/composable-cow:@openzeppelin/=lib/openzeppelin/contracts/",
   "lib/composable-cow:@openzeppelin/contracts/=lib/openzeppelin/contracts/",
-  "cowprotocol/=lib/composable-cow/lib/cowprotocol/src/"
+  "lib/composable-cow:cowprotocol/=lib/composable-cow/lib/cowprotocol/src/"
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
