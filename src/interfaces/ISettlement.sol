@@ -15,7 +15,7 @@ interface ISettlement {
      * protection mixed in so that signed orders are only valid for specific
      * GPv2 contracts.
      */
-    function domainSeparator() external returns (bytes32);
+    function domainSeparator() external view returns (bytes32);
 
     /**
      * @dev The address of the vault relayer: the contract that handles
@@ -23,5 +23,5 @@ interface ISettlement {
      * wants to sell a token on CoW Swap must approve this contract to spend the
      * token.
      */
-    function vaultRelayer() external returns (address);
+    function vaultRelayer() external view returns (address);
 }
