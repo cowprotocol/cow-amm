@@ -97,7 +97,7 @@ async fn main() -> eyre::Result<()> {
         .call_raw()
         .await
         .map_or_else(
-            |e| Err(e),
+            Err,
             |d| {
                 let dReturn {
                     order,
