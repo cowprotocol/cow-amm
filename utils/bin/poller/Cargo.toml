@@ -1,8 +1,8 @@
 [package]
-name = "cow-amm-indexer"
+name = "cow-amm-poller"
 version = "0.1.0"
 edition = "2021"
-description = "Indexer for legacy^2 amms"
+description = "Using the ConstantProductHelper to poll amms"
 
 [dependencies]
 cow-amm-common.workspace = true
@@ -10,4 +10,3 @@ alloy.workspace = true
 eyre.workspace = true
 futures.workspace = true
 tokio.workspace = true
-futures-util.workspace = true
