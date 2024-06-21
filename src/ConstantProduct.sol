@@ -10,7 +10,6 @@ import {IConditionalOrder, GPv2Order} from "lib/composable-cow/src/BaseCondition
 
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 import {ISettlement} from "./interfaces/ISettlement.sol";
-import {IWatchtowerCustomErrors} from "./interfaces/IWatchtowerCustomErrors.sol";
 
 /**
  * @title CoW AMM

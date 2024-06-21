@@ -75,12 +75,7 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
             ConstantProduct(expectedAMM), address(this), mockableToken0, mockableToken1
         );
         vm.expectEmit();
-        emit ComposableCoW.ConditionalOrderCreated(
-            expectedAMM,
-            IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(constantProductFactory)), bytes32(0), hex""
-            )
-        );
+        emit ConstantProductFactory.TradingEnabled(amm);
         constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 }

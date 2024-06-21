@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ComposableCoW, IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
 import {SafeERC20} from "lib/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ICOWAMMPoolFactory} from "./interfaces/ICOWAMMPoolFactory.sol";
@@ -38,6 +37,11 @@ contract ConstantProductFactory is ICOWAMMPoolFactory {
      * @param token1 The second token traded by the AMM.
      */
     event Deployed(ConstantProduct indexed amm, address indexed owner, IERC20 token0, IERC20 token1);
+    /**
+     * @notice A CoW AMM started trading.
+     * @param amm The address of the AMM that starts trading on CoW Protocol.
+     */
+    event TradingEnabled(ConstantProduct indexed amm);
     /**
      * @notice A CoW AMM stopped trading; no CoW Protocol orders can be settled
      * until trading is enabled again.
@@ -154,22 +158,10 @@ contract ConstantProductFactory is ICOWAMMPoolFactory {
      * @notice Enable trading for an existing AMM that is managed by this
      * contract.
      * @param amm The AMM for which to enable trading.
-     * order.
      */
     function _enableTrading(ConstantProduct amm) internal {
         amm.enableTrading();
-        // The salt is unused by this contract. External tools (for example the
-        // watch tower) may expect that the salt doesn't repeat. However, there
-        // can be at most one valid order per AMM at a time, and any conflicting
-        // order would have been invalidated before a conflict can occur.
-        bytes32 conditionalOrderSalt = bytes32(0);
-        // The following event will be pickd up by the watchtower offchain
-        // service, which is responsible for automatically posting CoW AMM
-        // orders on the CoW Protocol orderbook.
-        emit ComposableCoW.ConditionalOrderCreated(
-            address(amm),
-            IConditionalOrder.ConditionalOrderParams(IConditionalOrder(address(this)), conditionalOrderSalt, hex"")
-        );
+        emit TradingEnabled(amm);
     }
 
     /**
