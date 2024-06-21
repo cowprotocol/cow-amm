@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {ComposableCoW, IConditionalOrder} from "lib/composable-cow/src/ComposableCoW.sol";
 import {SafeERC20} from "lib/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ConstantProduct, IERC20, ISettlement, GPv2Order, IPriceOracle} from "./ConstantProduct.sol";
+import {ConstantProduct, IERC20, OZIERC20, ISettlement, GPv2Order, IPriceOracle} from "./ConstantProduct.sol";
 
 /**
  * @title CoW AMM Factory
@@ -15,7 +15,7 @@ import {ConstantProduct, IERC20, ISettlement, GPv2Order, IPriceOracle} from "./C
  * enabling/disabling trading and updating trade parameters.
  */
 contract ConstantProductFactory {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for OZIERC20;
 
     /**
      * @notice The settlement contract for CoW Protocol on this network.
@@ -147,8 +147,8 @@ contract ConstantProductFactory {
      * @param amount1 amount of AMM's token1 to withdraw
      */
     function withdraw(ConstantProduct amm, uint256 amount0, uint256 amount1) external onlyOwner(amm) {
-        amm.token0().safeTransferFrom(address(amm), msg.sender, amount0);
-        amm.token1().safeTransferFrom(address(amm), msg.sender, amount1);
+        OZIERC20(address(amm.token0())).safeTransferFrom(address(amm), msg.sender, amount0);
+        OZIERC20(address(amm.token1())).safeTransferFrom(address(amm), msg.sender, amount1);
     }
 
     /**
@@ -237,8 +237,8 @@ contract ConstantProductFactory {
      * @param amount1 amount of AMM's token1 to deposit
      */
     function deposit(ConstantProduct amm, uint256 amount0, uint256 amount1) public {
-        amm.token0().safeTransferFrom(msg.sender, address(amm), amount0);
-        amm.token1().safeTransferFrom(msg.sender, address(amm), amount1);
+        OZIERC20(address(amm.token0())).safeTransferFrom(msg.sender, address(amm), amount0);
+        OZIERC20(address(amm.token1())).safeTransferFrom(msg.sender, address(amm), amount1);
     }
 
     /**
