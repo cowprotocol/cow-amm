@@ -272,31 +272,4 @@ contract ConstantProduct is IERC1271 {
     function approveUnlimited(IERC20 token, address spender) internal {
         token.safeApprove(spender, type(uint256).max);
     }
-
-    /**
-     * @dev Computes the difference between the two input values. If it detects
-     * an underflow, the function reverts with a custom error that informs the
-     * watchtower to poll next.
-     * If the function reverted with a standard underflow, the watchtower would
-     * stop polling the order.
-     * @param lhs The minuend of the subtraction
-     * @param rhs The subtrahend of the subtraction
-     * @return The difference of the two input values
-     */
-    function sub(uint256 lhs, uint256 rhs) internal view returns (uint256) {
-        if (lhs < rhs) {
-            revertPollAtNextBlock("subtraction underflow");
-        }
-        unchecked {
-            return lhs - rhs;
-        }
-    }
-
-    /**
-     * @dev Reverts call execution with a custom error that indicates to the
-     * watchtower to poll for new order when the next block is mined.
-     */
-    function revertPollAtNextBlock(string memory message) internal view {
-        revert IWatchtowerCustomErrors.PollTryAtBlock(block.number + 1, message);
-    }
 }
