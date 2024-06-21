@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
 import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProduct.sol";
-import {ConstantProductFactory, IConditionalOrder} from "src/ConstantProductFactory.sol";
+import {ConstantProductFactory} from "src/ConstantProductFactory.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";
@@ -44,77 +44,6 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         uniswapVPair.mint(makeAddr("E2EConditionalOrderTest sink address from UniswapV2 liquidity tokens"));
     }
 
-    function testE2ESettle() public {
-        uint256 startAmountDai = 2_000 ether;
-        uint256 startAmountWeth = 1 ether;
-        // Deal the AMM reserves to the owner.
-        deal(address(DAI), address(owner), startAmountDai);
-        deal(address(WETH), address(owner), startAmountWeth);
-
-        vm.startPrank(owner);
-        DAI.approve(address(ammFactory), type(uint256).max);
-        WETH.approve(address(ammFactory), type(uint256).max);
-
-        // Funds have been allocated.
-        assertEq(DAI.balanceOf(owner), startAmountDai);
-        assertEq(WETH.balanceOf(owner), startAmountWeth);
-
-        uint256 minTradedToken0 = 0;
-        bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
-        bytes32 appData = keccak256("order app data");
-        ConstantProduct amm = ammFactory.create(
-            DAI, startAmountDai, WETH, startAmountWeth, minTradedToken0, uniswapV2PriceOracle, priceOracleData, appData
-        );
-        vm.stopPrank();
-
-        // Funds have been transferred to the AMM.
-        assertEq(DAI.balanceOf(owner), 0);
-        assertEq(WETH.balanceOf(owner), 0);
-
-        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: uniswapV2PriceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
-        IConditionalOrder.ConditionalOrderParams memory params =
-            super.createOrder(IConditionalOrder(address(ammFactory)), keccak256("e2e:any salt"), abi.encode(data));
-        (GPv2Order.Data memory order, bytes memory sig) =
-            ammFactory.getTradeableOrderWithSignature(amm, params, hex"", new bytes32[](0));
-
-        // The trade will be settled against bob.
-        deal(address(DAI), bob.addr, startAmountDai);
-        deal(address(WETH), bob.addr, startAmountWeth);
-        vm.startPrank(bob.addr);
-        DAI.approve(address(relayer), type(uint256).max);
-        WETH.approve(address(relayer), type(uint256).max);
-        vm.stopPrank();
-
-        settle(address(amm), bob, order, sig, hex"");
-
-        uint256 endBalanceDai = DAI.balanceOf(address(amm));
-        uint256 endBalanceWeth = WETH.balanceOf(address(amm));
-        {
-            // Braces to avoid stack too deep.
-            uint256 expectedDifferenceDai = 416.666666666666664667 ether;
-            uint256 expectedDifferenceWeth = 0.166666666666666666 ether;
-            assertEq(startAmountDai + expectedDifferenceDai, endBalanceDai);
-            assertEq(startAmountWeth, endBalanceWeth + expectedDifferenceWeth);
-            // Explicit price to see that it's reasonable
-            assertEq(expectedDifferenceDai / expectedDifferenceWeth, 2_499);
-        }
-
-        vm.prank(owner);
-        ammFactory.disableTrading(amm);
-
-        vm.prank(owner);
-        ammFactory.withdraw(amm, endBalanceDai, endBalanceWeth);
-
-        // Funds have been transferred to the owner.
-        assertEq(DAI.balanceOf(owner), endBalanceDai);
-        assertEq(WETH.balanceOf(owner), endBalanceWeth);
-    }
-
     function testE2ECustomOrder() public {
         uint256 startAmountDai = 2_000 ether;
         uint256 startAmountWeth = 1 ether;
@@ -132,22 +61,14 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
 
         uint256 minTradedToken0 = 0;
         bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
-        bytes32 appData = keccak256("order app data");
-        ConstantProduct amm = ammFactory.create(
-            DAI, startAmountDai, WETH, startAmountWeth, minTradedToken0, uniswapV2PriceOracle, priceOracleData, appData
-        );
+        ConstantProduct amm = ammFactory.create(DAI, startAmountDai, WETH, startAmountWeth);
+        bytes32 appData = amm.APP_DATA();
         vm.stopPrank();
 
         // Funds have been transferred to the AMM.
         assertEq(DAI.balanceOf(owner), 0);
         assertEq(WETH.balanceOf(owner), 0);
 
-        ConstantProduct.TradingParams memory data = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: uniswapV2PriceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
         uint256 sellAmount = 100 ether;
         uint256 buyAmount = 1 ether;
 
@@ -176,7 +97,7 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
                 sellTokenBalance: GPv2Order.BALANCE_ERC20,
                 buyTokenBalance: GPv2Order.BALANCE_ERC20
             });
-            bytes memory sig = abi.encode(order, data);
+            bytes memory sig = abi.encode(order);
 
             bytes32 domainSeparator = settlement.domainSeparator();
             // The commit should be part of the settlement for the test to work.

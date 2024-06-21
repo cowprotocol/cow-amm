@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {
-    ConstantProductFactory,
-    ConstantProduct,
-    GPv2Order,
-    IConditionalOrder,
-    ISettlement,
-    IERC20
-} from "src/ConstantProductFactory.sol";
+import {ConstantProductFactory, ConstantProduct, GPv2Order, ISettlement, IERC20} from "src/ConstantProductFactory.sol";
 
 import {ConstantProductTestHarness} from "test/ConstantProduct/ConstantProductTestHarness.sol";
 
@@ -20,22 +13,6 @@ abstract contract ConstantProductFactoryTestHarness is ConstantProductTestHarnes
     function setUp() public virtual override(ConstantProductTestHarness) {
         super.setUp();
         constantProductFactory = new ConstantProductFactory(solutionSettler);
-    }
-
-    // This function calls `getTradeableOrderWithSignature` while filling all
-    // unused parameters with arbitrary data.
-    function getTradeableOrderWithSignatureWrapper(
-        ConstantProduct amm,
-        ConstantProduct.TradingParams memory tradingParams
-    ) internal view returns (GPv2Order.Data memory order, bytes memory signature) {
-        IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams(
-            IConditionalOrder(address(constantProductFactory)),
-            keccak256("ConstantProductFactoryTestHarness: some salt"),
-            abi.encode(tradingParams)
-        );
-        return constantProductFactory.getTradeableOrderWithSignature(
-            amm, params, bytes("ConstantProductFactoryTestHarness: offchainData"), new bytes32[](2)
-        );
     }
 
     function mocksForTokenCreation(address constantProductAddress) internal {
