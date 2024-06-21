@@ -11,7 +11,7 @@ sol!(
     #[derive(Debug)]
     #[sol(rpc)]
     ComposableCoW,
-    "../../abi/ComposableCoW.json"
+    "../../../out/ComposableCoW.sol/ComposableCoW.json"
 );
 
 sol!(
@@ -20,7 +20,7 @@ sol!(
     #[derive(Debug)]
     #[sol(rpc)]
     GPv2Settlement,
-    "../../abi/GPv2Settlement.json"
+    "../../../out/GPv2Settlement.sol/GPv2Settlement.json"
 );
 
 sol!(
@@ -29,7 +29,16 @@ sol!(
     #[derive(Debug)]
     #[sol(rpc)]
     IPriceOracle,
-    "../../abi/IPriceOracle.json"
+    "../../../out/IPriceOracle.sol/IPriceOracle.json"
+);
+
+sol!(
+    #[allow(missing_docs)]
+    #[allow(clippy::too_many_arguments)]
+    #[derive(Debug)]
+    #[sol(rpc)]
+    ConstantProductHelper,
+    "../../../out/ConstantProductHelper.sol/ConstantProductHelper.json"
 );
 
 sol! {
@@ -58,15 +67,6 @@ sol! {
     }
 
 }
-
-sol!(
-    #[allow(missing_docs)]
-    #[allow(clippy::too_many_arguments)]
-    #[derive(Debug)]
-    #[sol(rpc)]
-    ConstantProductHelper,
-    "../../abi/ConstantProductHelper.json"
-);
 
 sol! {
     #[allow(missing_docs)]
