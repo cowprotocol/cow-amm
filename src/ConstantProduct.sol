@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {IERC20} from "lib/openzeppelin/contracts/interfaces/IERC20.sol";
+import {IERC20 as OZIERC20} from "lib/openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC1271} from "lib/openzeppelin/contracts/interfaces/IERC1271.sol";
 import {SafeERC20} from "lib/openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "lib/openzeppelin/contracts/utils/math/Math.sol";
 import {ConditionalOrdersUtilsLib as Utils} from "lib/composable-cow/src/types/ConditionalOrdersUtilsLib.sol";
-import {IConditionalOrder, GPv2Order} from "lib/composable-cow/src/BaseConditionalOrder.sol";
+import {IConditionalOrder, GPv2Order, IERC20} from "lib/composable-cow/src/BaseConditionalOrder.sol";
 
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 import {ISettlement} from "./interfaces/ISettlement.sol";
@@ -20,7 +20,7 @@ import {ISettlement} from "./interfaces/ISettlement.sol";
  * Order creation and execution is based on the Composable CoW base contracts.
  */
 contract ConstantProduct is IERC1271 {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for OZIERC20;
     using GPv2Order for GPv2Order.Data;
 
     /**
@@ -269,6 +269,6 @@ contract ConstantProduct is IERC1271 {
      * @param spender The address that can transfer on behalf of this contract.
      */
     function approveUnlimited(IERC20 token, address spender) internal {
-        token.safeApprove(spender, type(uint256).max);
+        OZIERC20(address(token)).safeApprove(spender, type(uint256).max);
     }
 }

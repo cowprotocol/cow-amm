@@ -83,7 +83,7 @@ abstract contract ConstantProductTestHarness is BaseComposableCoWTest {
         );
     }
 
-    function defaultSignatureAndHashes() internal returns (SignatureData memory out) {
+    function defaultSignatureAndHashes() internal view returns (SignatureData memory out) {
         GPv2Order.Data memory order = getDefaultOrder();
         bytes32 orderHash = order.hash(solutionSettler.domainSeparator());
         bytes memory signature = abi.encode(order);
