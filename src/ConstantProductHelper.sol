@@ -165,8 +165,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper {
         if (selfReserve1TimesPriceNumerator < selfReserve0TimesPriceDenominator) {
             sellToken = params.token0;
             buyToken = params.token1;
-            sellAmount =
-                selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * params.priceDenominator);
+            sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * params.priceDenominator);
             buyAmount = Math.mulDiv(
                 sellAmount,
                 selfReserve1TimesPriceNumerator + (params.priceDenominator * sellAmount),
@@ -177,8 +176,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper {
         } else {
             sellToken = params.token1;
             buyToken = params.token0;
-            sellAmount =
-                selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * params.priceNumerator);
+            sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * params.priceNumerator);
             buyAmount = Math.mulDiv(
                 sellAmount,
                 selfReserve0TimesPriceDenominator + (params.priceNumerator * sellAmount),
