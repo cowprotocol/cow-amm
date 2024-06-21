@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
 import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProduct.sol";
-import {ConstantProductFactory, IConditionalOrder} from "src/ConstantProductFactory.sol";
+import {ConstantProductFactory} from "src/ConstantProductFactory.sol";
 import {UniswapV2PriceOracle, IUniswapV2Pair} from "src/oracles/UniswapV2PriceOracle.sol";
 import {ISettlement} from "src/interfaces/ISettlement.sol";
 import {UniswapV2Helper, IUniswapV2Factory} from "test/libraries/UniswapV2Helper.sol";

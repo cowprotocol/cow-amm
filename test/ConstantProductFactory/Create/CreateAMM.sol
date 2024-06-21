@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {
-    IERC20,
-    IPriceOracle,
-    ConstantProduct,
-    ConstantProductFactory,
-    ComposableCoW,
-    IConditionalOrder
-} from "src/ConstantProductFactory.sol";
+import {IERC20, IPriceOracle, ConstantProduct, ConstantProductFactory} from "src/ConstantProductFactory.sol";
 
 import {ConstantProductFactoryTestHarness} from "../ConstantProductFactoryTestHarness.sol";
 
@@ -75,7 +68,7 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
             ConstantProduct(expectedAMM), address(this), mockableToken0, mockableToken1
         );
         vm.expectEmit();
-        emit ConstantProductFactory.TradingEnabled(amm);
+        emit ConstantProductFactory.TradingEnabled(ConstantProduct(expectedAMM));
         constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 }

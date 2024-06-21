@@ -34,11 +34,6 @@ abstract contract DisableTrading is ConstantProductFactoryTestHarness {
     function setupAndCreateAMM() private returns (ConstantProduct) {
         uint256 amount0 = 1234;
         uint256 amount1 = 5678;
-        uint256 minTradedToken0 = 42;
-        IPriceOracle priceOracle = IPriceOracle(makeAddr("DisableTrading: price oracle"));
-        bytes memory priceOracleData = bytes("some price oracle data");
-        bytes32 appData = keccak256("DisableTrading: app data");
-
         mocksForTokenCreation(
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1)
         );
