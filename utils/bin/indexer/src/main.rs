@@ -25,25 +25,16 @@ async fn main() -> eyre::Result<()> {
     const GNOSIS_DEPLOYMENT_GENESIS: u64 = 32478660;
     const GNOSIS_CONSTANT_PRODUCT_HANDLER: &str = "0xB148F40fff05b5CE6B22752cf8E454B556f7a851";
 
-    let rpc_url = match std::env::var("RPC_URL") {
-        Ok(url) => match url.parse() {
-            Ok(url) => url,
-            Err(_) => {
-                eprintln!("Invalid URL: {}", url);
-                std::process::exit(1);
-            }
-        },
-        Err(_) => {
-            eprintln!("Environment variable `RPC_URL` is not set");
-            eprintln!("Usage: RPC_URL=<URL> indexer");
-            std::process::exit(1);
-        }
-    };
-
+    let rpc_url = std::env::var("RPC_URL")
+        .expect("Environment variable `RPC_URL` is not set")
+        .parse()
+        .expect("Invalid RPC_URL");
     let provider = ProviderBuilder::new().on_http(rpc_url);
 
     // Determine the chain and then set the constant product handler and genesis block
     let chain_id = provider.get_chain_id().await?;
+    println!("Chain ID: {}", chain_id);
+
     let (constant_product_handler, mut start_block): (Address, u64) = match chain_id {
         1 => (
             MAINNET_CONSTANT_PRODUCT_HANDLER.parse()?,

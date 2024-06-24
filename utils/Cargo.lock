@@ -950,6 +950,7 @@ dependencies = [
  "alloy",
  "eyre",
  "futures",
+ "futures-util",
  "tokio",
 ]
 

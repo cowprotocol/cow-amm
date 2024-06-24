@@ -17,6 +17,7 @@ alloy = { version = "0.1", features = [ "full", "rpc-client" ] }
 # async
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 futures = "0.3"
+futures-util = "0.3.30"
 
 # misc
 eyre = "0.6.12"
