@@ -1,7 +1,7 @@
 use std::{cmp::min, collections::HashMap};
 
 use alloy::{
-    primitives::{Address, Bytes},
+    primitives::{keccak256, Address, Bytes},
     providers::{Provider, ProviderBuilder},
     rpc::types::Filter,
     sol,
@@ -24,6 +24,7 @@ async fn main() -> eyre::Result<()> {
     const MAINNET_CONSTANT_PRODUCT_HANDLER: &str = "0x34323B933096534e43958F6c7Bf44F2Bb59424DA";
     const GNOSIS_DEPLOYMENT_GENESIS: u64 = 32478660;
     const GNOSIS_CONSTANT_PRODUCT_HANDLER: &str = "0xB148F40fff05b5CE6B22752cf8E454B556f7a851";
+    const COMPOSABLE_COW: &str = "0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74";
 
     let rpc_url = std::env::var("RPC_URL")
         .expect("Environment variable `RPC_URL` is not set")
@@ -80,6 +81,27 @@ async fn main() -> eyre::Result<()> {
             false => start_block = to_block + 1,
         }
     }
+
+    let composable_cow = ComposableCoW::new(COMPOSABLE_COW.parse().unwrap(), provider.clone());
+    let amms = futures_util::future::join_all(amms.iter().map(|(addr, params)| {
+        let composable_cow = composable_cow.clone();
+        async move {
+            let open = composable_cow
+                .singleOrders(*addr, keccak256(params.clone()))
+                .call()
+                .await
+                .unwrap()
+                ._0;
+            match open {
+                true => Some((addr, params)),
+                false => None,
+            }
+        }
+    }))
+    .await
+    .into_iter()
+    .flatten()
+    .collect::<HashMap<_, _>>();
 
     println!("Total AMMs: {}", amms.len());
     println!("Caution: No guarantee is made that the AMMs will be presented in the same order as they were created.");
