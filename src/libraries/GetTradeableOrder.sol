@@ -76,7 +76,7 @@ library GetTradeableOrder {
             GPv2Order.RECEIVER_SAME_AS_OWNER,
             sellAmount,
             buyAmount,
-            block.timestamp + MAX_ORDER_DURATION,
+            uint32(block.timestamp) + MAX_ORDER_DURATION,
             params.appData,
             0,
             GPv2Order.KIND_SELL,
