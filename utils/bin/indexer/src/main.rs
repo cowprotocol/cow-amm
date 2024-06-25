@@ -82,6 +82,7 @@ async fn main() -> eyre::Result<()> {
         }
     }
 
+    // Filter out AMMs that are no longer open
     let composable_cow = ComposableCoW::new(COMPOSABLE_COW.parse().unwrap(), provider.clone());
     let amms = futures_util::future::join_all(amms.iter().map(|(addr, params)| {
         let composable_cow = composable_cow.clone();
@@ -103,10 +104,12 @@ async fn main() -> eyre::Result<()> {
     .flatten()
     .collect::<HashMap<_, _>>();
 
-    println!("Total AMMs: {}", amms.len());
-    println!("Caution: No guarantee is made that the AMMs will be presented in the same order as they were created.");
+    println!("\nTotal open AMMs: {}", amms.len());
+    println!("\nWill now print the AMMs in the format: <AMM Address>,<AMM Bytes Params>");
+    println!("Please note that the AMM Bytes Params are ABI encoded and will need to be decoded to be human readable.\n");
+    println!("Caution: No guarantee is made that the AMMs will be presented in the same order as they were created.\n");
     amms.iter().for_each(|(k, v)| {
-        println!("AMM: {},{}", k, v);
+        println!("{},{}", k, v);
     });
 
     Ok(())
