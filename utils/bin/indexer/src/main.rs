@@ -96,7 +96,7 @@ async fn main() -> eyre::Result<()> {
             let static_input = LegacyTradingParams::abi_decode(&params.staticInput, true).unwrap();
 
             for token in [&static_input.token0, &static_input.token1] {
-                let balance = IERC20::new(token.clone(), provider.clone())
+                let balance = IERC20::new(*token, provider.clone())
                     .balanceOf(*addr)
                     .call()
                     .await

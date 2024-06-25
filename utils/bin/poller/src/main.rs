@@ -1,4 +1,3 @@
-#![feature(async_closure)]
 use cow_amm_common::{
     rpc_url, ComposableCoW,
     ConstantProductHelper::{self, ConstantProductHelperErrors},
@@ -32,20 +31,10 @@ async fn main() -> eyre::Result<()> {
     let chain_id = provider.get_chain_id().await?;
 
     // Which amm are we interested in?
-    let amm: Address = match std::env::var("AMM") {
-        Ok(amm) => match amm.parse() {
-            Ok(amm) => amm,
-            Err(_) => {
-                eprintln!("Invalid AMM: {}", amm);
-                std::process::exit(1);
-            }
-        },
-        Err(_) => {
-            eprintln!("Environment variable `AMM` is not set");
-            eprintln!("Usage: RPC_URL=<URL> AMM=<AMM> poller");
-            std::process::exit(1);
-        }
-    };
+    let amm: Address = std::env::var("AMM")
+        .expect("Environment variable `AMM` is not set")
+        .parse()
+        .expect("Invalid address specified for AMM");
 
     println!("Polling AMM: {:?}", amm);
 
