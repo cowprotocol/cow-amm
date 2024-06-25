@@ -25,15 +25,14 @@ abstract contract DisableTrading is ConstantProductTestHarness {
 
     function testDisableTradingUnsetsState() public {
         setUpDisableTrading();
-        assertFalse(constantProduct.tradingParamsHash() == constantProduct.NO_TRADING());
+        assertFalse(constantProduct.tradingEnabled() == false);
         constantProduct.disableTrading();
-        assertTrue(constantProduct.tradingParamsHash() == constantProduct.NO_TRADING());
+        assertTrue(constantProduct.tradingEnabled() == false);
     }
 
     // By default, trading is disabled on a newly deployed contract. Calling
     // this function enables some trade that can be disabled in a test.
     function setUpDisableTrading() private {
-        ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
-        constantProduct.enableTrading(defaultTradingParams);
+        constantProduct.enableTrading();
     }
 }

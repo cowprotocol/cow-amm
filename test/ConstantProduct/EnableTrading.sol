@@ -5,27 +5,23 @@ import {ConstantProductTestHarness, ConstantProduct} from "./ConstantProductTest
 
 abstract contract EnableTrading is ConstantProductTestHarness {
     function testEnableTradingDoesNotRevert() public {
-        ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
-        constantProduct.enableTrading(defaultTradingParams);
+        constantProduct.enableTrading();
     }
 
     function testEnableTradingRevertsIfCalledByNonManager() public {
-        ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
         vm.prank(makeAddr("this is not the owner"));
         vm.expectRevert(abi.encodeWithSelector(ConstantProduct.OnlyManagerCanCall.selector));
-        constantProduct.enableTrading(defaultTradingParams);
+        constantProduct.enableTrading();
     }
 
     function testEnableTradingEmitsEvent() public {
-        ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
         vm.expectEmit();
-        emit ConstantProduct.TradingEnabled(constantProduct.hash(defaultTradingParams), defaultTradingParams);
-        constantProduct.enableTrading(defaultTradingParams);
+        emit ConstantProduct.TradingEnabled();
+        constantProduct.enableTrading();
     }
 
     function testEnableTradingSetsState() public {
-        ConstantProduct.TradingParams memory defaultTradingParams = getDefaultTradingParams();
-        constantProduct.enableTrading(defaultTradingParams);
-        assertEq(constantProduct.tradingParamsHash(), constantProduct.hash(defaultTradingParams));
+        constantProduct.enableTrading();
+        assertEq(constantProduct.tradingEnabled(), true);
     }
 }

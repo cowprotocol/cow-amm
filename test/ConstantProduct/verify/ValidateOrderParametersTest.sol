@@ -6,34 +6,28 @@ import {ConstantProduct, GPv2Order, IERC20, IConditionalOrder} from "src/Constan
 import {ConstantProductTestHarness} from "../ConstantProductTestHarness.sol";
 
 abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
-    function setUpBasicOrder()
-        internal
-        returns (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder)
-    {
-        defaultTradingParams = setUpDefaultTradingParams();
+    function setUpBasicOrder() internal returns (GPv2Order.Data memory defaultOrder) {
+        setUpDefaultPair();
         setUpDefaultReserves(address(constantProduct));
         setUpDefaultCommitment();
         defaultOrder = getDefaultOrder();
     }
 
     function testDefaultDoesNotRevert() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testCanInvertTokens() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         (defaultOrder.sellToken, defaultOrder.buyToken) = (defaultOrder.buyToken, defaultOrder.sellToken);
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfInvalidTokenCombination() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         IERC20 badToken = IERC20(makeAddr("bad token"));
         vm.mockCall(address(badToken), abi.encodeCall(IERC20.balanceOf, (address(constantProduct))), abi.encode(1337));
@@ -60,7 +54,7 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             defaultOrder.buyToken = sellTokenInvalidCombinations[i][1];
 
             vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid sell token"));
-            constantProduct.verify(defaultTradingParams, defaultOrder);
+            constantProduct.verify(defaultOrder);
         }
 
         for (uint256 i = 0; i < buyTokenInvalidCombinations.length; i += 1) {
@@ -68,69 +62,63 @@ abstract contract ValidateOrderParametersTest is ConstantProductTestHarness {
             defaultOrder.buyToken = buyTokenInvalidCombinations[i][1];
 
             vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid buy token"));
-            constantProduct.verify(defaultTradingParams, defaultOrder);
+            constantProduct.verify(defaultOrder);
         }
     }
 
     function testRevertsIfDifferentReceiver() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.receiver = makeAddr("bad receiver");
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "receiver must be zero address")
         );
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfExpiresFarInTheFuture() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.validTo = uint32(block.timestamp) + constantProduct.MAX_ORDER_DURATION() + 1;
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "validity too far in the future")
         );
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfDifferentAppData() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.appData = keccak256(bytes("bad app data"));
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "invalid appData"));
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfNonzeroFee() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.feeAmount = 1;
         vm.expectRevert(abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "fee amount must be zero"));
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfSellTokenBalanceIsNotErc20() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.sellTokenBalance = GPv2Order.BALANCE_EXTERNAL;
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "sellTokenBalance must be erc20")
         );
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 
     function testRevertsIfBuyTokenBalanceIsNotErc20() public {
-        (ConstantProduct.TradingParams memory defaultTradingParams, GPv2Order.Data memory defaultOrder) =
-            setUpBasicOrder();
+        GPv2Order.Data memory defaultOrder = setUpBasicOrder();
 
         defaultOrder.buyTokenBalance = GPv2Order.BALANCE_EXTERNAL;
         vm.expectRevert(
             abi.encodeWithSelector(IConditionalOrder.OrderNotValid.selector, "buyTokenBalance must be erc20")
         );
-        constantProduct.verify(defaultTradingParams, defaultOrder);
+        constantProduct.verify(defaultOrder);
     }
 }

@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {
-    IERC20,
-    IPriceOracle,
-    ConstantProduct,
-    ConstantProductFactory,
-    ComposableCoW,
-    IConditionalOrder
-} from "src/ConstantProductFactory.sol";
+import {IERC20, IPriceOracle, ConstantProduct, ConstantProductFactory} from "src/ConstantProductFactory.sol";
 
 import {ConstantProductFactoryTestHarness} from "../ConstantProductFactoryTestHarness.sol";
 
@@ -25,18 +18,9 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1)
         );
 
-        ConstantProduct amm = constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        ConstantProduct amm = constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
         assertEq(address(amm.token0()), address(mockableToken0));
         assertEq(address(amm.token1()), address(mockableToken1));
-        ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: priceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
-        assertEq(amm.tradingParamsHash(), amm.hash(params));
     }
 
     function testNewAMMEnablesTrading() public {
@@ -44,16 +28,8 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1)
         );
 
-        ConstantProduct amm = constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
-        ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: priceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
-        assertEq(amm.tradingParamsHash(), amm.hash(params));
+        ConstantProduct amm = constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
+        assertEq(amm.tradingEnabled(), true);
     }
 
     function testCreationTransfersInExpectedAmounts() public {
@@ -67,9 +43,7 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
         vm.expectCall(
             address(mockableToken1), abi.encodeCall(IERC20.transferFrom, (address(this), expectedAMM, amount1)), 1
         );
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 
     function testCreationSetsOwner() public {
@@ -79,9 +53,7 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
         mocksForTokenCreation(address(expectedAMM));
         require(constantProductFactory.owner(expectedAMM) == address(0), "Initial owner is expected to be unset");
 
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
         assertFalse(constantProductFactory.owner(expectedAMM) == address(0));
         assertEq(constantProductFactory.owner(expectedAMM), address(this));
     }
@@ -91,25 +63,12 @@ abstract contract CreateAMM is ConstantProductFactoryTestHarness {
             constantProductFactory.ammDeterministicAddress(address(this), mockableToken0, mockableToken1);
         mocksForTokenCreation(address(expectedAMM));
 
-        ConstantProduct.TradingParams memory params = ConstantProduct.TradingParams({
-            minTradedToken0: minTradedToken0,
-            priceOracle: priceOracle,
-            priceOracleData: priceOracleData,
-            appData: appData
-        });
         vm.expectEmit();
         emit ConstantProductFactory.Deployed(
             ConstantProduct(expectedAMM), address(this), mockableToken0, mockableToken1
         );
         vm.expectEmit();
-        emit ComposableCoW.ConditionalOrderCreated(
-            expectedAMM,
-            IConditionalOrder.ConditionalOrderParams(
-                IConditionalOrder(address(constantProductFactory)), bytes32(0), abi.encode(params)
-            )
-        );
-        constantProductFactory.create(
-            mockableToken0, amount0, mockableToken1, amount1, minTradedToken0, priceOracle, priceOracleData, appData
-        );
+        emit ConstantProductFactory.TradingEnabled(ConstantProduct(expectedAMM));
+        constantProductFactory.create(mockableToken0, amount0, mockableToken1, amount1);
     }
 }
