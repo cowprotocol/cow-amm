@@ -7,7 +7,11 @@ use alloy::{
     rpc::types::Filter,
     sol_types::{SolEvent, SolValue},
 };
-use cow_amm_common::{rpc_url, ComposableCoW};
+use cow_amm_common::{
+    rpc_url,
+    ComposableCoW::{self, ConditionalOrderParams},
+    LegacyTradingParams, IERC20,
+};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

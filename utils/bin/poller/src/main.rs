@@ -85,7 +85,10 @@ async fn main() -> eyre::Result<()> {
         .await
         .unwrap();
 
-    println!("Oracle Price: {:?} / {:?}", oracle_price.priceNumerator, oracle_price.priceDenominator);
+    println!(
+        "Oracle Price: {:?} / {:?}",
+        oracle_price.priceNumerator, oracle_price.priceDenominator
+    );
 
     // Fifth, we now have relative prices, so we can use the helper to get the order
     let hint = helper
@@ -96,17 +99,14 @@ async fn main() -> eyre::Result<()> {
         .state(overrides)
         .call_raw()
         .await
-        .map_or_else(
-            Err,
-            |d| {
-                let dReturn {
-                    order,
-                    interactions,
-                    sig,
-                } = IConstantProductHelper::dCall::abi_decode_returns(&d, true).unwrap();
-                Ok((order, interactions, sig))
-            },
-        );
+        .map_or_else(Err, |d| {
+            let dReturn {
+                order,
+                interactions,
+                sig,
+            } = IConstantProductHelper::dCall::abi_decode_returns(&d, true).unwrap();
+            Ok((order, interactions, sig))
+        });
 
     // Sixth, use the hint and verify that it can be settled on-chain. This is done by:
     // 1. Using `simulateDelegateCall` from the settlement contract to the `Multicall3` as we need to call two functions
@@ -153,7 +153,10 @@ async fn main() -> eyre::Result<()> {
                 ],
             }
             .abi_encode();
-            println!("\nsimulateDelegateCall payload: {:?}", hex::encode(payload.clone()));
+            println!(
+                "\nsimulateDelegateCall payload: {:?}",
+                hex::encode(payload.clone())
+            );
 
             let settlement = GPv2Settlement::new(SETTLEMENT.parse().unwrap(), provider.clone());
             let result = settlement

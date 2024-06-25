@@ -25,6 +25,15 @@ sol!(
 
 sol!(
     #[allow(missing_docs)]
+    #[derive(Debug)]
+    #[sol(rpc)]
+    interface IERC20 {
+        function balanceOf(address account) external view returns (uint256);
+    }
+);
+
+sol!(
+    #[allow(missing_docs)]
     #[allow(clippy::too_many_arguments)]
     #[derive(Debug)]
     #[sol(rpc)]
