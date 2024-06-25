@@ -10,7 +10,23 @@ import {Helper as LegacyHelper} from "./legacy/Helper.sol";
 contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
     using GPv2Order for GPv2Order.Data;
 
-    address public constant factory = address(0);
+    function factory() public view override returns (address) {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+
+        // Mainnet, gnosis, and sepolia. Addresses taken from networks.json
+        if (chainId == 1) {
+            return 0x8deEd8ED7C5fCB55884f13F121654Bb4bb7c8437;
+        } else if (chainId == 100) {
+            return 0x2AF6C59FC957D4a45ddBBD927fA30f7C5051F583;
+        } else if (chainId == 11155111) {
+            return 0xbD18758055dbe3ed37A2471394559aE97a5Da5c0;
+        }
+
+        revert("Unsupported chain");
+    }
 
     ISettlement private constant SETTLEMENT = ISettlement(0x9008D19f58AAbD9eD0D60971565AA8510560ab41);
 
