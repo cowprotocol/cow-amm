@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 abstract contract Snapshot {
     /// @dev Returns the IConditionalOrder.ConditionalOrderParams for a legacy CoW AMM. Returns bytes(0) if the pool
     /// isn't found in the snapshot data.
-    function getSnapshot(address amm) internal view returns (bytes memory) {
+    function getSnapshot(address amm) public view returns (bytes memory) {
         uint256 chainId;
         assembly {
             chainId := chainid()
