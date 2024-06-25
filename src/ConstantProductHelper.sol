@@ -50,7 +50,9 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
             IERC20 token0 = ConstantProduct(pool).token0();
             IERC20 token1 = ConstantProduct(pool).token1();
 
-            // TODO: 🚨 Check for the pool having trading enabled or not
+            if (ConstantProduct(pool).tradingEnabled() == false) {
+                revert ICOWAMMPoolHelper.PoolIsPaused();
+            }
 
             _order = GetTradeableOrder.getTradeableOrder(
                 GetTradeableOrder.GetTradeableOrderParams({
@@ -59,7 +61,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
                     token1: token1,
                     priceNumerator: prices[0],
                     priceDenominator: prices[1],
-                    appData: bytes32(0) // TODO: 🚨 point to app data on factory
+                    appData: ConstantProduct(pool).APP_DATA()
                 })
             );
 
@@ -78,6 +80,6 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
 
     /// @dev Take advantage of the mapping on the factory that is set to the owner's address for canonical pools.
     function isCanonical(address pool) private view returns (bool) {
-        return ConstantProductFactory(factory).owner(ConstantProduct(pool)) != address(0);
+        return ConstantProductFactory(factory()).owner(ConstantProduct(pool)) != address(0);
     }
 }
