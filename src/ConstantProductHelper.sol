@@ -49,15 +49,16 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
     function order(address pool, uint256[] calldata prices)
         external
         view
-        returns (GPv2Order.Data memory, GPv2Interaction.Data[] memory, bytes memory)
+        returns (
+            GPv2Order.Data memory _order,
+            GPv2Interaction.Data[] memory preInteractions,
+            GPv2Interaction.Data[] memory postInteractions,
+            bytes memory sig
+        )
     {
         if (prices.length != 2) {
             revert InvalidArrayLength();
         }
-
-        GPv2Order.Data memory _order;
-        GPv2Interaction.Data[] memory interactions = new GPv2Interaction.Data[](1);
-        bytes memory sig;
 
         if (!isLegacy(pool)) {
             // Standalone CoW AMMs (**non-Gnosis Safe Wallets**)
@@ -82,16 +83,16 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
             );
 
             sig = abi.encode(_order);
-            interactions[0] = GPv2Interaction.Data({
+
+            preInteractions = new GPv2Interaction.Data[](1);
+            preInteractions[0] = GPv2Interaction.Data({
                 target: pool,
                 value: 0,
                 callData: abi.encodeCall(ConstantProduct.commit, (_order.hash(SETTLEMENT.domainSeparator())))
             });
         } else {
-            (_order, interactions, sig) = legacyOrder(pool, prices);
+            (_order, preInteractions, postInteractions, sig) = legacyOrder(pool, prices);
         }
-
-        return (_order, interactions, sig);
     }
 
     /// @dev Take advantage of the mapping on the factory that is set to the owner's address for canonical pools.

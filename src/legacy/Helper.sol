@@ -35,7 +35,12 @@ abstract contract Helper is Snapshot {
     function legacyOrder(address pool, uint256[] calldata prices)
         internal
         view
-        returns (GPv2Order.Data memory _order, GPv2Interaction.Data[] memory interactions, bytes memory sig)
+        returns (
+            GPv2Order.Data memory _order,
+            GPv2Interaction.Data[] memory preInteractions,
+            GPv2Interaction.Data[] memory postInteractions,
+            bytes memory sig
+        )
     {
         // Legacy CoW AMMs (**Gnosis Safe Wallets**)
         if (!isLegacyEnabled(pool)) revert ICOWAMMPoolHelper.PoolIsClosed();
@@ -65,13 +70,25 @@ abstract contract Helper is Snapshot {
             )
         );
 
-        interactions = new GPv2Interaction.Data[](1);
+        // For legacy, we need to do a pre-interaction to set the commitment.
+        preInteractions = new GPv2Interaction.Data[](1);
 
         // Here we use a small ABI code snippet as this from severely legacy code.
-        interactions[0] = GPv2Interaction.Data({
+        preInteractions[0] = GPv2Interaction.Data({
             target: address(params.handler),
             value: 0,
             callData: abi.encodeWithSignature("commit(address,bytes32)", pool, _order.hash(domainSeparator))
+        });
+
+        // For legacy, we need to do a post-interaction to reset the commitment
+        // as the legacy code was deployed pre-dencun.
+        // The `EMPTY_COMMITMENT` as seen at
+        // https://github.com/cowprotocol/cow-amm/blob/91b25d6f54784783e694c7fdbd081b96b4991ae9/src/ConstantProduct.sol
+        postInteractions = new GPv2Interaction.Data[](1);
+        postInteractions[0] = GPv2Interaction.Data({
+            target: address(params.handler),
+            value: 0,
+            callData: abi.encodeWithSignature("commit(address,bytes32)", pool, bytes32(0))
         });
     }
 
