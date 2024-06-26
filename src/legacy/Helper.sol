@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {ICOWAMMPoolHelper, GPv2Interaction} from "../interfaces/ICOWAMMPoolHelper.sol";
 import {IERC20, IConditionalOrder, ISettlement, GPv2Order} from "../ConstantProduct.sol";
 import {GetTradeableOrder} from "../libraries/GetTradeableOrder.sol";
+import {ComposableCoW} from "lib/composable-cow/src/ComposableCoW.sol";
 
 import {Snapshot} from "./Snapshot.sol";
 
@@ -18,7 +19,7 @@ abstract contract Helper is Snapshot {
     bytes32 internal constant FALLBACK_HANDLER_STORAGE_SLOT =
         0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5;
     address internal constant EXTENSIBLE_FALLBACK_HANDLER = address(0x2f55e8b20D0B9FEFA187AA7d00B6Cbe563605bF5);
-    IComposableCOW private constant COMPOSABLE_COW = IComposableCOW(0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74);
+    ComposableCoW private constant COMPOSABLE_COW = ComposableCoW(0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74);
 
     // Data that was broadcast for off-chain consumption by legacy CoW AMMs.
     // All this data **MUST** be stored as this is used when creating the
@@ -102,17 +103,19 @@ abstract contract Helper is Snapshot {
         // First check the safe has `ExtensibleFallbackHandler` configured as the fallback handler
         address fallbackHandler =
             abi.decode(IStorageViewer(amm).getStorageAt(uint256(FALLBACK_HANDLER_STORAGE_SLOT), 1), (address));
-        success = fallbackHandler == EXTENSIBLE_FALLBACK_HANDLER;
+        bool hasSetHandler = fallbackHandler == EXTENSIBLE_FALLBACK_HANDLER;
 
         // Next check that the safe has delegated the domain verifier to ComposableCoW
-        success = success
-            && IExtensibleFallbackHandler(EXTENSIBLE_FALLBACK_HANDLER).domainVerifiers(amm, SETTLEMENT.domainSeparator())
-                == address(COMPOSABLE_COW);
+        bool hasSetDomainVerifier = IExtensibleFallbackHandler(EXTENSIBLE_FALLBACK_HANDLER).domainVerifiers(
+            amm, SETTLEMENT.domainSeparator()
+        ) == address(COMPOSABLE_COW);
 
         // Finally check that the singleOrder(h(params)) is true
         IConditionalOrder.ConditionalOrderParams memory params =
             abi.decode(getSnapshot(amm), (IConditionalOrder.ConditionalOrderParams));
-        success = success && COMPOSABLE_COW.singleOrders(amm, keccak256(abi.encode(params)));
+        bool hasEnabledOrder = COMPOSABLE_COW.singleOrders(amm, keccak256(abi.encode(params)));
+
+        return hasSetHandler && hasSetDomainVerifier && hasEnabledOrder;
     }
 
     /// @dev Returns the tokens and the IConditionalOrder.ConditionalOrderParams for a legacy CoW AMM.
@@ -144,8 +147,4 @@ interface IExtensibleFallbackHandler {
     }
 
     function domainVerifiers(address safe, bytes32 domainSeparator) external view returns (address);
-}
-
-interface IComposableCOW {
-    function singleOrders(address safe, bytes32 hash) external view returns (bool);
 }

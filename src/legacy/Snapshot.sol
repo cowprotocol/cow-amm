@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.24;
 
+/// @title Snapshot of events that were indexed relating to CoW AMMs that had been deployed with the legacy method
+/// @dev The legacy method, where currently 99.99% of the liquidity for CoW AMMs is deployed, emits events within
+/// the ComposableCoW framework, which is not forward compatible with the CoW AMM interface standard. To abridge
+/// this gap, the utils contained within the repository were used to generate a snapshot of the legacy CoW AMMs.
+/// The output of this snapshot is contained within this contract, and is used to provide a forwards compatible
+/// interface for the CoW AMM interface standard.
 abstract contract Snapshot {
     /// @dev Returns the IConditionalOrder.ConditionalOrderParams for a legacy CoW AMM. Returns bytes(0) if the pool
     /// isn't found in the snapshot data.

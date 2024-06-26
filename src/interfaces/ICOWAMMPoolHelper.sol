@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.24;
 
-import {GPv2Order} from "lib/composable-cow/src/BaseConditionalOrder.sol";
+import {GPv2Order} from "cowprotocol/contracts/libraries/GPv2Order.sol";
 import {GPv2Interaction} from "cowprotocol/contracts/libraries/GPv2Interaction.sol";
 
 /**
@@ -31,7 +31,6 @@ interface ICOWAMMPoolHelper {
      */
     error PoolIsClosed();
     /**
-     * /**
      * Returned by the `order` function if there is no order matching the supplied
      * parameters.
      */
@@ -43,6 +42,8 @@ interface ICOWAMMPoolHelper {
     function factory() external view returns (address);
     /**
      * AMM Pool helpers MUST return all tokens that may be traded on this pool.
+     * The order of the tokens is expected to be consistent and must be the same
+     * as that used for the input price vector in the `order` function.
      */
     function tokens(address pool) external view returns (address[] memory);
     /**
