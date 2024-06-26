@@ -223,6 +223,14 @@ async fn main() -> eyre::Result<()> {
 
                     // Check that the signature was correct
                     assert!(response.returnData[pre_interactions.len()].success);
+                    assert_eq!(
+                        FixedBytes::<4>::abi_decode(
+                            &*response.returnData[pre_interactions.len()].returnData,
+                            true
+                        )?,
+                        IERC1271::isValidSignatureCall::SELECTOR,
+                        "Signature was not valid"
+                    );
 
                     // Check that all post interactions were successful
                     response.returnData[pre_interactions.len() + 1..]
