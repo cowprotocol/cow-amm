@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.24;
 
-import {GPv2Order} from "lib/composable-cow/src/BaseConditionalOrder.sol";
+import {GPv2Order} from "cowprotocol/contracts/libraries/GPv2Order.sol";
 import {GPv2Interaction} from "cowprotocol/contracts/libraries/GPv2Interaction.sol";
 
 /**
@@ -31,7 +31,6 @@ interface ICOWAMMPoolHelper {
      */
     error PoolIsClosed();
     /**
-     * /**
      * Returned by the `order` function if there is no order matching the supplied
      * parameters.
      */
@@ -43,6 +42,8 @@ interface ICOWAMMPoolHelper {
     function factory() external view returns (address);
     /**
      * AMM Pool helpers MUST return all tokens that may be traded on this pool.
+     * The order of the tokens is expected to be consistent and must be the same
+     * as that used for the input price vector in the `order` function.
      */
     function tokens(address pool) external view returns (address[] memory);
     /**
@@ -53,12 +54,14 @@ interface ICOWAMMPoolHelper {
      * @param pool to calculate the order / signature for
      * @param prices supplied for determining the order, assumed to be in the
      *        same order as returned from `tokens(pool)`.
-     * @return The GPv2Order.Data struct for the CoW Protocol JIT order, any
-     *          PRE and/or POST interaction that is required by the **SOLVER**, and
-     *          the pool's associated ERC-1271 signature.
+     * @return A tuple of 4 elements:
+     *         * The GPv2Order.Data struct for the CoW Protocol JIT order
+     *         * The GPv2Interaction.Data array for any **PRE** interactions (empty if none)
+     *         * The GPv2Interaction.Data array for any **POST** interactions (empty if none)
+     *         * The ERC-1271 signature for the order
      */
     function order(address pool, uint256[] calldata prices)
         external
         view
-        returns (GPv2Order.Data memory, GPv2Interaction.Data[] memory, bytes memory);
+        returns (GPv2Order.Data memory, GPv2Interaction.Data[] memory, GPv2Interaction.Data[] memory, bytes memory);
 }

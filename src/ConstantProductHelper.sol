@@ -10,6 +10,12 @@ import {Helper as LegacyHelper} from "./legacy/Helper.sol";
 contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
     using GPv2Order for GPv2Order.Data;
 
+    /// @dev This is a specific hack to broadcast legacy data in a forward-compatible
+    //  method for indexers using the ICOWAMM interfaces.
+    constructor() {
+        broadcastLegacy();
+    }
+
     function factory() public view override returns (address) {
         uint256 chainId;
         assembly {
@@ -49,19 +55,22 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
     function order(address pool, uint256[] calldata prices)
         external
         view
-        returns (GPv2Order.Data memory, GPv2Interaction.Data[] memory, bytes memory)
+        returns (
+            GPv2Order.Data memory _order,
+            GPv2Interaction.Data[] memory preInteractions,
+            GPv2Interaction.Data[] memory postInteractions,
+            bytes memory sig
+        )
     {
         if (prices.length != 2) {
             revert InvalidArrayLength();
         }
 
-        GPv2Order.Data memory _order;
-        GPv2Interaction.Data[] memory interactions = new GPv2Interaction.Data[](1);
-        bytes memory sig;
-
         if (!isLegacy(pool)) {
             // Standalone CoW AMMs (**non-Gnosis Safe Wallets**)
-            if (!isCanonical(pool)) revert("Pool is not canonical");
+            if (!isCanonical(pool)) {
+                revert("Pool is not canonical");
+            }
 
             IERC20 token0 = ConstantProduct(pool).token0();
             IERC20 token1 = ConstantProduct(pool).token1();
@@ -82,16 +91,16 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
             );
 
             sig = abi.encode(_order);
-            interactions[0] = GPv2Interaction.Data({
+
+            preInteractions = new GPv2Interaction.Data[](1);
+            preInteractions[0] = GPv2Interaction.Data({
                 target: pool,
                 value: 0,
                 callData: abi.encodeCall(ConstantProduct.commit, (_order.hash(SETTLEMENT.domainSeparator())))
             });
         } else {
-            (_order, interactions, sig) = legacyOrder(pool, prices);
+            (_order, preInteractions, postInteractions, sig) = legacyOrder(pool, prices);
         }
-
-        return (_order, interactions, sig);
     }
 
     /// @dev Take advantage of the mapping on the factory that is set to the owner's address for canonical pools.

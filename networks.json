@@ -1,58 +1,16 @@
 {
-  "BalancerWeightedPoolPriceOracle": {
-    "1": {
-      "address": "0x32dBede1bD6559D7d3ecf279D1207B47cE147137",
-      "transactionHash": "0x9b9836a6992dff16d955da49f26abc3e0678f6240f7a4a3d97054501d65ea297"
-    },
-    "100": {
-      "address": "0x7ede1f69ccbf38ae4a0c2d53d8868a55f4311ba2",
-      "transactionHash": "0x50dcc1d75d2eeb92476d12a4e40da8fd73797ab25ff2fbaab327c022ddaa2123"
-    },
-    "11155111": {
-      "address": "0x7b073dd8192803ab692eb30e367f218ff399162d",
-      "transactionHash": "0x37a90d05f220d8e13053d6b5f8dea9d034f441dcaa09497f1f901df01c36d45c"
-    }
-  },
-  "ChainlinkPriceOracle": {
-    "1": {
-      "address": "0xF54c4bcc34a8750382B8fB0f0EC6f1A6C785af9c",
-      "transactionHash": "0x4a6ded6c5928a8e74daa6330408ab0532c8ab3b474cfac884261f16fb0ca659b"
-    },
-    "100": {
-      "address": "0xbd91a72dc3d9b5d9b16ee8638da1fc65311bd90a",
-      "transactionHash": "0x97abf8e06a37851a8d74ec75296656ddc8c2813feed63d4fbb7bf32a332a71bf"
-    },
-    "11155111": {
-      "address": "0x79200763b5bc95d8d6a3b53be1e9a494bc301940",
-      "transactionHash": "0x341f7936fe0bd5d80a775a7dbcd33d1df298bd89632bf3971df16745880d4e73"
-    }
-  },
   "ConstantProductFactory": {
     "1": {
-      "address": "0x40664207e3375FB4b733d4743CE9b159331fd034",
-      "transactionHash": "0xf37fc438ddacb00c28305bd7dea3b79091cd5be3405a2b445717d9faf946fa50"
+      "address": "0x8deed8ed7c5fcb55884f13f121654bb4bb7c8437",
+      "transactionHash": "0x4aa028aab545f88957d94f7d2a13924ade97f709c11dce12aac5f0609cd53b92"
     },
     "100": {
-      "address": "0xdb1cba3a87f2db53b6e1e6af48e28ed877592ec0",
-      "transactionHash": "0x4121efab4ad58ae7ad73b50448cccae0de92905e181648e5e08de3d6d9c66083"
+      "address": "0x2af6c59fc957d4a45ddbbd927fa30f7c5051f583",
+      "transactionHash": "0xf796756d733bcd656177c8db91cb39e2e35fbb101b7ab1e017d4727a84378333"
     },
     "11155111": {
-      "address": "0xb808e8183e3a72d196457d127c7fd4befa0d7fd3",
-      "transactionHash": "0x5e6af00c670eb421b96e78fd2e3b9df573b19e6e0ea77d8003e47cdde384b048"
-    }
-  },
-  "UniswapV2PriceOracle": {
-    "1": {
-      "address": "0xff77a62ADA5a37c2c500107DDc60F1292E030D85",
-      "transactionHash": "0x967564124beb451f546d2311e4b18addf9088888509366e9ab001de371534cf0"
-    },
-    "100": {
-      "address": "0x2145a393887b12f1fe7909d2d0c11dcdb53057ed",
-      "transactionHash": "0xf1a5eedd250dc75d6b632671a3e2fcafa153ccdc389aa6148e214f11a75fef48"
-    },
-    "11155111": {
-      "address": "0x79786bc861465fc4b355359545025676f8b5fbf9",
-      "transactionHash": "0x6f2092d0449a2508bccfc4acc6313961232a71f3e5faedf63c5f8b0821815c29"
+      "address": "0xbd18758055dbe3ed37a2471394559ae97a5da5c0",
+      "transactionHash": "0x6bb46c17360c05537b2b0a5f750e407c976c1839c219e555a02e79e3587fcab8"
     }
   }
 }

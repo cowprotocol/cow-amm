@@ -1,7 +1,53 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.24;
 
+import {ICOWAMMPoolFactory} from "../interfaces/ICOWAMMPoolFactory.sol";
+
+/// @title Snapshot of events that were indexed relating to CoW AMMs that had been deployed with the legacy method
+/// @dev The legacy method, where currently 99.99% of the liquidity for CoW AMMs is deployed, emits events within
+/// the ComposableCoW framework, which is not forward compatible with the CoW AMM interface standard. To abridge
+/// this gap, the utils contained within the repository were used to generate a snapshot of the legacy CoW AMMs.
+/// The output of this snapshot is contained within this contract, and is used to provide a forwards compatible
+/// interface for the CoW AMM interface standard.
 abstract contract Snapshot {
+    /// @dev Broadcasts the legacy CoW AMMs to the CoW AMM interface standard
+    function broadcastLegacy() internal {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+
+        if (chainId == 1) {
+            emitHelper(0x9941fD7dB2003308E7Ee17B04400012278F12aC6);
+            emitHelper(0xB3Bf81714f704720dcB0351fF0d42eCa61B069FC);
+            emitHelper(0x301076c36E034948A747BB61bAB9CD03f62672e3);
+            emitHelper(0x027e1CbF2C299CBa5eB8A2584910d04f1A8Aa403);
+            emitHelper(0xBEEf5aFE88eF73337e5070aB2855d37dBF5493A4);
+            emitHelper(0xC6B13D5E662FA0458F03995bCb824a1934aA895f);
+            emitHelper(0xd7cb8Cc1B56356BB7b78D02E785eAD28e2158660);
+        } else if (chainId == 100) {
+            emitHelper(0x321eB07a898A9F4FF5b23C0eCC2F5e78F297e6C8);
+            emitHelper(0xbc6159Fd429be18206e60b3BB01D7289F905511B);
+            emitHelper(0xE5d1Aa8565f5DBFc06cDE20dFD76B4C7C6d43BD5);
+            emitHelper(0x9d8570ef9A519CA81daec35212f435D9843bA564);
+            emitHelper(0xd97c31E53f16f495715ce71e12E11B9545eEDd8b);
+            emitHelper(0xFf1bD3d570e3544c183ba77F5A4D3Cc742C8D2b3);
+            emitHelper(0x209d269DfD66b9CEC764De7eb6FEFC24f75BdD48);
+            emitHelper(0xc37575Ad8EFE530FD8A79aEB0087e5872a24DABC);
+            emitHelper(0x1c7828DAdAdE12a848f36BE8E2d3146462ABfF68);
+            emitHelper(0xAbA5294BBA7d3635C2A3e44d0e87EA7f58898fB7);
+            emitHelper(0x6Eb7Be972aeBB6bE2d9aCF437Cb412C0AbeE912B);
+            emitHelper(0xC4d09969AAD7f252c75DD352bBBd719e34Ed06AD);
+            emitHelper(0xa25Af86A5dbeA45E9fd70c1879489F63D081AD44);
+            emitHelper(0x57492cb6C8ee2998E9D83dDc8c713e781ffE548E);
+            emitHelper(0xC33E3ec14556A8e71be3097Fe2dC8C0b9119C897);
+        }
+    }
+
+    function emitHelper(address amm) internal {
+        emit ICOWAMMPoolFactory.COWAMMPoolCreated(amm);
+    }
+
     /// @dev Returns the IConditionalOrder.ConditionalOrderParams for a legacy CoW AMM. Returns bytes(0) if the pool
     /// isn't found in the snapshot data.
     function getSnapshot(address amm) public view returns (bytes memory) {
