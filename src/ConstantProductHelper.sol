@@ -10,6 +10,12 @@ import {Helper as LegacyHelper} from "./legacy/Helper.sol";
 contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
     using GPv2Order for GPv2Order.Data;
 
+    /// @dev This is a specific hack to broadcast legacy data in a forward-compatible
+    //  method for indexers using the ICOWAMM interfaces.
+    constructor() {
+        broadcastLegacy();
+    }
+
     function factory() public view override returns (address) {
         uint256 chainId;
         assembly {
