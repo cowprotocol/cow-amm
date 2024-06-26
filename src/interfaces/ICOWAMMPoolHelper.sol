@@ -62,5 +62,10 @@ interface ICOWAMMPoolHelper {
     function order(address pool, uint256[] calldata prices)
         external
         view
-        returns (GPv2Order.Data memory order, GPv2Interaction.Data[] memory preInteractions, GPv2Interaction.Data[] memory postInteractions, bytes memory sig);
+        returns (
+            GPv2Order.Data memory order,
+            GPv2Interaction.Data[] memory preInteractions,
+            GPv2Interaction.Data[] memory postInteractions,
+            bytes memory sig
+        );
 }
