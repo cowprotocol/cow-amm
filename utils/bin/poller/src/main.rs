@@ -3,7 +3,7 @@ use cow_amm_common::{
     ConstantProductHelper::{self, ConstantProductHelperErrors},
     GPv2Settlement,
     IConstantProductHelper::{self, dReturn},
-    IMulticall3, IPriceOracle, LegacyTradingParams, Order, IERC1271,
+    IMulticall3, IPriceOracle, LegacyConstantProduct, LegacyTradingParams, Order, IERC1271,
 };
 use std::collections::HashMap;
 
@@ -12,7 +12,7 @@ use std::str::FromStr;
 use alloy::{
     contract::Error,
     hex,
-    primitives::{Address, Bytes},
+    primitives::{Address, Bytes, FixedBytes, U256},
     providers::{Provider, ProviderBuilder},
     rpc::types::state::AccountOverride,
     sol_types::{
@@ -59,42 +59,75 @@ async fn main() -> eyre::Result<()> {
         .call()
         .await?;
 
-    // Third decode the data and get the trading params
-    let (data,) = ComposableCoW::ConditionalOrderCreated::abi_decode_data(&data._0, true).unwrap();
-    let trading_params = LegacyTradingParams::abi_decode(&data.staticInput, true).unwrap();
+    // Check if the AMM is legacy
+    let legacy = !data._0.is_empty();
 
-    // Fourth, let's get the price from the oracle
-    let oracle_price = IPriceOracle::new(trading_params.priceOracle, provider.clone())
-        .getPrice(
-            trading_params.token0,
-            trading_params.token1,
-            trading_params.priceOracleData,
-        )
-        .call()
-        .await
-        .unwrap();
+    let numerator = std::env::var("NUMERATOR");
+    let denominator = std::env::var("DENOMINATOR");
 
-    println!(
-        "Oracle Price: {:?} / {:?}",
-        oracle_price.priceNumerator, oracle_price.priceDenominator
-    );
+    let (numerator, denominator, other_post_interactions) = match legacy {
+        true => {
+            // Third decode the data and get the trading params
+            let (data,) =
+                ComposableCoW::ConditionalOrderCreated::abi_decode_data(&data._0, true).unwrap();
+            let trading_params = LegacyTradingParams::abi_decode(&data.staticInput, true).unwrap();
+
+            let (numerator, denominator) = match (numerator, denominator) {
+                (Ok(n), Ok(d)) => (U256::from_str(&n)?, U256::from_str(&d)?),
+                _ => {
+                    let oracle_price =
+                        IPriceOracle::new(trading_params.priceOracle, provider.clone())
+                            .getPrice(
+                                trading_params.token0,
+                                trading_params.token1,
+                                trading_params.priceOracleData,
+                            )
+                            .call()
+                            .await
+                            .unwrap();
+                    println!(
+                        "Oracle Price: {:?} / {:?}",
+                        oracle_price.priceNumerator, oracle_price.priceDenominator
+                    );
+                    (oracle_price.priceNumerator, oracle_price.priceDenominator)
+                }
+            };
+
+            (
+                numerator,
+                denominator,
+                Some(IMulticall3::Call {
+                    target: data.handler,
+                    callData: LegacyConstantProduct::commitmentCall { amm }
+                        .abi_encode()
+                        .into(),
+                }),
+            )
+        }
+        false => match (numerator, denominator) {
+            (Ok(n), Ok(d)) => (U256::from_str(&n)?, U256::from_str(&d)?, None),
+            _ => {
+                return Err(eyre::eyre!(
+                    "NUMERATOR and DENOMINATOR env vars must be set for non-legacy AMMs"
+                ))
+            }
+        },
+    };
 
     // Fifth, we now have relative prices, so we can use the helper to get the order
     let hint = helper
-        .order(
-            amm,
-            vec![oracle_price.priceNumerator, oracle_price.priceDenominator],
-        )
+        .order(amm, vec![numerator, denominator])
         .state(overrides)
         .call_raw()
         .await
         .map_or_else(Err, |d| {
             let dReturn {
                 order,
-                interactions,
+                preInteractions,
+                postInteractions,
                 sig,
             } = IConstantProductHelper::dCall::abi_decode_returns(&d, true).unwrap();
-            Ok((order, interactions, sig))
+            Ok((order, preInteractions, postInteractions, sig))
         });
 
     // Sixth, use the hint and verify that it can be settled on-chain. This is done by:
@@ -105,10 +138,11 @@ async fn main() -> eyre::Result<()> {
     // 4. We will then verify that the `isValidSignature` function returns valid
 
     match hint {
-        Ok((order, interactions, sig)) => {
+        Ok((order, pre_interactions, post_interactions, sig)) => {
             println!("\nHint received!");
             println!("Order: {:?}", order);
-            println!("Interactions: {:?}", interactions.clone());
+            println!("Pre Interactions: {:?}", pre_interactions.clone());
+            println!("Post Interactions: {:?}", post_interactions.clone());
             println!("Sig: {:?}", sig);
 
             let offchain_order = Order::try_from(order).unwrap();
@@ -126,11 +160,16 @@ async fn main() -> eyre::Result<()> {
             let payload = IMulticall3::tryAggregateCall {
                 requireSuccess: true,
                 calls: vec![
-                    IMulticall3::Call {
-                        target: interactions[0].target,
-                        callData: interactions[0].callData.clone(),
-                    },
-                    IMulticall3::Call {
+                    // Inline mapping of pre_interactions to Multicall3::Call
+                    pre_interactions
+                        .iter()
+                        .map(|interaction| IMulticall3::Call {
+                            target: interaction.target,
+                            callData: interaction.callData.clone(),
+                        })
+                        .collect::<Vec<_>>(),
+                    // Inserting the isValidSignature call
+                    vec![IMulticall3::Call {
                         target: amm,
                         callData: IERC1271::isValidSignatureCall {
                             _hash: signing_message,
@@ -138,8 +177,23 @@ async fn main() -> eyre::Result<()> {
                         }
                         .abi_encode()
                         .into(),
+                    }],
+                    // Inline mapping of post_interactions to Multicall3::Call
+                    post_interactions
+                        .iter()
+                        .map(|interaction| IMulticall3::Call {
+                            target: interaction.target,
+                            callData: interaction.callData.clone(),
+                        })
+                        .collect::<Vec<_>>(),
+                    {
+                        match other_post_interactions {
+                            Some(other_post_interactions) => vec![other_post_interactions],
+                            None => vec![],
+                        }
                     },
-                ],
+                ]
+                .concat(),
             }
             .abi_encode();
             println!(
@@ -155,7 +209,48 @@ async fn main() -> eyre::Result<()> {
 
             match result {
                 Ok(result) => {
-                    println!("\nSuccess!\n{:?}", result);
+                    let response =
+                        IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
+
+                    let length = pre_interactions.len() + post_interactions.len() + 1;
+
+                    // Check that all calls were successful
+                    response.returnData[0..pre_interactions.len()]
+                        .iter()
+                        .for_each(|r| {
+                            assert!(r.success, "Pre interaction Call failed");
+                        });
+
+                    // Check that the signature was correct
+                    assert!(response.returnData[pre_interactions.len()].success);
+
+                    // Check that all post interactions were successful
+                    response.returnData[pre_interactions.len() + 1..]
+                        .iter()
+                        .for_each(|r| {
+                            assert!(r.success, "Post interaction Call failed");
+                        });
+
+                    // If legacy, check there is another interaction that returns the commitment
+                    // after the post interaction is meant to set it back to `bytes32(0)`
+                    if legacy {
+                        assert_eq!(
+                            response.returnData.len(),
+                            length + 1,
+                            "Missing expected commitment check"
+                        );
+                        assert!(
+                            response.returnData[length].success,
+                            "Commitment check failed"
+                        );
+                        assert_eq!(
+                            **response.returnData[length].returnData,
+                            FixedBytes::<32>::default(),
+                            "Commitment was not reset"
+                        );
+                    }
+
+                    println!("\nGenerated order was able to be settled successfully!");
                 }
                 Err(e) => {
                     println!("Error: {:?}", e);

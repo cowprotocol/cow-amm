@@ -74,7 +74,14 @@ sol! {
     interface IERC1271 {
         function isValidSignature(bytes32 _hash, bytes calldata signature) external view returns (bytes4 magicValue);
     }
+}
 
+sol! {
+    #[allow(missing_docs)]
+    #[derive(Debug)]
+    interface LegacyConstantProduct {
+        function commitment(address amm) external view returns (bytes32);
+    }
 }
 
 sol! {
@@ -137,7 +144,7 @@ sol! {
             uint256 value;
             bytes callData;
         }
-        function d() external view returns (OnchainOrder memory order, Interaction[] memory interactions, bytes memory sig);
+        function d() external view returns (OnchainOrder memory order, Interaction[] memory preInteractions, Interaction[] memory postInteractions, bytes memory sig);
     }
 }
 

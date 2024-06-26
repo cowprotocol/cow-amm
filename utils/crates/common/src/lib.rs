@@ -7,6 +7,7 @@ pub use contracts::GPv2Settlement;
 pub use contracts::IConstantProductHelper;
 pub use contracts::IMulticall3;
 pub use contracts::IPriceOracle;
+pub use contracts::LegacyConstantProduct;
 pub use contracts::LegacyTradingParams;
 pub use contracts::Order;
 pub use contracts::IERC1271;
