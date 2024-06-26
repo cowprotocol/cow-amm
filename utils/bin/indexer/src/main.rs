@@ -14,7 +14,7 @@ sol!(
     #[allow(clippy::too_many_arguments)]
     #[sol(rpc)]
     ComposableCoW,
-    "../../abi/ComposableCoW.json"
+    "../../../out/ComposableCoW.sol/ComposableCoW.json"
 );
 
 #[tokio::main]
@@ -26,10 +26,10 @@ async fn main() -> eyre::Result<()> {
     const GNOSIS_CONSTANT_PRODUCT_HANDLER: &str = "0xB148F40fff05b5CE6B22752cf8E454B556f7a851";
     const COMPOSABLE_COW: &str = "0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74";
 
-    let rpc_url = std::env::var("RPC_URL")
-        .expect("Environment variable `RPC_URL` is not set")
+    let rpc_url = std::env::var("ETH_RPC_URL")
+        .expect("Environment variable `ETH_RPC_URL` is not set")
         .parse()
-        .expect("Invalid RPC_URL");
+        .expect("Invalid ETH_RPC_URL");
     let provider = ProviderBuilder::new().on_http(rpc_url);
 
     // Determine the chain and then set the constant product handler and genesis block
