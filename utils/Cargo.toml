@@ -9,7 +9,6 @@ members = [
 default-members = [
     "bin/indexer",
 ]
-resolver = "2"
 
 [workspace.dependencies]
 alloy = { version = "0.1", features = [ "full", "rpc-client" ] }
