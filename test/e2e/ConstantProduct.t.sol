@@ -59,8 +59,6 @@ contract E2EConditionalOrderTest is BaseComposableCoWTest {
         assertEq(DAI.balanceOf(owner), startAmountDai);
         assertEq(WETH.balanceOf(owner), startAmountWeth);
 
-        uint256 minTradedToken0 = 0;
-        bytes memory priceOracleData = abi.encode(UniswapV2PriceOracle.Data(pair));
         ConstantProduct amm = ammFactory.create(DAI, startAmountDai, WETH, startAmountWeth);
         bytes32 appData = amm.APP_DATA();
         vm.stopPrank();
