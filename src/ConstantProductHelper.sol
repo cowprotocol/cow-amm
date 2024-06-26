@@ -69,7 +69,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
         if (!isLegacy(pool)) {
             // Standalone CoW AMMs (**non-Gnosis Safe Wallets**)
             if (!isCanonical(pool)) {
-                revert("Pool is not canonical");
+                revert("Pool is not a CoW AMM");
             }
 
             IERC20 token0 = ConstantProduct(pool).token0();
