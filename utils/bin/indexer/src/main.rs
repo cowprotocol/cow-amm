@@ -14,7 +14,7 @@ sol!(
     #[allow(clippy::too_many_arguments)]
     #[sol(rpc)]
     ComposableCoW,
-    "../../abi/ComposableCoW.json"
+    "../../../out/ComposableCoW.sol/ComposableCoW.json"
 );
 
 #[tokio::main]
