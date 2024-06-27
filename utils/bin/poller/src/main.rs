@@ -24,7 +24,7 @@ use alloy::{
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     const SETTLEMENT: &str = "0x9008D19f58AAbD9eD0D60971565AA8510560ab41";
-    const MUTLICALL3: &str = "0xcA11bde05977b3631167028862bE2a173976CA11";
+    const MULTICALL3: &str = "0xcA11bde05977b3631167028862bE2a173976CA11";
 
     // Create a provider.
     let provider = ProviderBuilder::new().on_http(rpc_url());
@@ -74,6 +74,11 @@ async fn main() -> eyre::Result<()> {
 
             let (numerator, denominator) = match (numerator, denominator) {
                 (Ok(n), Ok(d)) => (U256::from_str(&n)?, U256::from_str(&d)?),
+                (Ok(_), _) | (_, Ok(_)) => {
+                    return Err(eyre::eyre!(
+                        "Must not set just one of NUMERATOR and DENOMINATOR"
+                    ))
+                }
                 _ => {
                     let oracle_price =
                         IPriceOracle::new(trading_params.priceOracle, provider.clone())
