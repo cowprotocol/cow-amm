@@ -21,6 +21,10 @@
     "100": {
       "address": "0x18a2facebef44a72dfdcc52ef9588fefc84fdfbf",
       "transactionHash": "0xcdbc954d309e0c1a68e5ab499530ce53ef20001ae47e092525578fb228d8fab9"
+    },
+    "11155111": {
+      "address": "0x758fe3195f6499fd64de2b96a0b97d0441c10bab",
+      "transactionHash": "0x544836f65ba99d61687dc829fb8d1ef657ca29b5011fca4d2758c677256d570a"
     }
   }
 }
