@@ -67,7 +67,10 @@ async fn main() -> eyre::Result<()> {
     let numerator = std::env::var("NUMERATOR");
     let denominator = std::env::var("DENOMINATOR");
 
-    let (numerator, denominator, other_post_interactions) = match legacy {
+    // Here we determine the numerator / denominator, as well as the commitment read address
+    // The committment read address changes between legacy and non-legacy AMMs
+    // (Legacy is within the ConstantProduct *handler* field, non-legacy is the AMM address itself)
+    let (numerator, denominator, commitment_read_address) = match legacy {
         true => {
             // Third decode the data and get the trading params
             let (data,) =
@@ -100,19 +103,10 @@ async fn main() -> eyre::Result<()> {
                 }
             };
 
-            (
-                numerator,
-                denominator,
-                Some(IMulticall3::Call {
-                    target: data.handler,
-                    callData: LegacyConstantProduct::commitmentCall { amm }
-                        .abi_encode()
-                        .into(),
-                }),
-            )
+            (numerator, denominator, data.handler)
         }
         false => match (numerator, denominator) {
-            (Ok(n), Ok(d)) => (U256::from_str(&n)?, U256::from_str(&d)?, None),
+            (Ok(n), Ok(d)) => (U256::from_str(&n)?, U256::from_str(&d)?, amm),
             _ => {
                 return Err(eyre::eyre!(
                     "NUMERATOR and DENOMINATOR env vars must be set for non-legacy AMMs"
@@ -168,29 +162,33 @@ async fn main() -> eyre::Result<()> {
             let num_post_interactions = post_interactions.len();
 
             // To do this, we will make use of Multicall3
+            let calls = [
+                map_interactions(pre_interactions.clone())?,
+                vec![IMulticall3::Call {
+                    target: amm,
+                    callData: IERC1271::isValidSignatureCall {
+                        _hash: signing_message,
+                        signature: sig,
+                    }
+                    .abi_encode()
+                    .into(),
+                }],
+                map_interactions(post_interactions.clone())?,
+                // read the commitment after the post interactions
+                vec![IMulticall3::Call {
+                    target: commitment_read_address,
+                    callData: LegacyConstantProduct::commitmentCall {
+                        amm: commitment_read_address,
+                    }
+                    .abi_encode()
+                    .into(),
+                }],
+            ]
+            .concat();
+
             let payload = IMulticall3::tryAggregateCall {
                 requireSuccess: true,
-                calls: [
-                    map_interactions(pre_interactions)?,
-                    // Inserting the isValidSignature call
-                    vec![IMulticall3::Call {
-                        target: amm,
-                        callData: IERC1271::isValidSignatureCall {
-                            _hash: signing_message,
-                            signature: sig,
-                        }
-                        .abi_encode()
-                        .into(),
-                    }],
-                    map_interactions(post_interactions)?,
-                    {
-                        match other_post_interactions {
-                            Some(other_post_interactions) => vec![other_post_interactions],
-                            None => vec![],
-                        }
-                    },
-                ]
-                .concat(),
+                calls,
             }
             .abi_encode();
             println!(
@@ -234,25 +232,32 @@ async fn main() -> eyre::Result<()> {
                             assert!(r.success, "Post interaction Call failed");
                         });
 
-                    // If legacy, check there is another interaction that returns the commitment
-                    // after the post interaction is meant to set it back to `bytes32(0)`
-                    if legacy {
-                        let length = num_pre_interactions + num_post_interactions + 1;
+                    // Check the status of the commitment, depending on if legacy or not.
+                    let length = num_pre_interactions + num_post_interactions + 1;
 
-                        assert_eq!(
-                            response.returnData.len(),
-                            length + 1,
-                            "Missing expected commitment check"
-                        );
-                        assert!(
-                            response.returnData[length].success,
-                            "Commitment check failed"
-                        );
-                        assert_eq!(
-                            **response.returnData[length].returnData,
-                            FixedBytes::<32>::default(),
-                            "Commitment was not reset"
-                        );
+                    assert_eq!(
+                        response.returnData.len(),
+                        length + 1,
+                        "Missing expected commitment check"
+                    );
+                    assert!(
+                        response.returnData[length].success,
+                        "Commitment check failed"
+                    );
+                    match legacy {
+                        true => {
+                            assert_eq!(
+                                **response.returnData[length].returnData,
+                                FixedBytes::<32>::default(),
+                                "Commitment was not reset (legacy)"
+                            );
+                        }
+                        false => {
+                            assert_eq!(
+                                **response.returnData[length].returnData, signing_message,
+                                "Commitment should NOT have been reset (transient)"
+                            );
+                        }
                     }
 
                     println!("\nGenerated order was able to be settled successfully!");
