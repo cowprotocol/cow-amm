@@ -148,15 +148,13 @@ async fn main() -> eyre::Result<()> {
                 let decoded_error = ConstantProductHelperErrors::abi_decode(&data, true);
 
                 match decoded_error {
-                    Ok(t) => match t {
-                        ConstantProductHelperErrors::PoolDoesNotExist(_) => {
-                            format!("Pool does not exist: {:?}", amm)
-                        }
-                        ConstantProductHelperErrors::PoolIsClosed(_) => {
-                            format!("Pool is closed: {:?}", amm)
-                        }
-                        _ => format!("Unspecified ConstantProductHelperErrors"),
-                    },
+                    Ok(ConstantProductHelperErrors::PoolDoesNotExist(_)) => {
+                        format!("Pool does not exist: {:?}", amm)
+                    }
+                    Ok(ConstantProductHelperErrors::PoolIsClosed(_)) => {
+                        format!("Pool is closed: {:?}", amm)
+                    }
+                    Ok(_) => format!("Unspecified ConstantProductHelperError"),
                     Err(e) => match decode_revert_reason(&data) {
                         Some(reason) => format!("Reason: {:?}", reason),
                         None => format!("Err: {:?}", e),
