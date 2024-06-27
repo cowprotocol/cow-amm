@@ -2,10 +2,12 @@ use cow_amm_common::{
     rpc_url, ComposableCoW,
     ConstantProductHelper::{self, ConstantProductHelperErrors},
     GPv2Settlement,
-    IConstantProductHelper::{self, dReturn},
+    IConstantProductHelper::{self, dReturn, Interaction},
     IMulticall3, IPriceOracle, LegacyConstantProduct, LegacyTradingParams, Order, IERC1271,
 };
 use std::collections::HashMap;
+
+use eyre::Result;
 
 use std::str::FromStr;
 
@@ -161,18 +163,15 @@ async fn main() -> eyre::Result<()> {
 
             let signing_message = offchain_order.eip712_signing_hash(&domain);
 
+            // stash the number of interactions so map_interactions can consume the slice
+            let num_pre_interactions = pre_interactions.len();
+            let num_post_interactions = post_interactions.len();
+
             // To do this, we will make use of Multicall3
             let payload = IMulticall3::tryAggregateCall {
                 requireSuccess: true,
                 calls: [
-                    // Inline mapping of pre_interactions to Multicall3::Call
-                    pre_interactions
-                        .iter()
-                        .map(|interaction| IMulticall3::Call {
-                            target: interaction.target,
-                            callData: interaction.callData.clone(),
-                        })
-                        .collect::<Vec<_>>(),
+                    map_interactions(pre_interactions)?,
                     // Inserting the isValidSignature call
                     vec![IMulticall3::Call {
                         target: amm,
@@ -183,14 +182,7 @@ async fn main() -> eyre::Result<()> {
                         .abi_encode()
                         .into(),
                     }],
-                    // Inline mapping of post_interactions to Multicall3::Call
-                    post_interactions
-                        .iter()
-                        .map(|interaction| IMulticall3::Call {
-                            target: interaction.target,
-                            callData: interaction.callData.clone(),
-                        })
-                        .collect::<Vec<_>>(),
+                    map_interactions(post_interactions)?,
                     {
                         match other_post_interactions {
                             Some(other_post_interactions) => vec![other_post_interactions],
@@ -217,20 +209,18 @@ async fn main() -> eyre::Result<()> {
                     let response =
                         IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
 
-                    let length = pre_interactions.len() + post_interactions.len() + 1;
-
                     // Check that all calls were successful
-                    response.returnData[0..pre_interactions.len()]
+                    response.returnData[0..num_pre_interactions]
                         .iter()
                         .for_each(|r| {
                             assert!(r.success, "Pre interaction Call failed");
                         });
 
                     // Check that the signature was correct
-                    assert!(response.returnData[pre_interactions.len()].success);
+                    assert!(response.returnData[num_pre_interactions].success);
                     assert_eq!(
                         FixedBytes::<4>::abi_decode(
-                            &response.returnData[pre_interactions.len()].returnData,
+                            &response.returnData[num_pre_interactions].returnData,
                             true
                         )?,
                         IERC1271::isValidSignatureCall::SELECTOR,
@@ -238,7 +228,7 @@ async fn main() -> eyre::Result<()> {
                     );
 
                     // Check that all post interactions were successful
-                    response.returnData[pre_interactions.len() + 1..]
+                    response.returnData[num_pre_interactions + 1..]
                         .iter()
                         .for_each(|r| {
                             assert!(r.success, "Post interaction Call failed");
@@ -247,6 +237,8 @@ async fn main() -> eyre::Result<()> {
                     // If legacy, check there is another interaction that returns the commitment
                     // after the post interaction is meant to set it back to `bytes32(0)`
                     if legacy {
+                        let length = num_pre_interactions + num_post_interactions + 1;
+
                         assert_eq!(
                             response.returnData.len(),
                             length + 1,
@@ -303,4 +295,21 @@ async fn main() -> eyre::Result<()> {
     }
 
     Ok(())
+}
+
+/// Maps the interactions to the Multicall3::Call type, verifying that the value is 0
+fn map_interactions(interactions: Vec<Interaction>) -> Result<Vec<IMulticall3::Call>> {
+    interactions
+        .iter()
+        .map(|interaction| {
+            if !interaction.value.is_zero() {
+                return Err(eyre::eyre!("Value must be 0"));
+            }
+
+            Ok(IMulticall3::Call {
+                target: interaction.target,
+                callData: interaction.callData.clone(),
+            })
+        })
+        .collect()
 }
