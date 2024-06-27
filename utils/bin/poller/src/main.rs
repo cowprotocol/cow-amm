@@ -164,7 +164,7 @@ async fn main() -> eyre::Result<()> {
             // To do this, we will make use of Multicall3
             let payload = IMulticall3::tryAggregateCall {
                 requireSuccess: true,
-                calls: vec![
+                calls: [
                     // Inline mapping of pre_interactions to Multicall3::Call
                     pre_interactions
                         .iter()
@@ -208,7 +208,7 @@ async fn main() -> eyre::Result<()> {
 
             let settlement = GPv2Settlement::new(SETTLEMENT.parse().unwrap(), provider.clone());
             let result = settlement
-                .simulateDelegatecall(MUTLICALL3.parse().unwrap(), payload.into())
+                .simulateDelegatecall(MULTICALL3.parse().unwrap(), payload.into())
                 .call()
                 .await;
 
@@ -230,7 +230,7 @@ async fn main() -> eyre::Result<()> {
                     assert!(response.returnData[pre_interactions.len()].success);
                     assert_eq!(
                         FixedBytes::<4>::abi_decode(
-                            &*response.returnData[pre_interactions.len()].returnData,
+                            &response.returnData[pre_interactions.len()].returnData,
                             true
                         )?,
                         IERC1271::isValidSignatureCall::SELECTOR,
