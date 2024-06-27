@@ -229,70 +229,61 @@ async fn main() -> eyre::Result<()> {
         .call()
         .await;
 
-    match result {
-        Ok(result) => {
-            let response =
-                IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
+    let result = result.map_err(|e| eyre::eyre!("Error: {:?}", e))?;
 
-            // Check that all calls were successful
-            response.returnData[0..num_pre_interactions]
-                .iter()
-                .for_each(|r| {
-                    assert!(r.success, "Pre interaction Call failed");
-                });
+    let response = IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
 
-            // Check that the signature was correct
-            assert!(response.returnData[num_pre_interactions].success);
+    // Check that all calls were successful
+    response.returnData[0..num_pre_interactions]
+        .iter()
+        .for_each(|r| {
+            assert!(r.success, "Pre interaction Call failed");
+        });
+
+    // Check that the signature was correct
+    assert!(response.returnData[num_pre_interactions].success);
+    assert_eq!(
+        FixedBytes::<4>::abi_decode(&response.returnData[num_pre_interactions].returnData, true)?,
+        IERC1271::isValidSignatureCall::SELECTOR,
+        "Signature was not valid"
+    );
+
+    // Check that all post interactions were successful
+    response.returnData[num_pre_interactions + 1..]
+        .iter()
+        .for_each(|r| {
+            assert!(r.success, "Post interaction Call failed");
+        });
+
+    // Check the status of the commitment, depending on if legacy or not.
+    let length = num_pre_interactions + num_post_interactions + 1;
+
+    assert_eq!(
+        response.returnData.len(),
+        length + 1,
+        "Missing expected commitment check"
+    );
+    assert!(
+        response.returnData[length].success,
+        "Commitment check failed"
+    );
+    match legacy {
+        true => {
             assert_eq!(
-                FixedBytes::<4>::abi_decode(
-                    &response.returnData[num_pre_interactions].returnData,
-                    true
-                )?,
-                IERC1271::isValidSignatureCall::SELECTOR,
-                "Signature was not valid"
+                **response.returnData[length].returnData,
+                FixedBytes::<32>::default(),
+                "Commitment was not reset (legacy)"
             );
-
-            // Check that all post interactions were successful
-            response.returnData[num_pre_interactions + 1..]
-                .iter()
-                .for_each(|r| {
-                    assert!(r.success, "Post interaction Call failed");
-                });
-
-            // Check the status of the commitment, depending on if legacy or not.
-            let length = num_pre_interactions + num_post_interactions + 1;
-
-            assert_eq!(
-                response.returnData.len(),
-                length + 1,
-                "Missing expected commitment check"
-            );
-            assert!(
-                response.returnData[length].success,
-                "Commitment check failed"
-            );
-            match legacy {
-                true => {
-                    assert_eq!(
-                        **response.returnData[length].returnData,
-                        FixedBytes::<32>::default(),
-                        "Commitment was not reset (legacy)"
-                    );
-                }
-                false => {
-                    assert_eq!(
-                        **response.returnData[length].returnData, signing_message,
-                        "Commitment should NOT have been reset (transient)"
-                    );
-                }
-            }
-
-            println!("\nGenerated order was able to be settled successfully!");
         }
-        Err(e) => {
-            println!("Error: {:?}", e);
+        false => {
+            assert_eq!(
+                **response.returnData[length].returnData, signing_message,
+                "Commitment should NOT have been reset (transient)"
+            );
         }
     }
+
+    println!("\nGenerated order was able to be settled successfully!");
 
     Ok(())
 }
