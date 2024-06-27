@@ -53,8 +53,11 @@ abstract contract Helper is Snapshot {
                 pool: pool,
                 token0: _tokens[0],
                 token1: _tokens[1],
-                priceNumerator: prices[0],
-                priceDenominator: prices[1],
+                // The price of this function is expressed as amount of
+                // token1 per amount of token0. The `prices` vector is
+                // expressed the other way around.
+                priceNumerator: prices[1],
+                priceDenominator: prices[0],
                 appData: tradingParams.appData
             })
         );
