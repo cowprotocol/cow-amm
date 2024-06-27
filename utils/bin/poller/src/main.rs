@@ -138,161 +138,156 @@ async fn main() -> eyre::Result<()> {
     //    normally during the course of the settlement process
     // 4. We will then verify that the `isValidSignature` function returns valid
 
-    match hint {
-        Ok((order, pre_interactions, post_interactions, sig)) => {
-            println!("\nHint received!");
-            println!("Order: {:?}", order);
-            println!("Pre Interactions: {:?}", pre_interactions.clone());
-            println!("Post Interactions: {:?}", post_interactions.clone());
-            println!("Sig: {:?}", sig);
+    let (order, pre_interactions, post_interactions, sig) = hint.map_err(|e| {
+        eyre::eyre!(match e {
+            Error::TransportError(TransportError::ErrorResp(err)) => {
+                let data = err.data.unwrap_or_default();
+                let data = data.get().trim_matches('"');
+                let data = Bytes::from_str(data).unwrap();
+                println!("Data: {:?}", data);
+                let decoded_error = ConstantProductHelperErrors::abi_decode(&data, true);
 
-            let offchain_order = Order::try_from(order).unwrap();
-
-            let domain = eip712_domain! {
-                name: "Gnosis Protocol",
-                version: "v2",
-                chain_id: chain_id,
-                verifying_contract: SETTLEMENT.parse()?,
-            };
-
-            let signing_message = offchain_order.eip712_signing_hash(&domain);
-
-            // stash the number of interactions so map_interactions can consume the slice
-            let num_pre_interactions = pre_interactions.len();
-            let num_post_interactions = post_interactions.len();
-
-            // To do this, we will make use of Multicall3
-            let calls = [
-                map_interactions(pre_interactions.clone())?,
-                vec![IMulticall3::Call {
-                    target: amm,
-                    callData: IERC1271::isValidSignatureCall {
-                        _hash: signing_message,
-                        signature: sig,
-                    }
-                    .abi_encode()
-                    .into(),
-                }],
-                map_interactions(post_interactions.clone())?,
-                // read the commitment after the post interactions
-                vec![IMulticall3::Call {
-                    target: commitment_read_address,
-                    callData: LegacyConstantProduct::commitmentCall {
-                        amm: commitment_read_address,
-                    }
-                    .abi_encode()
-                    .into(),
-                }],
-            ]
-            .concat();
-
-            let payload = IMulticall3::tryAggregateCall {
-                requireSuccess: true,
-                calls,
+                match decoded_error {
+                    Ok(t) => match t {
+                        ConstantProductHelperErrors::PoolDoesNotExist(_) => {
+                            format!("Pool does not exist: {:?}", amm)
+                        }
+                        ConstantProductHelperErrors::PoolIsClosed(_) => {
+                            format!("Pool is closed: {:?}", amm)
+                        }
+                        _ => format!("Unspecified ConstantProductHelperErrors"),
+                    },
+                    Err(e) => match decode_revert_reason(&data) {
+                        Some(reason) => format!("Reason: {:?}", reason),
+                        None => format!("Err: {:?}", e),
+                    },
+                }
             }
-            .abi_encode();
-            println!(
-                "\nsimulateDelegateCall payload: {:?}",
-                hex::encode(payload.clone())
+            e => format!("Error: {:?}", e),
+        })
+    })?;
+
+    println!("\nHint received!");
+    println!("Order: {:?}", order);
+    println!("Pre Interactions: {:?}", pre_interactions.clone());
+    println!("Post Interactions: {:?}", post_interactions.clone());
+    println!("Sig: {:?}", sig);
+
+    let offchain_order = Order::try_from(order).unwrap();
+
+    let domain = eip712_domain! {
+        name: "Gnosis Protocol",
+        version: "v2",
+        chain_id: chain_id,
+        verifying_contract: SETTLEMENT.parse()?,
+    };
+
+    let signing_message = offchain_order.eip712_signing_hash(&domain);
+
+    // stash the number of interactions so map_interactions can consume the slice
+    let num_pre_interactions = pre_interactions.len();
+    let num_post_interactions = post_interactions.len();
+
+    // To do this, we will make use of Multicall3
+    let calls = [
+        map_interactions(pre_interactions.clone())?,
+        vec![IMulticall3::Call {
+            target: amm,
+            callData: IERC1271::isValidSignatureCall {
+                _hash: signing_message,
+                signature: sig,
+            }
+            .abi_encode()
+            .into(),
+        }],
+        map_interactions(post_interactions.clone())?,
+        // read the commitment after the post interactions
+        vec![IMulticall3::Call {
+            target: commitment_read_address,
+            callData: LegacyConstantProduct::commitmentCall {
+                amm: commitment_read_address,
+            }
+            .abi_encode()
+            .into(),
+        }],
+    ]
+    .concat();
+
+    let payload = IMulticall3::tryAggregateCall {
+        requireSuccess: true,
+        calls,
+    }
+    .abi_encode();
+    println!(
+        "\nsimulateDelegateCall payload: {:?}",
+        hex::encode(payload.clone())
+    );
+
+    let settlement = GPv2Settlement::new(SETTLEMENT.parse().unwrap(), provider.clone());
+    let result = settlement
+        .simulateDelegatecall(MULTICALL3.parse().unwrap(), payload.into())
+        .call()
+        .await;
+
+    match result {
+        Ok(result) => {
+            let response =
+                IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
+
+            // Check that all calls were successful
+            response.returnData[0..num_pre_interactions]
+                .iter()
+                .for_each(|r| {
+                    assert!(r.success, "Pre interaction Call failed");
+                });
+
+            // Check that the signature was correct
+            assert!(response.returnData[num_pre_interactions].success);
+            assert_eq!(
+                FixedBytes::<4>::abi_decode(
+                    &response.returnData[num_pre_interactions].returnData,
+                    true
+                )?,
+                IERC1271::isValidSignatureCall::SELECTOR,
+                "Signature was not valid"
             );
 
-            let settlement = GPv2Settlement::new(SETTLEMENT.parse().unwrap(), provider.clone());
-            let result = settlement
-                .simulateDelegatecall(MULTICALL3.parse().unwrap(), payload.into())
-                .call()
-                .await;
+            // Check that all post interactions were successful
+            response.returnData[num_pre_interactions + 1..]
+                .iter()
+                .for_each(|r| {
+                    assert!(r.success, "Post interaction Call failed");
+                });
 
-            match result {
-                Ok(result) => {
-                    let response =
-                        IMulticall3::tryAggregateCall::abi_decode_returns(&result.response, true)?;
+            // Check the status of the commitment, depending on if legacy or not.
+            let length = num_pre_interactions + num_post_interactions + 1;
 
-                    // Check that all calls were successful
-                    response.returnData[0..num_pre_interactions]
-                        .iter()
-                        .for_each(|r| {
-                            assert!(r.success, "Pre interaction Call failed");
-                        });
-
-                    // Check that the signature was correct
-                    assert!(response.returnData[num_pre_interactions].success);
+            assert_eq!(
+                response.returnData.len(),
+                length + 1,
+                "Missing expected commitment check"
+            );
+            assert!(
+                response.returnData[length].success,
+                "Commitment check failed"
+            );
+            match legacy {
+                true => {
                     assert_eq!(
-                        FixedBytes::<4>::abi_decode(
-                            &response.returnData[num_pre_interactions].returnData,
-                            true
-                        )?,
-                        IERC1271::isValidSignatureCall::SELECTOR,
-                        "Signature was not valid"
+                        **response.returnData[length].returnData,
+                        FixedBytes::<32>::default(),
+                        "Commitment was not reset (legacy)"
                     );
-
-                    // Check that all post interactions were successful
-                    response.returnData[num_pre_interactions + 1..]
-                        .iter()
-                        .for_each(|r| {
-                            assert!(r.success, "Post interaction Call failed");
-                        });
-
-                    // Check the status of the commitment, depending on if legacy or not.
-                    let length = num_pre_interactions + num_post_interactions + 1;
-
-                    assert_eq!(
-                        response.returnData.len(),
-                        length + 1,
-                        "Missing expected commitment check"
-                    );
-                    assert!(
-                        response.returnData[length].success,
-                        "Commitment check failed"
-                    );
-                    match legacy {
-                        true => {
-                            assert_eq!(
-                                **response.returnData[length].returnData,
-                                FixedBytes::<32>::default(),
-                                "Commitment was not reset (legacy)"
-                            );
-                        }
-                        false => {
-                            assert_eq!(
-                                **response.returnData[length].returnData, signing_message,
-                                "Commitment should NOT have been reset (transient)"
-                            );
-                        }
-                    }
-
-                    println!("\nGenerated order was able to be settled successfully!");
                 }
-                Err(e) => {
-                    println!("Error: {:?}", e);
+                false => {
+                    assert_eq!(
+                        **response.returnData[length].returnData, signing_message,
+                        "Commitment should NOT have been reset (transient)"
+                    );
                 }
             }
-        }
-        Err(Error::TransportError(TransportError::ErrorResp(err))) => {
-            let data = err.data.unwrap_or_default();
-            let data = data.get().trim_matches('"');
-            let data = Bytes::from_str(data).unwrap();
-            println!("Data: {:?}", data);
-            let decoded_error = ConstantProductHelperErrors::abi_decode(&data, true);
 
-            match decoded_error {
-                Ok(t) => match t {
-                    ConstantProductHelperErrors::PoolDoesNotExist(_) => {
-                        println!("Pool does not exist: {:?}", amm);
-                    }
-                    ConstantProductHelperErrors::PoolIsClosed(_) => {
-                        println!("Pool is closed: {:?}", amm);
-                    }
-                    _ => {}
-                },
-                Err(e) => match decode_revert_reason(&data) {
-                    Some(reason) => {
-                        println!("Reason: {:?}", reason);
-                    }
-                    None => {
-                        println!("Err: {:?}", e);
-                    }
-                },
-            }
+            println!("\nGenerated order was able to be settled successfully!");
         }
         Err(e) => {
             println!("Error: {:?}", e);
