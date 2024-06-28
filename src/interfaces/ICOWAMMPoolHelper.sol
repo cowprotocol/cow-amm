@@ -53,7 +53,15 @@ interface ICOWAMMPoolHelper {
      *      given price vector.
      * @param pool to calculate the order / signature for
      * @param prices supplied for determining the order, assumed to be in the
-     *        same order as returned from `tokens(pool)`.
+     *        same order as returned from `tokens(pool)`. Tokens prices are
+     *        expressed relative to each other: for example, if tokens[0] is
+     *        WETH, tokens[2] is DAI, and the price is 1 WETH per 3000 DAI, then
+     *        a valid price vector is [3000, *, 1, ...]. If tokens[1] is another
+     *        stablecoin with 18 decimals, then a valid price vector could be
+     *        [3000, 3000, 1, ...].
+     *        This price vector is compatible with the price vector used in a
+     *        call to `settle`, assuming the traded token array is in the same
+     *        order as in `tokens(pool)`.
      * @return order The CoW Protocol JIT order
      * @return preInteractions The array array for any **PRE** interactions (empty if none)
      * @return postInteractions The array array for any **POST** interactions (empty if none)
