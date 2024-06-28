@@ -1,21 +1,17 @@
 use std::{cmp::min, collections::HashMap};
 
 use alloy::{
-    primitives::{keccak256, Address, Bytes},
+    hex,
+    primitives::{keccak256, Address},
     providers::{Provider, ProviderBuilder},
     rpc::types::Filter,
-    sol,
     sol_types::{SolEvent, SolValue},
 };
-
-// Codegen from ABI file to interact with the contract.
-sol!(
-    #[allow(missing_docs)]
-    #[allow(clippy::too_many_arguments)]
-    #[sol(rpc)]
-    ComposableCoW,
-    "../../../out/ComposableCoW.sol/ComposableCoW.json"
-);
+use cow_amm_common::{
+    rpc_url,
+    ComposableCoW::{self, ConditionalOrderParams},
+    LegacyTradingParams, IERC20,
+};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -26,11 +22,8 @@ async fn main() -> eyre::Result<()> {
     const GNOSIS_CONSTANT_PRODUCT_HANDLER: &str = "0xB148F40fff05b5CE6B22752cf8E454B556f7a851";
     const COMPOSABLE_COW: &str = "0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74";
 
-    let rpc_url = std::env::var("ETH_RPC_URL")
-        .expect("Environment variable `ETH_RPC_URL` is not set")
-        .parse()
-        .expect("Invalid ETH_RPC_URL");
-    let provider = ProviderBuilder::new().on_http(rpc_url);
+    // Create a provider.
+    let provider = ProviderBuilder::new().on_http(rpc_url());
 
     // Determine the chain and then set the constant product handler and genesis block
     let chain_id = provider.get_chain_id().await?;
@@ -51,7 +44,7 @@ async fn main() -> eyre::Result<()> {
     };
 
     let mut latest_block = provider.get_block_number().await?;
-    let mut amms: HashMap<Address, Bytes> = HashMap::new();
+    let mut amms: HashMap<Address, ConditionalOrderParams> = HashMap::new();
 
     loop {
         let to_block = start_block + min(WINDOW_SIZE - 1, latest_block - start_block);
@@ -71,7 +64,7 @@ async fn main() -> eyre::Result<()> {
 
             if event.data.params.handler == constant_product_handler {
                 // insert will override the previous value if the key already existed
-                amms.insert(event.data.owner, event.params.abi_encode().into());
+                amms.insert(event.data.owner, event.params.clone());
             }
         }
 
@@ -86,17 +79,36 @@ async fn main() -> eyre::Result<()> {
     let composable_cow = ComposableCoW::new(COMPOSABLE_COW.parse().unwrap(), provider.clone());
     let amms = futures_util::future::join_all(amms.iter().map(|(addr, params)| {
         let composable_cow = composable_cow.clone();
+        let provider = provider.clone();
         async move {
-            let open = composable_cow
-                .singleOrders(*addr, keccak256(params.clone()))
+            let trading_enabled = composable_cow
+                .singleOrders(*addr, keccak256(params.abi_encode()))
                 .call()
                 .await
                 .unwrap()
                 ._0;
-            match open {
-                true => Some((addr, params)),
-                false => None,
+
+            if !trading_enabled {
+                return None;
             }
+
+            // Decode the staticInput as LegacyTradingParams
+            let static_input = LegacyTradingParams::abi_decode(&params.staticInput, true).unwrap();
+
+            for token in [&static_input.token0, &static_input.token1] {
+                let balance = IERC20::new(*token, provider.clone())
+                    .balanceOf(*addr)
+                    .call()
+                    .await
+                    .unwrap()
+                    ._0;
+
+                if balance.is_zero() {
+                    return None;
+                }
+            }
+
+            Some((addr, params))
         }
     }))
     .await
@@ -109,7 +121,7 @@ async fn main() -> eyre::Result<()> {
     println!("Please note that the AMM Bytes Params are ABI encoded and will need to be decoded to be human readable.\n");
     println!("Caution: No guarantee is made that the AMMs will be presented in the same order as they were created.\n");
     amms.iter().for_each(|(k, v)| {
-        println!("{},{}", k, v);
+        println!("{},{}", k, hex::encode(v.abi_encode()));
     });
 
     Ok(())

@@ -5,13 +5,19 @@ edition = "2021"
 [workspace]
 members = [
     "bin/indexer",
+    "bin/poller",
+    "crates/common",
 ]
 default-members = [
     "bin/indexer",
+    "bin/poller",
 ]
 resolver = "2"
 
 [workspace.dependencies]
+# cow-amm
+cow-amm-common = { path = "crates/common" }
+
 alloy = { version = "0.1", features = [ "full", "rpc-client" ] }
 
 # async
