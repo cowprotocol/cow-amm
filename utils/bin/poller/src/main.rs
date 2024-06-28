@@ -154,7 +154,7 @@ async fn main() -> eyre::Result<()> {
                     Ok(ConstantProductHelperErrors::PoolIsClosed(_)) => {
                         format!("Pool is closed: {:?}", amm)
                     }
-                    Ok(_) => format!("Unspecified ConstantProductHelperError"),
+                    Ok(_) => "Unspecified ConstantProductHelperError".to_string(),
                     Err(e) => match decode_revert_reason(&data) {
                         Some(reason) => format!("Reason: {:?}", reason),
                         None => format!("Err: {:?}", e),
