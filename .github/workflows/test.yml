@@ -38,7 +38,12 @@ jobs:
           forge build
         id: build
 
-      - name: Run Forge tests
+      - name: Run offline Forge tests
         run: |
-          forge test -vvv
+          forge test --no-match-contract '.*ForkedTest$' -vvv
         id: test
+
+      - name: Run foked Forge tests
+        run: |
+          forge test --fork-url "https://eth.llamarpc.com" --match-contract '.*ForkedTest$' -vvv
+        id: forked-test
