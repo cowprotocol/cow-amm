@@ -18,6 +18,9 @@ import {ForkedTest} from "./ForkedTest.sol";
 contract ConstantProductHelperForkedTest is ForkedTest {
     using GPv2Order for GPv2Order.Data;
 
+    // Used for `assertApproxEqRel`.
+    uint256 constant TEN_PERCENT = 0.1 ether;
+
     // All hardcoded addresses are mainnet addresses
 
     GPv2Settlement private settlement = GPv2Settlement(payable(0x9008D19f58AAbD9eD0D60971565AA8510560ab41));
@@ -101,12 +104,9 @@ contract ConstantProductHelperForkedTest is ForkedTest {
         assertEq(address(ammOrder.buyToken), address(WETH));
         // Check that the amounts and price aren't unreasonable. We changed the
         // price by about 5%, so the amounts aren't expected to change
-        // significantly more (say, they are between 2% and 3% of the original
-        // balance).
-        assertGt(ammOrder.sellAmount, ammUsdcInitialBalance * 2 / 100);
-        assertLt(ammOrder.sellAmount, ammUsdcInitialBalance * 3 / 100);
-        assertGt(ammOrder.buyAmount, ammWethInitialBalance * 2 / 100);
-        assertLt(ammOrder.buyAmount, ammWethInitialBalance * 3 / 100);
+        // significantly more (say, about 2.5% of the original balance).
+        assertApproxEqRel(ammOrder.sellAmount, ammUsdcInitialBalance * 25 / 1000, TEN_PERCENT);
+        assertApproxEqRel(ammOrder.buyAmount, ammWethInitialBalance * 25 / 1000, TEN_PERCENT);
 
         GPv2Interaction.Data[][3] memory interactions;
         interactions[0] = preInteractions;
