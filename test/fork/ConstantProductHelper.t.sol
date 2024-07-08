@@ -71,9 +71,11 @@ contract ConstantProductHelperForkedTest is ForkedTest {
         uint256[] memory prices = new uint256[](2);
         // Note: oracle price are expressed in the same format as prices in
         // a call to `settle`, where the  price vector is expressed so that
-        // if the first token is DAI and the second WETH then a price of 3000
-        // DAI per WETH means a price vector of [1, 3000] (if the decimals are
-        // different, as in WETH/USDC, then the atom amount is what counts).
+        // if the first token is USDC and the second WETH then a price of 3000
+        // USDC per WETH means a price vector of [1, 3000]. (This is technically
+        // incorrect because what counts is the atom amount, [1, 3000] would be
+        // a valid price vector only if the decimals were the same. In the
+        // comment we keep it simpler to make it easier to think about prices.)
         prices[usdcIndex] = WETH.balanceOf(wethUsdcAmm);
         prices[wethIndex] = USDC.balanceOf(wethUsdcAmm) * 95 / 100;
 
@@ -101,8 +103,8 @@ contract ConstantProductHelperForkedTest is ForkedTest {
 
         // The WETH component of the price vector has been decreased by 5%.
         // Continuing the example above, the price vector of [1, 3000] has
-        // become [1, 2850]: this means that one unit of DAI buys more WETH than
-        // available at the original AMM price and the AMM wants to sell DAI to
+        // become [1, 2850]: this means that one unit of USDC buys more WETH than
+        // available at the original AMM price and the AMM wants to sell USDC to
         // buy WETH and rebalance its position.
         assertEq(address(ammOrder.sellToken), address(USDC));
         assertEq(address(ammOrder.buyToken), address(WETH));
