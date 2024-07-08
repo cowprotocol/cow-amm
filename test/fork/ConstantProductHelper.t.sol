@@ -87,12 +87,6 @@ contract ConstantProductHelperForkedTest is ForkedTest {
         GPv2Interaction.Data[] memory postInteractions;
         bytes memory sig;
         (ammOrder, preInteractions, postInteractions, sig) = helper.order(wethUsdcAmm, prices);
-        // The signature is valid for the contract but not for the
-        // settlement contract. We need to prepend the verifying contract
-        // address.
-        // TODO: update the helper so that it already includes the address in
-        // the signature.
-        sig = abi.encodePacked(wethUsdcAmm, sig);
         trades[0] = orderToFullTrade(ammOrder, tokens, GPv2Signing.Scheme.Eip1271, sig);
 
         // We expect a commit interaction in both pre and post interactions

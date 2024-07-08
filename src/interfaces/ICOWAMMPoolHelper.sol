@@ -65,7 +65,8 @@ interface ICOWAMMPoolHelper {
      * @return order The CoW Protocol JIT order
      * @return preInteractions The array array for any **PRE** interactions (empty if none)
      * @return postInteractions The array array for any **POST** interactions (empty if none)
-     * @return sig The ERC-1271 signature for the order
+     * @return sig A valid CoW-Protocol signature for the resulting order using
+     * the ERC-1271 signature scheme.
      */
     function order(address pool, uint256[] calldata prices)
         external
