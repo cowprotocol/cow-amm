@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > All CoW AMM versions described in this repository have been deprecated in favor of the [Balancer CoW AMM](https://github.com/defi-wonderland/balancer-v1-amm/).
-> Pools deployed from the code in this repository are not going be supported in the future.
+> Support for pools deployed with the code in this repository may be dropped at any time without further notice.
 
 CoW AMM is an automated market maker running on top of CoW Protocol.
 
