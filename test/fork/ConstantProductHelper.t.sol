@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {Test} from "forge-std/Test.sol";
 import {BaseComposableCoWTest} from "lib/composable-cow/test/ComposableCoW.base.t.sol";
 
 import {ConstantProduct, IERC20, GPv2Order, ISettlement} from "src/ConstantProduct.sol";
@@ -14,7 +13,9 @@ import {
     GPv2Interaction
 } from "lib/composable-cow/lib/cowprotocol/src/contracts/GPv2Settlement.sol";
 
-contract ConstantProductHelperForkedTest is Test {
+import {ForkedTest} from "./ForkedTest.sol";
+
+contract ConstantProductHelperForkedTest is ForkedTest {
     using GPv2Order for GPv2Order.Data;
 
     // All hardcoded addresses are mainnet addresses
@@ -32,6 +33,9 @@ contract ConstantProductHelperForkedTest is Test {
     ConstantProductHelper helper;
 
     function setUp() public {
+        // This block is chosen so that `wethUsdcAmm` stores a large amount of
+        // funds.
+        forkMainnetAtBlock(20260921);
         helper = new ConstantProductHelper();
         vaultRelayer = address(settlement.vaultRelayer());
     }

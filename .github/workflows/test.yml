@@ -43,7 +43,7 @@ jobs:
           forge test --no-match-contract '.*ForkedTest$' -vvv
         id: test
 
-      - name: Run foked Forge tests
+      - name: Run forked Forge tests
         run: |
-          forge test --fork-url "https://eth.llamarpc.com" --match-contract '.*ForkedTest$' -vvv
+          forge test --match-contract '.*ForkedTest$' -vvv
         id: forked-test
