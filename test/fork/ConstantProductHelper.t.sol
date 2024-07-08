@@ -99,7 +99,11 @@ contract ConstantProductHelperForkedTest is ForkedTest {
         assertEq(preInteractions.length, 1);
         assertEq(postInteractions.length, 1);
 
-        // Because of how we changed the price, we expect to buy USDC
+        // The WETH component of the price vector has been decreased by 5%.
+        // Continuing the example above, the price vector of [1, 3000] has
+        // become [1, 2850]: this means that one unit of DAI buys more WETH than
+        // available at the original AMM price and the AMM wants to sell DAI to
+        // buy WETH and rebalance its position.
         assertEq(address(ammOrder.sellToken), address(USDC));
         assertEq(address(ammOrder.buyToken), address(WETH));
         // Check that the amounts and price aren't unreasonable. We changed the
