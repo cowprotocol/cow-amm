@@ -66,6 +66,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
             revert InvalidArrayLength();
         }
 
+        bytes memory eip1271sig;
         if (!isLegacy(pool)) {
             // Standalone CoW AMMs (**non-Gnosis Safe Wallets**)
             if (!isCanonical(pool)) {
@@ -93,7 +94,7 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
                 })
             );
 
-            sig = abi.encode(_order);
+            eip1271sig = abi.encode(_order);
 
             preInteractions = new GPv2Interaction.Data[](1);
             preInteractions[0] = GPv2Interaction.Data({
@@ -102,8 +103,12 @@ contract ConstantProductHelper is ICOWAMMPoolHelper, LegacyHelper {
                 callData: abi.encodeCall(ConstantProduct.commit, (_order.hash(SETTLEMENT.domainSeparator())))
             });
         } else {
-            (_order, preInteractions, postInteractions, sig) = legacyOrder(pool, prices);
+            (_order, preInteractions, postInteractions, eip1271sig) = legacyOrder(pool, prices);
         }
+
+        // A ERC-1271 signature on CoW Protocol is composed of two parts: the
+        // signer address and the valid ERC-1271 signature data for that signer.
+        sig = abi.encodePacked(pool, eip1271sig);
     }
 
     /// @dev Take advantage of the mapping on the factory that is set to the owner's address for canonical pools.
