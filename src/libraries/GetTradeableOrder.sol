@@ -58,13 +58,13 @@ library GetTradeableOrder {
             sellToken = params.token0;
             buyToken = params.token1;
             sellAmount = selfReserve0 / 2 - Math.ceilDiv(selfReserve1TimesPriceNumerator, 2 * params.priceDenominator);
-            buyAmount = Math.mulDiv(sellAmount, selfReserve1, selfReserve0 - sellAmount, Math.Rounding.Up);
+            buyAmount = Math.mulDiv(sellAmount, selfReserve1, selfReserve0 - sellAmount, Math.Rounding.Ceil);
             tradedAmountToken0 = sellAmount;
         } else {
             sellToken = params.token1;
             buyToken = params.token0;
             sellAmount = selfReserve1 / 2 - Math.ceilDiv(selfReserve0TimesPriceDenominator, 2 * params.priceNumerator);
-            buyAmount = Math.mulDiv(sellAmount, selfReserve0, selfReserve1 - sellAmount, Math.Rounding.Up);
+            buyAmount = Math.mulDiv(sellAmount, selfReserve0, selfReserve1 - sellAmount, Math.Rounding.Ceil);
             tradedAmountToken0 = buyAmount;
         }
 

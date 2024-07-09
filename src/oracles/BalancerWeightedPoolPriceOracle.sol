@@ -137,8 +137,8 @@ contract BalancerWeightedPoolPriceOracle is IPriceOracle {
         } else {
             (max, min) = (num2, num1);
         }
-        uint256 logMax = Math.log2(max, Math.Rounding.Up);
-        uint256 logMin = Math.log2(min, Math.Rounding.Down);
+        uint256 logMax = Math.log2(max, Math.Rounding.Ceil);
+        uint256 logMin = Math.log2(min, Math.Rounding.Floor);
 
         if ((logMax <= 128) || (logMin <= TOLERANCE)) {
             return (num1, num2);

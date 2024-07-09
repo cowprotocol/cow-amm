@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "src/ConstantProductFactory.sol";
 
-import {ConstantProductFactoryTestHarness} from "./ConstantProductFactoryTestHarness.sol";
+import {ConstantProductFactoryTestHarness, SafeERC20} from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract Deposit is ConstantProductFactoryTestHarness {
     function testAnyoneCanDeposit() public {
@@ -54,7 +54,7 @@ abstract contract Deposit is ConstantProductFactoryTestHarness {
             abi.encode(false)
         );
 
-        vm.expectRevert("SafeERC20: ERC20 operation did not succeed");
+        vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, token1));
         constantProductFactory.deposit(constantProduct, amount0, amount1);
     }
 

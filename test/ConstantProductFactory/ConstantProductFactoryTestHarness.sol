@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ConstantProductFactory, ConstantProduct, GPv2Order, ISettlement, IERC20} from "src/ConstantProductFactory.sol";
+import {
+    ConstantProductFactory,
+    ConstantProduct,
+    GPv2Order,
+    ISettlement,
+    IERC20,
+    SafeERC20
+} from "src/ConstantProductFactory.sol";
 
 import {ConstantProductTestHarness} from "test/ConstantProduct/ConstantProductTestHarness.sol";
 
