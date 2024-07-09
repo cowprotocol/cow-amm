@@ -27,8 +27,16 @@ $ forge build
 
 ### Test
 
+This repository uses both off-chain tests and tests based on the current state of the blockchain.
+
+To run all tests:
 ```shell
 $ forge test
+```
+
+To run only tests that work offline:
+```shell
+$ forge test --no-match-contract '.*ForkedTest$'
 ```
 
 ### Format
