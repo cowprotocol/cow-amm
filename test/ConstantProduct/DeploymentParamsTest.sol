@@ -40,6 +40,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         mockZeroAllowance(token, expectedDeploymentAddress(), spenderBadApproval);
         vm.mockCallRevert(
             address(token),
+            // Notice: we intentionally don't match the approved amount.
             abi.encodeWithSelector(IERC20.approve.selector, spenderBadApproval),
             "mock revert on approval"
         );
