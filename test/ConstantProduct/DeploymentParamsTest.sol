@@ -40,7 +40,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         mockZeroAllowance(token, expectedDeploymentAddress(), spenderBadApproval);
         vm.mockCallRevert(
             address(token),
-            abi.encodeCall(IERC20.approve, (spenderBadApproval, type(uint256).max)),
+            abi.encodeWithSelector(IERC20.approve.selector, spenderBadApproval),
             "mock revert on approval"
         );
         vm.mockCallRevert(address(token), hex"", abi.encode("Unexpected call to token contract"));
@@ -73,11 +73,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         new ConstantProduct(solutionSettler, token0, token1);
     }
 
-    // TODO: fix mock and expectations
-    // [FAIL. Reason: Error != expected error: Unexpected call to token contract != mock revert on approval]
     function testDeploymentRevertsIfApprovalReverts() public {
-        vm.skip(true);
-
         IERC20 reverting = revertApproveDeployerToken("reverting");
         IERC20 regular = approvedToken("regular");
         vm.expectRevert("mock revert on approval");
