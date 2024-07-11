@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import {ConstantProductTestHarness, ConstantProduct, IERC20} from "./ConstantProductTestHarness.sol";
+import {ConstantProductTestHarness, ConstantProduct, IERC20, SafeERC20} from "./ConstantProductTestHarness.sol";
 
 abstract contract DeploymentParamsTest is ConstantProductTestHarness {
     function testSetsDeploymentParameters() public {
@@ -40,7 +40,8 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         mockZeroAllowance(token, expectedDeploymentAddress(), spenderBadApproval);
         vm.mockCallRevert(
             address(token),
-            abi.encodeCall(IERC20.approve, (spenderBadApproval, type(uint256).max)),
+            // Notice: we intentionally don't match the approved amount.
+            abi.encodeWithSelector(IERC20.approve.selector, spenderBadApproval),
             "mock revert on approval"
         );
         vm.mockCallRevert(address(token), hex"", abi.encode("Unexpected call to token contract"));
@@ -93,7 +94,7 @@ abstract contract DeploymentParamsTest is ConstantProductTestHarness {
         );
 
         vm.prank(defaultDeployer());
-        vm.expectRevert("SafeERC20: ERC20 operation did not succeed");
+        vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, falseOnApproval));
         new ConstantProduct(solutionSettler, falseOnApproval, regular);
     }
 

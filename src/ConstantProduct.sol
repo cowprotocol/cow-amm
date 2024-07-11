@@ -269,6 +269,6 @@ contract ConstantProduct is IERC1271 {
      * @param spender The address that can transfer on behalf of this contract.
      */
     function approveUnlimited(IERC20 token, address spender) internal {
-        OZIERC20(address(token)).safeApprove(spender, type(uint256).max);
+        OZIERC20(address(token)).forceApprove(spender, type(uint256).max);
     }
 }

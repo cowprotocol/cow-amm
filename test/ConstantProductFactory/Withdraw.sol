@@ -5,7 +5,8 @@ import {ConstantProductFactory, IERC20} from "src/ConstantProductFactory.sol";
 
 import {
     EditableOwnerConstantProductFactory,
-    ConstantProductFactoryTestHarness
+    ConstantProductFactoryTestHarness,
+    SafeERC20
 } from "./ConstantProductFactoryTestHarness.sol";
 
 abstract contract Withdraw is ConstantProductFactoryTestHarness {
@@ -64,7 +65,7 @@ abstract contract Withdraw is ConstantProductFactoryTestHarness {
             token1, abi.encodeCall(IERC20.transferFrom, (address(constantProduct), owner, amount1)), abi.encode(false)
         );
 
-        vm.expectRevert("SafeERC20: ERC20 operation did not succeed");
+        vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, token1));
         vm.prank(owner);
         factory.withdraw(constantProduct, amount0, amount1);
     }
