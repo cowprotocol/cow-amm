@@ -15,12 +15,12 @@
   },
   "ConstantProductHelper": {
     "1": {
-      "address": "0xd47e907179ac35921533898d44c4870d34a3aed1",
-      "transactionHash": "0xa9c93d11db13623984cdacc9db06663b88354e6d403c3f8d3a21322cdbca3f28"
+      "address": "0x3705ceee5eaa561e3157cf92641ce28c45a3999c",
+      "transactionHash": "0x07f0ce50fb9cd30e69799a63ae9100869a3c653d62ea3ba49d2e5e1282f42b63"
     },
     "100": {
-      "address": "0x76aa4558206f7a5c814636f14e9ef3ac4bfad77e",
-      "transactionHash": "0xa2323c687b2d04c2646503c95aedb17b0da0df0ec40bc20ef8901903236f0161"
+      "address": "0xd9ec06b001957498ab1bc716145515d1d0e30ffb",
+      "transactionHash": "0x09e56c7173ab1e1c5d02bc2832799422ebca6d9a40e5bae77f6ca908696bfebf"
     },
     "11155111": {
       "address": "0x9386fc8220fbdc9dee404d372fc89efcd22a1b1b",

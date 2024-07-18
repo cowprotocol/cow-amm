@@ -11,5 +11,5 @@ interface ICOWAMMPoolFactory {
      * creation.
      * @param amm The address of the newly tradeable CoW AMM Pool
      */
-    event COWAMMPoolCreated(address amm);
+    event COWAMMPoolCreated(address indexed amm);
 }
